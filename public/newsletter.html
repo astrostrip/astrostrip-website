@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Newsletter · astro.strip</title>
+  <meta name="description" content="The astro.strip newsletter: astrology without the fluff, about twice a month.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+  <main class="newsletter newsletter-page">
+    <p id="nl-confirmed" class="notice" hidden>You’re in. Thank you for confirming. · Danke, deine Anmeldung ist bestätigt.</p>
+    <p id="nl-expired" class="notice" hidden>This confirmation link has expired or was already used. Just sign up again below. · Der Link ist abgelaufen oder wurde schon benutzt. Melde dich unten einfach neu an.</p>
+    <p class="kicker">NEWSLETTER</p>
+    <h1 class="section-title">Stripped down, <em>in your inbox.</em></h1>
+    <p class="section-sub">Astrology without the fluff, about twice a month. No spam, unsubscribe any time.</p>
+    <form class="newsletter-form" data-source="newsletter-page" novalidate>
+      <div class="newsletter-row">
+        <label for="nl-email" class="sr-only">Email</label>
+        <input id="nl-email" type="email" placeholder="Your email" autocomplete="email" required>
+        <button class="btn btn-solid" type="submit">SIGN UP</button>
+      </div>
+      <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="check"><input type="checkbox" name="consent"><span>Yes, send me the astro.strip newsletter by email: astrology insights and offers for readings and PDFs, about twice a month. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the <a href="datenschutz.html">privacy notice</a>.</span></label>
+      <p class="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a></nav>
+  </footer>
+  <script>
+    var st = new URLSearchParams(location.search).get('status');
+    if (st === 'confirmed') document.getElementById('nl-confirmed').hidden = false;
+    if (st === 'expired') document.getElementById('nl-expired').hidden = false;
+  </script>
+  <script type="module" src="assets/newsletter.js"></script>
+</body>
+</html>

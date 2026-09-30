@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>astro.strip · Birth charts, stripped down</title>
+  <meta name="description" content="Free birth chart calculator by astro.strip. Your chart, your Big Three and what your exact degrees mean. Psychological astrology without the fluff.">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta property="og:title" content="astro.strip · Birth charts, stripped down">
+  <meta property="og:description" content="Your chart, your Big Three and what your exact degrees mean. Calculated in your browser.">
+  <link rel="preload" href="fonts/playfair-display-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="astro.strip home">astro.strip</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#chart">Chart</a>
+      <a href="#strips">Strips</a>
+      <a href="#method">Method</a>
+      <a href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank">Instagram</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" id="chart">
+      <svg class="hero-ring" viewBox="0 0 400 400" aria-hidden="true">
+        <circle cx="200" cy="200" r="196"/><circle cx="200" cy="200" r="160"/><circle cx="200" cy="200" r="70"/>
+        <g class="spokes"></g>
+      </svg>
+      <p class="kicker">ASTRO.STRIP &middot; BIRTH CHART</p>
+      <h1 class="hero-title">Your chart,<br>stripped down.</h1>
+      <p class="hero-sub">Astrology without the fluff. Enter your birth data and get your chart, your Big Three and what your exact degrees say about you.</p>
+
+      <form id="chart-form" class="chart-form" novalidate autocomplete="off">
+        <div class="field">
+          <label for="date">Date of birth</label>
+          <input id="date" name="date" type="date" min="1900-01-01" max="2100-12-31" required>
+        </div>
+        <div class="field">
+          <label for="time">Time of birth</label>
+          <input id="time" name="time" type="time" required>
+          <label class="check"><input id="time-unknown" type="checkbox"><span>I don&rsquo;t know my birth time</span></label>
+        </div>
+        <div class="field field-wide combo">
+          <label for="place">Place of birth</label>
+          <div class="combo-box">
+            <input id="place" name="place" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="place-list" spellcheck="false">
+            <ul id="place-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+          <p class="hint">Small town not listed? Choose the nearest larger one. A few kilometres make almost no difference.</p>
+        </div>
+        <details class="field field-wide advanced">
+          <summary>Time zone</summary>
+          <label for="tz-override" class="sr-only">Time zone</label>
+          <select id="tz-override"><option value="auto" selected>Automatic, from the place and date (recommended)</option></select>
+          <p class="hint">Daylight saving time is included automatically, also for past decades. Only change this if your birth certificate says otherwise.</p>
+        </details>
+        <div class="field-wide submit-row">
+          <button id="submit" class="btn btn-solid" type="submit">STRIP MY CHART</button>
+          <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+        </div>
+        <p class="privacy-line field-wide">Calculated in your browser. Your birth data never leaves your device.</p>
+      </form>
+    </section>
+
+    <section id="result" class="result" hidden aria-live="polite"></section>
+
+    <section id="strips" class="strips">
+      <p class="kicker">PERSONAL READINGS</p>
+      <h2 class="section-title">The chart is the outline.<br><em>A strip reads the pattern.</em></h2>
+      <p class="section-sub">Every strip is prepared for your chart alone and personally reviewed by Sandra before it reaches you. Founding prices.</p>
+      <div class="strip-grid">
+        <article class="strip">
+          <p class="strip-name">MINI STRIP</p>
+          <p class="strip-tag">THE ESSENTIALS</p>
+          <p class="strip-desc">Your Big Three in depth: houses, their key aspects and the exact degrees of Rising, Sun and Moon.</p>
+          <p class="strip-price">39&nbsp;&euro;</p>
+          <p class="strip-time">5 working days</p>
+          <p class="slot" data-slot="mini"></p>
+          <a class="btn" href="order.html?strip=mini" data-strip="mini">ORDER</a>
+        </article>
+        <article class="strip strip-featured">
+          <p class="strip-name">MAXI STRIP</p>
+          <p class="strip-tag">FULL CHART READING</p>
+          <p class="strip-desc">The whole chart as one pattern. Every planet, every house, the degrees that carry it.</p>
+          <p class="strip-price">79&nbsp;&euro;</p>
+          <p class="strip-time">7 working days</p>
+          <p class="slot" data-slot="maxi"></p>
+          <a class="btn btn-solid" href="order.html?strip=maxi" data-strip="maxi">ORDER</a>
+        </article>
+        <article class="strip">
+          <p class="strip-name">ULTRA STRIP</p>
+          <p class="strip-tag">COMPLETE DOSSIER</p>
+          <p class="strip-desc">The full reading plus one life area of your choice in depth, and the chances and risks of your coming transits.</p>
+          <p class="strip-price">129&nbsp;&euro;</p>
+          <p class="strip-time">10 working days</p>
+          <p class="slot" data-slot="ultra"></p>
+          <a class="btn" href="order.html?strip=ultra" data-strip="ultra">ORDER</a>
+        </article>
+      </div>
+      <p class="fine center">All prices include 19&nbsp;% VAT.</p>
+      <p class="fine center">Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.</p>
+    </section>
+
+    <section id="method" class="method">
+      <p class="kicker">METHOD</p>
+      <h2 class="section-title">Deep, but readable.</h2>
+      <div class="method-grid">
+        <div>
+          <h3 class="sub-title">Psychological, not predictive</h3>
+          <p>astro.strip reads a chart as a pattern: what drives you, how you protect yourself, where you get in your own way. Ancient sources and myths are the evidence. The reading stays down to earth.</p>
+        </div>
+        <div>
+          <h3 class="sub-title">Every degree counts</h3>
+          <p>Two people with a Sun in Leo are not the same. Each of the 360 degrees of the zodiac has its own meaning, and your Big Three are read at their exact degree.</p>
+        </div>
+        <div>
+          <h3 class="sub-title">Calculated precisely</h3>
+          <p>Swiss Ephemeris, the engine professional astrology software runs on. Tropical zodiac, Placidus houses, true node, the orbs of our school. Past daylight saving times are included.</p>
+        </div>
+        <div>
+          <h3 class="sub-title">Your data stays yours</h3>
+          <p>The chart is calculated right here in your browser. Nothing is sent, nothing is stored, no tracking, no cookies.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="newsletter" class="newsletter">
+      <p class="kicker">NEWSLETTER</p>
+      <h2 class="section-title">Stripped down, <em>in your inbox.</em></h2>
+      <form class="newsletter-form" data-source="calculator" novalidate>
+        <div class="newsletter-row">
+          <label for="nl-email" class="sr-only">Email</label>
+          <input id="nl-email" type="email" placeholder="Your email" autocomplete="email" required>
+          <button class="btn btn-solid" type="submit">SIGN UP</button>
+        </div>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label class="check"><input type="checkbox" name="consent"><span>Yes, send me the astro.strip newsletter by email: astrology insights and offers for readings and PDFs, about twice a month. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the <a href="datenschutz.html">privacy notice</a>.</span></label>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="insta">
+      <p class="insta-line">More charts, stripped down, every week.</p>
+      <a class="btn" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank">FOLLOW @ASTRO.STRIP</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wordmark small">astro.strip</p>
+    <nav class="footer-nav" aria-label="Legal">
+      <a href="impressum.html">Impressum · Legal notice</a>
+      <a href="datenschutz.html">Datenschutz · Privacy</a>
+      <a href="terms.html">AGB · Terms</a>
+      <a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a>
+      <a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a>
+      <a href="https://github.com/astrostrip/astrostrip-website" rel="noopener">Source code</a>
+    </nav>
+    <p class="credits">Chart calculation: Swiss Ephemeris &copy; Astrodienst AG, used under the AGPL-3.0. The source code of this website is public. Place data: <a href="https://www.geonames.org/" rel="noopener">GeoNames</a>, CC BY 4.0. Typeface: Playfair Display, SIL Open Font License.</p>
+  </footer>
+
+  <script>
+    // decorative spokes on the hero ring
+    (function () {
+      var g = document.querySelector('.hero-ring .spokes'); var s = '';
+      for (var i = 0; i < 12; i++) { var a = i * Math.PI / 6;
+        s += '<line x1="' + (200 + 160 * Math.cos(a)) + '" y1="' + (200 + 160 * Math.sin(a)) + '" x2="' + (200 + 196 * Math.cos(a)) + '" y2="' + (200 + 196 * Math.sin(a)) + '"/>'; }
+      g.innerHTML = s;
+    })();
+  </script>
+  <script type="module" src="assets/app.js"></script>
+  <script type="module" src="assets/newsletter.js"></script>
+  <script>
+    // free slots per strip (served by the order backend; silently skipped when unavailable)
+    fetch('/api/slots').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      if (!s) return;
+      document.querySelectorAll('[data-slot]').forEach(function (el) {
+        var x = s[el.dataset.slot]; if (!x) return;
+        var day = function (ymd) { var p = ymd.split('-'); return new Date(Date.UTC(+p[0], p[1] - 1, +p[2])).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' }); };
+        el.textContent = x.left > 0 ? x.left + ' of ' + x.limit + ' slots left this week'
+          : x.next ? 'This week fully booked · next free week: ' + day(x.next)
+          : 'Fully booked until ' + day(x.until);
+        if (x.left <= 0 && x.next === null) { el.classList.add('sold-out'); var b = document.querySelector('[data-strip="' + el.dataset.slot + '"]'); if (b) { b.textContent = 'FULLY BOOKED'; b.setAttribute('aria-disabled', 'true'); b.removeAttribute('href'); } }
+      });
+    }).catch(function () {});
+  </script>
+</body>
+</html>

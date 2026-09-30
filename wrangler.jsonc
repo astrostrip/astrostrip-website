@@ -1,0 +1,27 @@
+{
+  // Cloudflare Worker with static assets. The website lives in ./public,
+  // the order and newsletter backend (/api/*) in ./src/worker.js.
+  "name": "astrostrip",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": "./public/",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "kv_namespaces": [
+    // Create a KV namespace called "astrostrip-orders" in the Cloudflare dashboard
+    // (Storage & Databases → KV) and paste its ID here. The ID is not secret.
+    { "binding": "ORDERS", "id": "794a9d021f1e46bab5445f0d7a9ac588" }
+  ],
+  "vars": {
+    "SITE_URL": "https://astrostrip.com",
+    "MAIL_FROM_NAME": "astro.strip",
+    "MAIL_FROM_ADDRESS": "hello@astrostrip.com",
+    // Mailjet list IDs (Contacts → Contact lists). Not secret.
+    "MAILJET_NEWSLETTER_LIST_ID": "10560905",
+    "MAILJET_CUSTOMER_LIST_ID": "10560908"
+  }
+  // Secrets are NOT in this file. Set them in the dashboard (Worker → Settings → Variables and Secrets):
+  // STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
+}

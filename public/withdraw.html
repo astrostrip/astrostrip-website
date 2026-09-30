@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vertrag widerrufen · Withdraw from contract · astro.strip</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+  <main class="legal">
+    <p class="kicker">WITHDRAWAL · WIDERRUF</p>
+    <h1>Vertrag widerrufen <span lang="en">· Withdraw from contract</span></h1>
+    <p>Hier können Sie Ihre Bestellung während der Widerrufsfrist widerrufen. Sie erhalten sofort eine Eingangsbestätigung per E-Mail.</p>
+    <p lang="en">Here you can withdraw from your order during the withdrawal period. You will receive a confirmation of receipt by email straight away.</p>
+
+    <form id="w-form" class="chart-form" novalidate>
+      <div class="field field-wide"><label for="w-name">Name · Your name</label><input id="w-name" type="text" autocomplete="name" maxlength="120" required></div>
+      <div class="field field-wide"><label for="w-contract">Bestellnummer oder Produkt und Bestelldatum · Order number, or product and order date</label><input id="w-contract" type="text" maxlength="120" placeholder="e.g. AS-20261116-3K9QZ" required></div>
+      <div class="field field-wide"><label for="w-email">E-Mail für die Bestätigung · Email for the confirmation</label><input id="w-email" type="email" autocomplete="email" maxlength="200" required></div>
+      <div class="field-wide submit-row"><button class="btn" type="submit" id="w-next">WEITER · CONTINUE</button></div>
+    </form>
+
+    <section id="w-confirm" hidden>
+      <h2>Bitte prüfen · Please check</h2>
+      <p id="w-summary"></p>
+      <p>Hiermit widerrufe ich den oben genannten Vertrag.<br><span lang="en">I hereby withdraw from the contract named above.</span></p>
+      <div class="submit-row">
+        <button class="btn btn-solid" type="button" id="w-send">WIDERRUF BESTÄTIGEN · CONFIRM WITHDRAWAL</button>
+        <button class="btn" type="button" id="w-back">ÄNDERN · CHANGE</button>
+      </div>
+    </section>
+    <p id="w-status" class="form-status" role="status" aria-live="polite"></p>
+    <p class="fine">Sie können auch per E-Mail an hello@astrostrip.com widerrufen. · You can also withdraw by email to hello@astrostrip.com.</p>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a></nav>
+  </footer>
+  <script>
+    (function () {
+      var $ = function (s) { return document.querySelector(s); };
+      var data = null;
+      $('#w-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        data = { name: $('#w-name').value.trim(), contract: $('#w-contract').value.trim(), email: $('#w-email').value.trim() };
+        if (data.name.length < 2 || data.contract.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+          $('#w-status').textContent = 'Bitte alle drei Felder ausfüllen. · Please fill in all three fields.'; return;
+        }
+        $('#w-status').textContent = '';
+        $('#w-summary').textContent = 'Name: ' + data.name + ' · Contract: ' + data.contract + ' · Confirmation to: ' + data.email;
+        $('#w-form').hidden = true; $('#w-confirm').hidden = false;
+      });
+      $('#w-back').addEventListener('click', function () { $('#w-form').hidden = false; $('#w-confirm').hidden = true; });
+      $('#w-send').addEventListener('click', function () {
+        var btn = $('#w-send'); btn.disabled = true;
+        fetch('/api/withdraw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (x) {
+            if (!x.ok || !x.j.received) throw new Error(x.j.error || 'error');
+            $('#w-confirm').hidden = true;
+            $('#w-status').textContent = 'Ihr Widerruf ist eingegangen am ' + x.j.received + '. Die Bestätigung geht an ' + data.email + '. · Your withdrawal was received. A confirmation is on its way.';
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            $('#w-status').textContent = (err.message && err.message !== 'error' && err.message.indexOf('fetch') < 0 ? err.message + ' ' : '') + 'Falls das nicht klappt, senden Sie Ihren Widerruf bitte an hello@astrostrip.com; er gilt ab dem Absenden. · If this keeps failing, please email your withdrawal to hello@astrostrip.com. It counts from the moment you send it.';
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

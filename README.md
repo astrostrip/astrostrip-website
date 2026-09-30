@@ -1,0 +1,33 @@
+# astro.strip website
+
+Landing page with a birth chart calculator. Static files only, no server code, no build step.
+
+## How it works
+
+- Everything is calculated in the visitor's browser. No birth data is sent or stored.
+- Engine: [Swiss Ephemeris](https://www.astro.com/swisseph/) by Astrodienst AG, compiled to WebAssembly by the npm package `swisseph-wasm` 0.1.0 (`vendor/swisseph/`).
+- Conventions: tropical zodiac, Placidus houses (Porphyry above 66° latitude), true node, orbs of the astro.strip school.
+- Places: GeoNames (`data/cities.js`), all places worldwide with at least 15,000 inhabitants plus Germany, Austria and Switzerland from 1,000, each with its IANA time zone. Historical daylight saving time comes from the browser's own time zone data.
+- Big Three texts: `assets/texts.js` (sign level) and `assets/degrees/<sign>.js` (one text per degree and role).
+
+## Ordering
+
+Tests: `node test/worker.test.mjs` (Stripe and mail are mocked).
+
+`src/worker.js` (Cloudflare Worker) serves `/api/*`: weekly slots (counted from Stripe, Monday 00:00 Europe/Berlin; when a week is full, the next free week can be booked, up to 8 weeks ahead), Stripe Checkout, the Stripe webhook, the electronic withdrawal function (§ 356a BGB) and the newsletter double opt-in (Mailjet, tracking off). Birth data is kept in KV only until payment, then mailed to the owner and deleted. It is never sent to Stripe. Secrets are set in the Cloudflare dashboard, never in this repository.
+
+## Run locally
+
+The website itself is in `public/`. Any static web server works, for example:
+
+    python3 -m http.server 8765 --directory public
+
+then open http://localhost:8765. Opening `index.html` directly as a file does not work (ES modules and WebAssembly need a server).
+
+## Licences
+
+- The code of this website is licensed under the GNU Affero General Public License v3.0 (`LICENSE`), because it uses the Swiss Ephemeris under the AGPL.
+- Swiss Ephemeris © Astrodienst AG, AGPL-3.0. `swisseph-wasm` © prolaxu, GPL-3.0-or-later (`vendor/swisseph/LICENSE`).
+- Place data © GeoNames, CC BY 4.0.
+- Playfair Display, SIL Open Font License 1.1 (`fonts/OFL.txt`).
+- The written interpretations in `assets/texts.js` and `assets/degrees/` are © astro.strip.

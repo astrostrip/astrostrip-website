@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order your strip · astro.strip</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav" aria-label="Main"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+
+  <main class="order">
+    <p class="kicker">ORDER</p>
+    <h1 class="section-title">Your strip, written for your chart.</h1>
+    <p id="cancelled" class="notice" hidden>Payment was cancelled. Nothing was charged. Your details are still filled in below.</p>
+
+    <form id="order-form" class="chart-form order-form" novalidate autocomplete="on">
+      <fieldset class="field field-wide strip-choice">
+        <legend>Choose your strip</legend>
+        <label class="strip-option"><input type="radio" name="strip" value="mini"><span><b>MINI STRIP</b> · 39&nbsp;&euro; <em>Your Big Three in depth: houses, key aspects and exact degrees of Rising, Sun and Moon.</em><small class="slot" data-slot="mini"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="maxi"><span><b>MAXI STRIP</b> · 79&nbsp;&euro; <em>The whole chart as one pattern.</em><small class="slot" data-slot="maxi"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="ultra"><span><b>ULTRA STRIP</b> · 129&nbsp;&euro; <em>The full reading plus one life area in depth and your coming transits.</em><small class="slot" data-slot="ultra"></small></span></label>
+      </fieldset>
+
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required maxlength="120">
+      </div>
+      <div class="field">
+        <label for="email">Email for your strip</label>
+        <input id="email" name="email" type="email" autocomplete="email" required maxlength="200">
+      </div>
+
+      <div class="field">
+        <label for="birth-date">Date of birth</label>
+        <input id="birth-date" type="date" min="1900-01-01" max="2100-12-31" required>
+      </div>
+      <div class="field">
+        <label for="birth-time">Time of birth (local time)</label>
+        <input id="birth-time" type="time" required>
+      </div>
+      <div class="field field-wide">
+        <label for="time-source">Where does your birth time come from?</label>
+        <select id="time-source" required>
+          <option value="">Please choose</option>
+          <option value="certificate">Birth certificate or hospital record</option>
+          <option value="family">From family memory</option>
+          <option value="approximate">Approximate</option>
+        </select>
+        <p class="hint">A strip needs a birth time. The more exact it is, the more exact your Rising and houses.</p>
+      </div>
+      <div class="field field-wide combo">
+        <label for="place">Place of birth</label>
+        <div class="combo-box">
+          <input id="place" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="place-list" spellcheck="false" autocomplete="off">
+          <ul id="place-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+
+      <div class="field field-wide" id="life-area-field" hidden>
+        <label for="life-area">Life area for your Ultra Strip</label>
+        <select id="life-area">
+          <option value="">Please choose</option>
+          <option>Love and relationships</option>
+          <option>Work and calling</option>
+          <option>Money and self-worth</option>
+          <option>Home and family</option>
+          <option>Creativity and self-expression</option>
+          <option>Friends and belonging</option>
+          <option>Personal growth</option>
+        </select>
+      </div>
+
+      <fieldset class="field field-wide questionnaire" id="questionnaire" hidden>
+        <legend>A few questions about your life right now</legend>
+        <p class="hint">They help us read your chart against your real life. Everything except your current city is optional. Your strip works without sensitive details: please don’t share health information, diagnoses, or anything about other people.</p>
+        <div class="field combo">
+          <label for="residence">Where do you live now? <span id="residence-req">(needed for the Ultra Strip)</span></label>
+          <div class="combo-box">
+            <input id="residence" type="text" placeholder="Current city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="residence-list" spellcheck="false" autocomplete="off">
+            <ul id="residence-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <div class="field">
+          <label for="occupation">What do you do for a living?</label>
+          <input id="occupation" type="text" maxlength="120">
+        </div>
+        <div class="field">
+          <label for="passions">What do you love doing?</label>
+          <input id="passions" type="text" maxlength="200">
+        </div>
+        <div class="field">
+          <label for="relationship">Relationship status</label>
+          <select id="relationship">
+            <option value="">Prefer not to say</option>
+            <option>Single</option>
+            <option>Dating</option>
+            <option>In a relationship</option>
+            <option>Married</option>
+            <option>Separated or divorced</option>
+            <option>Widowed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="focus">What do you most want to understand right now?</label>
+          <input id="focus" type="text" maxlength="300" placeholder="e.g. my career, a decision I’m facing, how I relate to others">
+        </div>
+        <label class="check"><input id="sensitive-consent" type="checkbox"><span>Optional: if my answers include sensitive information (for example about health, sexuality or beliefs), I explicitly consent to it being used solely to prepare my strip. I can withdraw this consent at any time by email. Without this consent such details are not used.</span></label>
+      </fieldset>
+
+      <div class="field field-wide">
+        <label for="language">Language of your strip</label>
+        <select id="language"><option value="en">English</option><option value="de">German</option></select>
+      </div>
+
+      <fieldset class="field field-wide options">
+        <legend>Optional layers</legend>
+        <label class="check"><input id="nodes" type="checkbox"><span>Add a karmic reading of your lunar nodes (read as an invitation to reflect, not as fact about past lives)</span></label>
+        <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Ultra only: add the ancestral layer (patterns that may run in your family)</span></label>
+      </fieldset>
+
+      <div class="field field-wide">
+        <label for="note">Anything else we should know? (optional)</label>
+        <input id="note" type="text" maxlength="500" placeholder="Please no health details or details about other people">
+      </div>
+
+      <section class="summary field-wide" aria-live="polite">
+        <p class="sub-title">Your order</p>
+        <p id="summary-text">Choose a strip above.</p>
+        <p class="fine">Payment by card, PayPal, Apple Pay or Google Pay on the next page (Stripe). Your birth data is used only to write your strip and is not passed to the payment provider.</p>
+      </section>
+
+      <div class="field field-wide">
+        <label class="check"><input id="newsletter" type="checkbox"><span>Optional: Yes, send me the astro.strip newsletter by email: astrology insights and offers for readings and PDFs, about twice a month. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the <a href="datenschutz.html" target="_blank">privacy notice</a>. (You will get a separate email to confirm.)</span></label>
+        <p class="hint">We will also use your email address to tell you about similar astro.strip readings and PDFs. You can object to this at any time, for example via the link in every such email or by writing to hello@astrostrip.com, without any costs other than the basic transmission costs.</p>
+      </div>
+
+      <div class="field field-wide consents">
+        <label class="check"><input id="accept-terms" type="checkbox" required><span>I am at least 18 years old and I have read the <a href="terms.html" target="_blank">terms</a>, the <a href="cancellation.html" target="_blank">cancellation policy</a> and the <a href="datenschutz.html" target="_blank">privacy notice</a>.</span></label>
+        <label class="check"><input id="early-start" type="checkbox" required><span>I expressly request that astro.strip starts writing my strip before the 14-day withdrawal period ends. I know that my right of withdrawal ends once the strip has been fully written and delivered to me as a PDF. If I withdraw earlier, I pay a proportionate amount for the work already done.</span></label>
+      </div>
+
+      <div class="field-wide submit-row">
+        <button id="order-submit" class="btn btn-solid" type="submit">CONTINUE TO PAYMENT</button>
+        <p id="order-status" class="form-status" role="status" aria-live="polite"></p>
+        <p class="fine center">The contract is concluded when you click the payment button on the next page.</p>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wordmark small">astro.strip</p>
+    <nav class="footer-nav" aria-label="Legal">
+      <a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a>
+    </nav>
+  </footer>
+  <script type="module" src="assets/order.js"></script>
+</body>
+</html>

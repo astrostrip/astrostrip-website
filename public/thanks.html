@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thank you · astro.strip</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header"><a class="wordmark" href="index.html">astro.strip</a></header>
+  <main class="legal center">
+    <p class="kicker">ORDER RECEIVED</p>
+    <h1>Thank you.</h1>
+    <p>Your order <b id="order-id"></b> is paid. A confirmation with all details and the cancellation policy is on its way to your inbox.</p>
+    <p>If a detail of your birth data is wrong, just reply to that email before we start writing.</p>
+    <p><a class="btn" href="index.html">BACK TO ASTRO.STRIP</a></p>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a></nav>
+  </footer>
+  <script>
+    try { sessionStorage.removeItem('astrostrip-order-draft'); } catch (e) {}
+    var id = new URLSearchParams(location.search).get('order') || '';
+    document.getElementById('order-id').textContent = /^AS-\d{8}-[A-Z0-9]{2,6}$/.test(id) ? id : '';
+  </script>
+</body>
+</html>
