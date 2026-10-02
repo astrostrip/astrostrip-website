@@ -6,11 +6,11 @@
 
 import SwissEph from '../vendor/swisseph/src/swisseph.js';
 import { TEXTS, ROLES } from './texts.js';
+import { ZODIAC_PATHS, signIcon } from './zodiac.js';
 import { attachPlaceSearch } from './places.js';
 
 const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 const VS = '︎'; // text presentation, keeps glyphs from turning into emoji
-const SIGN_GLYPHS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map(g => g + VS);
 
 // id = Swiss Ephemeris body number; orb = school orb; body = sends aspects
 const POINTS = [
@@ -201,8 +201,8 @@ function findAspects(planets, angles, timeKnown) {
         if (!p.body) continue;
         const diff = ((p.lon - ax.lon + 540) % 360) - 180; // planet relative to axis, negative = before
         const oppDiff = ((p.lon - (ax.lon + 180) + 540) % 360) - 180;
-        if (diff >= -ax.conj[0] && diff <= ax.conj[1]) add(p, { key: ax.key, glyph: ax.key }, ASPECTS[0], Math.abs(diff), diff < 0 ? ax.conj[0] : ax.conj[1]);
-        else if (oppDiff >= -ax.opp[0] && oppDiff <= ax.opp[1]) add(p, { key: ax.key, glyph: ax.key }, ASPECTS[4], Math.abs(oppDiff), oppDiff < 0 ? ax.opp[0] : ax.opp[1]);
+        if (diff >= -ax.conj[0] && diff <= ax.conj[1]) add(p, { key: ax.key, glyph: ax.key, lon: ax.lon, axis: true }, ASPECTS[0], Math.abs(diff), diff < 0 ? ax.conj[0] : ax.conj[1]);
+        else if (oppDiff >= -ax.opp[0] && oppDiff <= ax.opp[1]) add(p, { key: ax.key, glyph: ax.key, lon: ax.lon, axis: true }, ASPECTS[4], Math.abs(oppDiff), oppDiff < 0 ? ax.opp[0] : ax.opp[1]);
         const sep = Math.abs(diff);
         for (const asp of ASPECTS) {
           if (asp.angle === 0 || asp.angle === 180) continue;
@@ -210,7 +210,7 @@ function findAspects(planets, angles, timeKnown) {
           const orb = Math.abs(sep - asp.angle);
           if (orb > allowed) continue;
           if (signDist(p.lon, ax.lon) !== expectedSigns[asp.angle] && orb > 3) continue;
-          add(p, { key: ax.key, glyph: ax.key }, asp, orb, allowed);
+          add(p, { key: ax.key, glyph: ax.key, lon: ax.lon, axis: true }, asp, orb, allowed);
         }
       }
     }
@@ -243,7 +243,7 @@ function wheelSvg(chart) {
       parts.push(`<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" class="w-line w-faint"/>`);
     }
     const [gx, gy] = pos(s * 30 + 15, (R.outer + R.zodiacIn) / 2);
-    parts.push(`<text x="${gx}" y="${gy}" class="w-sign" text-anchor="middle" dominant-baseline="central">${SIGN_GLYPHS[s]}</text>`);
+    parts.push(`<path transform="translate(${gx} ${gy}) scale(1.15)" class="w-sign" d="${ZODIAC_PATHS[s]}"><title>${SIGNS[s]}</title></path>`);
   }
 
   if (chart.houses) {
@@ -261,9 +261,9 @@ function wheelSvg(chart) {
     parts.push(lab(chart.angles.asc, 'AC'), lab(chart.angles.mc, 'MC'));
   }
 
-  // aspect lines (bodies only, no axes)
+  // aspect lines, also to AC and MC (Sandra, 02.10.2026: what the list shows, the wheel draws); conjunctions have no line
   for (const a of chart.aspects) {
-    if (a.asp.angle === 0 || a.b.lon === undefined) continue; // axes have no line
+    if (a.asp.angle === 0) continue;
     const [x1, y1] = pos(a.a.lon, R.aspect);
     const [x2, y2] = pos(a.b.lon, R.aspect);
     parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${a.asp.hard ? 'w-hard' : 'w-soft'}"/>`);
@@ -322,8 +322,8 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     <p class="card-role">${r.role}</p>
     <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
     ${degreeKnown ? `<p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>` : ''}
-    <p class="card-body card-lock-text">What your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}${degreeKnown ? ' degree' : ''} says about you is part of the Mini Strip, together with your Sun, the houses and the key aspects of your Big Three.</p>
-    <a class="card-lock-link" href="order.html?strip=mini">MINI STRIP · 39 &euro;</a>
+    <p class="card-body card-lock-text">For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.</p>
+    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
     ${extra}
   </article>`;
   }
@@ -332,7 +332,7 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
   if (degreeKnown) {
     degreeBlock = `<div class="card-degree">
       <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
-      <p class="card-body">${dt ? esc(dt) : 'The reading for this degree is being written.'}</p>
+      <p class="card-body">${dt ? esc(dt) : 'For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.'}</p>
     </div>`;
   }
   return `<article class="card">
@@ -374,13 +374,13 @@ async function renderResult(chart, input) {
 
   const rows = chart.planets.map(p => `<tr>
       <td><span class="glyph">${p.glyph}${VS}</span>${esc(p.key)}</td>
-      <td>${SIGN_GLYPHS[signOf(p.lon)]} ${SIGNS[signOf(p.lon)]}</td>
+      <td>${signIcon(signOf(p.lon))} ${SIGNS[signOf(p.lon)]}</td>
       <td class="num">${fmtDeg(p.lon)}${p.speed < 0 && p.key !== 'North Node' ? ' <span class="retro" title="retrograde">R</span>' : ''}</td>
       ${chart.houses ? `<td class="num">${p.house}</td>` : ''}
     </tr>`).join('');
   const angleRows = chart.angles ? ['asc', 'mc'].map(k => `<tr>
       <td><span class="glyph glyph-txt">${k === 'asc' ? 'AC' : 'MC'}</span>${k === 'asc' ? 'Ascendant' : 'Midheaven'}</td>
-      <td>${SIGN_GLYPHS[signOf(chart.angles[k])]} ${SIGNS[signOf(chart.angles[k])]}</td>
+      <td>${signIcon(signOf(chart.angles[k]))} ${SIGNS[signOf(chart.angles[k])]}</td>
       <td class="num">${fmtDeg(chart.angles[k])}</td><td class="num">${k === 'asc' ? 1 : 10}</td></tr>`).join('') : '';
 
   const aspectRows = chart.aspects.map(a => `<li>
