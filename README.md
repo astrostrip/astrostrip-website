@@ -1,6 +1,6 @@
 # astro.strip website
 
-Landing page with a birth chart calculator. Static files only, no server code, no build step.
+Landing page with a birth chart calculator and an order form for personal readings. No build step: static files in `public/`, plus a small Cloudflare Worker (`src/worker.js`) for orders and the newsletter. The calculator itself runs only in the browser.
 
 ## How it works
 
