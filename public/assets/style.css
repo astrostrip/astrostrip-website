@@ -64,7 +64,7 @@ p { margin: 0 0 1em; }
 
 /* hero */
 .hero { position: relative; max-width: var(--max); margin: 0 auto; padding: clamp(56px, 10vw, 120px) var(--gutter) 80px; text-align: center; overflow: hidden; }
-.hero-ring { position: absolute; left: 50%; top: 30px; width: min(760px, 130vw); transform: translateX(-50%); fill: none; stroke: rgba(201, 164, 92, .3); stroke-width: .6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.hero-ring { position: absolute; left: 50%; top: 30px; width: min(calc(85vw + 50px), 1040px); transform: translateX(-50%); fill: none; stroke: rgba(201, 164, 92, .3); stroke-width: .6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .hero-ring .ticks { stroke: rgba(201, 164, 92, .22); stroke-width: .4; }
 .hero-ring .axis { stroke: rgba(201, 164, 92, .22); stroke-width: .5; }
 .hero-ring .zodiac { stroke: rgba(201, 164, 92, .55); stroke-width: .75; }
@@ -158,7 +158,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .strips .section-sub { margin: 0 auto 48px; }
 /* paper sections: full-width cream, content stays in its column */
 .paper { background: var(--paper); box-shadow: 0 0 0 100vmax var(--paper); clip-path: inset(0 -100vmax); color: var(--ink); padding-bottom: 90px; }
-.paper .kicker, .paper .strip-tag, .paper .slot, .paper .strip-desc, .paper .section-title em, .paper .form-status, .paper a { color: var(--bronze); }
+.paper .kicker, .paper .insta-line, .paper .strip-tag, .paper .slot, .paper .strip-desc, .paper .section-title em, .paper .form-status, .paper a { color: var(--bronze); }
 .paper .section-title, .paper .strip-name, .paper .strip-price { color: var(--ink); }
 .paper .section-sub, .paper .fine, .paper .strip-time, .paper .check, .paper .slot.sold-out { color: var(--ink-muted); }
 .paper .strip { background: var(--paper-card); border-color: var(--paper-line); }
@@ -172,6 +172,8 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .paper input::placeholder { color: #8a7f70; }
 .paper .check input { accent-color: var(--ink); }
 .paper :focus-visible { outline-color: var(--ink); }
+.paper + .paper { margin-top: -1px; clip-path: inset(-1px -100vmax 0); } /* no hairline seam between two paper sections */
+.newsletter.paper + .insta.paper { padding-top: 40px; }
 .strip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; text-align: center; margin-bottom: 28px; }
 .strip { border: 1px solid var(--line); padding: 40px 28px; display: flex; flex-direction: column; align-items: center; }
 .strip-featured { border-color: var(--gold); background: var(--panel); }
@@ -253,6 +255,13 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .positions td, .positions th { padding-left: 4px; padding-right: 4px; font-size: 14px; }
   .aspect-list li { grid-template-columns: 1fr auto; }
   .asp-name { display: none; }
+}
+/* hero ring up to 760 px (Sandra, 02.10.2026): fits the screen below the kicker, the title sits in its centre,
+   the italic lines start below it. Margins in vw follow the ring; checked for no glyph/text overlap at 360-760 px.
+   Wider screens: the script in index.html centres the ring on the whole text block. */
+@media (max-width: 760px) {
+  .hero-ring { width: 100vw; top: calc(clamp(56px, 10vw, 120px) + 44px); }
+  .hero-title { font-size: clamp(30px, 9.2vw, 40px); margin-top: calc(50vw - 13px); margin-bottom: calc(50vw - 10px); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 

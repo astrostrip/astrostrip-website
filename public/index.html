@@ -148,7 +148,7 @@
       </form>
     </section>
 
-    <section class="insta">
+    <section class="insta paper">
       <p class="insta-line">More charts, stripped down, every week.</p>
       <a class="btn" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank">FOLLOW @ASTRO.STRIP</a>
     </section>
@@ -167,6 +167,29 @@
     <p class="credits">Chart calculation: Swiss Ephemeris &copy; Astrodienst AG, used under the AGPL-3.0. The source code of this website is public. Place data: <a href="https://www.geonames.org/" rel="noopener">GeoNames</a>, CC BY 4.0. Typeface: Playfair Display, SIL Open Font License.</p>
   </footer>
 
+  <script>
+    // Hero ring above 760 px (Sandra, 02.10.2026): ring centred on the text block (kicker to invite line),
+    // with enough room above so its top glyphs stay visible. Phones use the CSS rule in style.css.
+    (function () {
+      var hero = document.querySelector('.hero'), ring = document.querySelector('.hero-ring');
+      var first = hero.querySelector('.kicker'), last = hero.querySelector('.hero-invite');
+      function place() {
+        hero.style.paddingTop = ''; ring.style.top = '';
+        if (window.innerWidth <= 760) return;
+        var w = ring.getBoundingClientRect().width, top0 = first.offsetTop;
+        var blockH = last.offsetTop + last.offsetHeight - top0;
+        var need = w / 2 - blockH / 2 + 16;
+        if (top0 < need) { hero.style.paddingTop = (parseFloat(getComputedStyle(hero).paddingTop) + need - top0) + 'px'; top0 = first.offsetTop; }
+        ring.style.top = (top0 + blockH / 2 - w / 2) + 'px';
+      }
+      place();
+      var timer;
+      function later() { clearTimeout(timer); timer = setTimeout(place, 60); }
+      window.addEventListener('resize', later);
+      if (window.ResizeObserver) new ResizeObserver(later).observe(document.querySelector('.hero-title'));
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    })();
+  </script>
   <script type="module" src="assets/app.js"></script>
   <script type="module" src="assets/newsletter.js"></script>
   <script>
