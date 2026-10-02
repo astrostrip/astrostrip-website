@@ -310,8 +310,8 @@ async function degreeText(sign, degree, role) {
 }
 
 // ---------- Rendering ----------
-// Free calculator: only the Sun is read (Sandra, 02.10.2026). Rising and Moon show sign and degree;
-// their reading is part of the Mini Strip. Their texts are not in the public degree files.
+// Free calculator (Sandra, 02.10.2026): every card keeps its sign text; only the Sun gets its degree text.
+// Rising and Moon show their degree with a pointer to the strips. Their degree texts are not in the public files.
 async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked = false } = {}) {
   const sign = SIGNS[signOf(lon)];
   const deg = sabianDegree(lon);
@@ -321,9 +321,13 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     return `<article class="card card-locked">
     <p class="card-role">${r.role}</p>
     <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
+    <p class="card-head">${esc(head)}</p>
+    <p class="card-body card-sign">${esc(body)}</p>
+    <div class="card-degree">
     ${degreeKnown ? `<p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>` : ''}
     <p class="card-body card-lock-text">For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.</p>
     <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
+    </div>
     ${extra}
   </article>`;
   }

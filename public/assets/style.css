@@ -14,8 +14,14 @@
   --muted: #a89c8a;
   --line: rgba(201, 164, 92, .38);
   --line-faint: rgba(201, 164, 92, .16);
-  --band: #24211F;            /* taupe band behind the strips, little yellow so the gold reads (Sandra, 02.10.2026) */
-  --band-card: #1B1917;       /* darker cards in the band's own tone (Sandra, 02.10.2026) */
+  /* "paper" sections (strips, newsletter): cream ground, black type, bronze accents (Sandra, 02.10.2026).
+     The light gold does not read on cream (about 2:1), so text accents there use bronze. */
+  --paper: #F4EBDD;
+  --paper-card: #FBF7F0;
+  --ink: #0B0B0B;
+  --ink-muted: #4E463E;
+  --bronze: #7A5C25;
+  --paper-line: rgba(122, 92, 37, .45);
   --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --glyph: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif;
   --gutter: clamp(16px, 5vw, 56px);
@@ -150,14 +156,25 @@ input::placeholder { color: #6f6556; font-style: italic; }
 /* strips */
 .strips, .method { max-width: var(--max); margin: 0 auto; padding: 110px var(--gutter) 40px; text-align: center; scroll-margin-top: 70px; }
 .strips .section-sub { margin: 0 auto 48px; }
-/* full-width taupe band with thin gold lines, content stays in the max-width column */
-.strips { position: relative; background: var(--band); box-shadow: 0 0 0 100vmax var(--band); clip-path: inset(0 -100vmax); padding-bottom: 80px; }
-.strips::before, .strips::after { content: ''; position: absolute; left: 50%; width: 100vw; height: 1px; transform: translateX(-50%); background: var(--line); }
-.strips::before { top: 0; }
-.strips::after { bottom: 0; }
+/* paper sections: full-width cream, content stays in its column */
+.paper { background: var(--paper); box-shadow: 0 0 0 100vmax var(--paper); clip-path: inset(0 -100vmax); color: var(--ink); padding-bottom: 90px; }
+.paper .kicker, .paper .strip-tag, .paper .slot, .paper .strip-desc, .paper .section-title em, .paper .form-status, .paper a { color: var(--bronze); }
+.paper .section-title, .paper .strip-name, .paper .strip-price { color: var(--ink); }
+.paper .section-sub, .paper .fine, .paper .strip-time, .paper .check, .paper .slot.sold-out { color: var(--ink-muted); }
+.paper .strip { background: var(--paper-card); border-color: var(--paper-line); }
+.paper .strip-featured { border-color: var(--bronze); }
+.paper .btn { color: var(--ink); border-color: var(--ink); background: transparent; }
+.paper .btn:hover, .paper .btn:focus-visible { background: var(--ink); color: var(--paper); }
+.paper .btn-solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.paper .btn-solid:hover, .paper .btn-solid:focus-visible { background: var(--bronze); border-color: var(--bronze); color: var(--paper); }
+.paper input[type=email], .paper input[type=text] { color: var(--ink); border-bottom-color: var(--paper-line); color-scheme: light; }
+.paper input:focus { border-bottom-color: var(--ink); }
+.paper input::placeholder { color: #8a7f70; }
+.paper .check input { accent-color: var(--ink); }
+.paper :focus-visible { outline-color: var(--ink); }
 .strip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; text-align: center; margin-bottom: 28px; }
-.strip { border: 1px solid var(--line); background: var(--band-card); padding: 40px 28px; display: flex; flex-direction: column; align-items: center; }
-.strip-featured { border-color: var(--gold); background: var(--band-card); }
+.strip { border: 1px solid var(--line); padding: 40px 28px; display: flex; flex-direction: column; align-items: center; }
+.strip-featured { border-color: var(--gold); background: var(--panel); }
 .strip-name { font-size: 24px; letter-spacing: .12em; margin-bottom: 4px; }
 .strip-tag { font-size: 11px; letter-spacing: .3em; color: var(--gold-label); margin-bottom: 22px; }
 .strip-desc { color: var(--gold-italic); font-style: italic; flex: 1; }
