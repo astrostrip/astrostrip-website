@@ -322,8 +322,8 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     <p class="card-role">${r.role}</p>
     <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
     ${degreeKnown ? `<p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>` : ''}
-    <p class="card-body card-lock-text">What your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}${degreeKnown ? ' degree' : ''} says about you is part of the Mini Strip, together with your Sun, the houses and the key aspects of your Big Three.</p>
-    <a class="card-lock-link" href="order.html?strip=mini">MINI STRIP · 39 &euro;</a>
+    <p class="card-body card-lock-text">For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.</p>
+    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
     ${extra}
   </article>`;
   }
@@ -332,7 +332,7 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
   if (degreeKnown) {
     degreeBlock = `<div class="card-degree">
       <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
-      <p class="card-body">${dt ? esc(dt) : 'The reading for this degree is being written.'}</p>
+      <p class="card-body">${dt ? esc(dt) : 'For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.'}</p>
     </div>`;
   }
   return `<article class="card">
