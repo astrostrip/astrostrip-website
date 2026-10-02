@@ -118,7 +118,8 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .w-faint { stroke: var(--line-faint); }
 .w-axis { stroke: var(--gold); stroke-width: 1.4; }
 .w-tick { stroke: var(--cream); stroke-width: 1; }
-.w-sign { fill: var(--gold); font-family: var(--glyph); font-size: 26px; }
+.w-sign { fill: none; stroke: var(--gold); stroke-width: .7; stroke-linecap: round; stroke-linejoin: round; }
+.sign-icon { width: 1.05em; height: 1.05em; vertical-align: -.18em; fill: none; stroke: var(--gold); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .w-house { fill: var(--muted); font-size: 14px; font-family: var(--serif); }
 .w-axislabel { fill: var(--gold-label); font-size: 15px; letter-spacing: .12em; font-family: var(--serif); }
 .w-planet { fill: var(--cream); font-family: var(--glyph); font-size: 27px; }
