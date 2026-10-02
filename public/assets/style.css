@@ -25,6 +25,7 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--black); color: var(--cream); font-family: var(--serif); font-size: 17px; line-height: 1.6; overflow-x: hidden; }
 a { color: var(--gold); }
 p { margin: 0 0 1em; }
+[hidden] { display: none !important; } /* class rules like .field { display: flex } must not override the hidden attribute */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .nowrap { white-space: nowrap; }
 .center { text-align: center; }
