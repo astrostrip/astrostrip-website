@@ -11,6 +11,7 @@
 //
 //   POST /api/subscribe        newsletter signup: stores the consent and sends the double opt-in mail
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
+//   cron (hourly)              retention: buyer list after 3 years without purchase, consent proofs 3 years after the end
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
@@ -471,7 +472,8 @@ export const CUSTOMER_NOTICE = {
 const DOI_TTL = 604800; // confirmation link valid for 7 days
 const randomToken = () => [...crypto.getRandomValues(new Uint8Array(32))].map(b => b.toString(16).padStart(2, '0')).join('');
 
-// Proof of consent (DSK OH Direktwerbung 3.3/3.7): kept without expiry, also after an unsubscribe.
+// Proof of consent (DSK OH Direktwerbung 3.3/3.7): kept as long as the address gets mail from us,
+// and RETAIN_YEARS after the last list ended (see runRetention below).
 async function logConsent(env, email, event) {
   const key = `consent:${email.toLowerCase()}`;
   const log = JSON.parse((await env.ORDERS.get(key)) || '{"events":[]}');
@@ -514,6 +516,76 @@ async function afterOrderMarketing(env, order) {
   } catch (err) {
     console.error('marketing after order failed', err);
   }
+}
+
+// ---------- retention (Sandra, 02.10.2026) ----------
+// Buyer list "Kundinnen": removed 3 years after the last purchase. Consent proof: deleted 3 years after
+// the last list relationship ended (newsletter unsubscribed, buyer objected or was removed).
+// Runs hourly (wrangler.jsonc "triggers") and checks RETENTION_BATCH proofs per run, because the free plan
+// allows 50 subrequests per invocation; a full pass over 1,000 addresses takes about four days.
+export const RETAIN_YEARS = 3;
+export const RETENTION_BATCH = 10;
+const yearsMs = y => y * 365.25 * 86400000;
+
+async function mailjetRecipients(env, email) {
+  const res = await fetch(`https://api.mailjet.com/v3/REST/listrecipient?ContactEmail=${encodeURIComponent(email)}&Limit=100`, { headers: { Authorization: mailjetAuth(env) } });
+  if (!res.ok) throw new Error(`Mailjet listrecipient ${res.status}`);
+  return (await res.json()).Data || [];
+}
+
+// Decides one proof. Returns 'kept', 'updated' or 'deleted'. Mailjet errors leave the proof untouched.
+export async function retainConsent(env, key, now = Date.now()) {
+  const raw = await env.ORDERS.get(key);
+  if (!raw) return 'kept';
+  const log = JSON.parse(raw);
+  const email = key.slice('consent:'.length);
+  const recs = await mailjetRecipients(env, email);
+  const onList = id => recs.find(r => String(r.ListID) === String(id));
+  const before = JSON.stringify(log);
+  const ends = [];
+
+  // newsletter
+  if (log.events.some(e => e.type === 'newsletter-optin')) {
+    const r = onList(env.MAILJET_NEWSLETTER_LIST_ID);
+    if (r && !r.IsUnsubscribed) delete log.newsletterEndedAt; // active (again)
+    else log.newsletterEndedAt = (r && r.UnsubscribedAt) || log.newsletterEndedAt || new Date(now).toISOString();
+    ends.push(log.newsletterEndedAt);
+  }
+
+  // buyer list (§ 7 Abs. 3 UWG)
+  const buys = log.events.filter(e => e.type === 'customer-7-3-uwg').map(e => Date.parse(e.at));
+  if (buys.length) {
+    const lastBuy = Math.max(...buys);
+    const r = onList(env.MAILJET_CUSTOMER_LIST_ID);
+    if (r && !r.IsUnsubscribed) {
+      if (now - lastBuy >= yearsMs(RETAIN_YEARS)) {
+        await mailjetList(env, env.MAILJET_CUSTOMER_LIST_ID, email, 'remove');
+        log.customerEndedAt = new Date(now).toISOString();
+        log.events.push({ type: 'customer-list-removed', reason: `${RETAIN_YEARS} years without purchase`, at: log.customerEndedAt });
+      } else delete log.customerEndedAt;
+    } else log.customerEndedAt = (r && r.UnsubscribedAt) || log.customerEndedAt || new Date(now).toISOString();
+    ends.push(log.customerEndedAt || null); // null = still on the list
+  }
+
+  if (ends.length && ends.every(Boolean) && Math.max(...ends.map(Date.parse)) + yearsMs(RETAIN_YEARS) <= now) {
+    await env.ORDERS.delete(key);
+    return 'deleted';
+  }
+  if (JSON.stringify(log) !== before) { await env.ORDERS.put(key, JSON.stringify(log)); return 'updated'; }
+  return 'kept';
+}
+
+export async function runRetention(env, now = Date.now()) {
+  if (!env.MAILJET_API_KEY) return { skipped: true };
+  const cursor = (await env.ORDERS.get('retention:cursor')) || undefined;
+  const page = await env.ORDERS.list({ prefix: 'consent:', cursor, limit: RETENTION_BATCH });
+  const result = { kept: 0, updated: 0, deleted: 0, failed: 0 };
+  for (const { name } of page.keys) {
+    try { result[await retainConsent(env, name, now)]++; } catch (err) { result.failed++; console.error('retention', err); }
+  }
+  if (page.list_complete) await env.ORDERS.delete('retention:cursor');
+  else await env.ORDERS.put('retention:cursor', page.cursor);
+  return result;
 }
 
 // ---------- handlers ----------
@@ -647,5 +719,8 @@ export default {
       return json({ error: 'Something went wrong on our side. Nothing was charged. Please try again, or email hello@astrostrip.com.' }, 500);
     }
     return env.ASSETS.fetch(request);
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runRetention(env).then(r => console.log('retention', JSON.stringify(r))));
   },
 };

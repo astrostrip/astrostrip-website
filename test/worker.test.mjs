@@ -208,3 +208,78 @@ console.log('newsletter ok');
   assert.ok(plain('order.html').includes(CUSTOMER_NOTICE.en), 'customer notice differs on order.html');
   console.log('consent wording = proof ok');
 }
+
+// retention: buyer list after 3 years without purchase, consent proof 3 years after the last list ended
+{
+  const { runRetention, RETENTION_BATCH } = await import('../src/worker.js');
+  const now = Date.parse('2030-06-01T12:00:00Z');
+  const ago = y => new Date(now - y * 365.25 * 86400000).toISOString();
+  const store = new Map();
+  const renv = {
+    MAILJET_API_KEY: 'k', MAILJET_SECRET_KEY: 's', MAILJET_NEWSLETTER_LIST_ID: '111', MAILJET_CUSTOMER_LIST_ID: '222',
+    ORDERS: {
+      get: async k => store.get(k) ?? null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); },
+      list: async ({ prefix, cursor, limit }) => {
+        const all = [...store.keys()].filter(k => k.startsWith(prefix)).sort();
+        const start = Number(cursor || 0), keys = all.slice(start, start + limit).map(name => ({ name }));
+        return { keys, list_complete: start + limit >= all.length, cursor: String(start + limit) };
+      },
+    },
+  };
+  const optin = { type: 'newsletter-optin', confirmedAt: ago(6) };
+  const buy = y => ({ type: 'customer-7-3-uwg', at: ago(y) });
+  const put = (email, ...events) => store.set('consent:' + email, JSON.stringify({ events }));
+  // Mailjet state per address: list id -> unsubscribed at (null = subscribed)
+  const mj = {
+    'active@x.de': { 111: null },                        // newsletter running for 6 years: keep, untouched
+    'unsub-old@x.de': { 111: ago(3.2) },                 // unsubscribed > 3 years ago: delete
+    'unsub-new@x.de': { 111: ago(1) },                   // unsubscribed 1 year ago: keep, note the end
+    'buyer-old@x.de': { 222: null },                     // last purchase 3.5 years ago: remove from list, keep proof
+    'buyer-new@x.de': { 222: null },                     // bought 2 years ago: keep
+    'buyer-objected@x.de': { 222: ago(4) },              // objected 4 years ago: delete
+    'both@x.de': { 111: null, 222: null },               // old buyer, still on newsletter: removed from buyers, proof stays
+    'removed@x.de': {},                                  // gone from Mailjet: end noted now, kept 3 more years
+  };
+  put('active@x.de', optin); put('unsub-old@x.de', optin); put('unsub-new@x.de', optin);
+  put('buyer-old@x.de', buy(3.5)); put('buyer-new@x.de', buy(5), buy(2)); put('buyer-objected@x.de', buy(4.5));
+  put('both@x.de', optin, buy(4)); put('removed@x.de', optin);
+  const removed = []; let calls = 0;
+  globalThis.fetch = async (url, init = {}) => {
+    url = String(url); calls++;
+    const m = url.match(/^https:\/\/api\.mailjet\.com\/v3\/REST\/listrecipient\?ContactEmail=([^&]+)&Limit=100$/);
+    if (m) {
+      const st = mj[decodeURIComponent(m[1])] || {};
+      return new Response(JSON.stringify({ Data: Object.entries(st).map(([id, at]) => ({ ListID: Number(id), IsUnsubscribed: at !== null, UnsubscribedAt: at || '' })) }));
+    }
+    if (url === 'https://api.mailjet.com/v3/REST/contactslist/222/managecontact') { const b = JSON.parse(init.body); removed.push(b); delete mj[b.Email][222]; return new Response('{}', { status: 201 }); }
+    throw new Error('unexpected fetch ' + url);
+  };
+  store.set('order:cs_x', '{}'); // other keys are never touched
+  let res = await runRetention(renv, now);
+  assert.equal(res.updated + res.kept + res.deleted, Math.min(RETENTION_BATCH, 8));
+  while (store.has('retention:cursor')) res = await runRetention(renv, now);
+  const has = e => store.has('consent:' + e);
+  assert.ok(has('active@x.de') && !JSON.parse(store.get('consent:active@x.de')).newsletterEndedAt);
+  assert.ok(!has('unsub-old@x.de'), 'unsubscribed > 3 years: deleted');
+  assert.ok(has('unsub-new@x.de') && JSON.parse(store.get('consent:unsub-new@x.de')).newsletterEndedAt);
+  assert.ok(has('buyer-old@x.de') && JSON.parse(store.get('consent:buyer-old@x.de')).customerEndedAt, 'removed buyer keeps proof 3 more years');
+  assert.ok(has('buyer-new@x.de') && !JSON.parse(store.get('consent:buyer-new@x.de')).customerEndedAt, 'latest purchase counts');
+  assert.ok(!has('buyer-objected@x.de'), 'objection > 3 years: deleted');
+  assert.ok(has('both@x.de'), 'newsletter still running');
+  assert.ok(has('removed@x.de'));
+  assert.deepEqual(removed.map(r => [r.Email, r.Action]).sort(), [['both@x.de', 'remove'], ['buyer-old@x.de', 'remove']]);
+  assert.ok(store.has('order:cs_x'));
+  // a proof whose end was noted 3+ years ago disappears on a later pass
+  const later = now + 3.1 * 365.25 * 86400000;
+  while (true) { await runRetention(renv, later); if (!store.has('retention:cursor')) break; }
+  for (const e of ['unsub-new@x.de', 'buyer-old@x.de', 'removed@x.de']) assert.ok(!has(e), e + ' deleted after 3 more years');
+  assert.ok(has('active@x.de'), 'running newsletter is never deleted');
+  assert.ok(has('buyer-new@x.de') && JSON.parse(store.get('consent:buyer-new@x.de')).customerEndedAt, 'buyer-new now 5 years without purchase: removed, proof kept');
+  // Mailjet down: nothing is deleted
+  put('fail@x.de', optin);
+  globalThis.fetch = async () => new Response('err', { status: 500 });
+  res = await runRetention(renv, later + 1e12);
+  assert.ok(res.failed >= 1 && has('fail@x.de'));
+  assert.deepEqual(await runRetention({ ...renv, MAILJET_API_KEY: '' }, now), { skipped: true });
+  console.log('retention ok');
+}

@@ -12,6 +12,8 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  // Hourly retention run (src/worker.js, runRetention). Free plan: 5 cron triggers per account.
+  "triggers": { "crons": ["17 * * * *"] },
   "kv_namespaces": [
     // Create a KV namespace called "astrostrip-orders" in the Cloudflare dashboard
     // (Storage & Databases → KV) and paste its ID here. The ID is not secret.
