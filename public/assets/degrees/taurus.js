@@ -16,7 +16,7 @@ export default {
   },
   4: {
     sun: "You are here to build a sense of abundance that doesn’t depend on luck. Your core strength is trust as a skill: practised, kept steady, and backed by fair exchange, because you tend to get back what you put in. The shadow is grand fantasies that drift off your real course and leave missed chances behind. Stay with your line, deal with people who deal fairly, and practise gratitude. In the end, the trust itself is worth more than what it earns.",
-    life: "Feels rich on a normal Tuesday. Says thank you a lot and means it every time.",
+    life: "Feels rich on a normal Tuesday, only does business with people they trust, and says thank you like they mean it.",
   },
   5: {
     sun: "Your life keeps teaching one hard lesson: everything ends, and that is not the same as losing yourself. You tend to put part of your identity into one or two people or into what you own, and up to a point that’s love. Past it, clinging becomes the obstacle, and grief turns into a place you live. Your task is to release things once they’re complete and to remember that you shape your circumstances. What you carry inside stays.",
@@ -24,7 +24,7 @@ export default {
   },
   6: {
     sun: "You are built to get past what separates, and a setback often turns into your starting point. After a hard fall, a demanding project shared with others tends to pull you back up faster than anything else. Obstacles point to where you still need to grow. The shadow is the shortcut and the ego that won’t let go when it should, both of which cost you your word. Refuse defeat, find stamina, and accept help bigger than you.",
-    life: "Never takes the shortcut, so when they say it'll be done Friday, it's done Friday.",
+    life: "After the worst setback, signed up for the hardest team project in sight. Never takes shortcuts, so their word holds.",
   },
   7: {
     sun: "Your life tends to move in breakthroughs: a strong experience redirects everything, and something new grows out of what burned down. When meaning goes missing, the temptation is to buy it back with pleasure, status or money, or to accept a mediocre status quo and call it contentment. Neither holds. Your task is ruthless honesty with yourself, even in the places that feel off-limits, and the willingness to put your own business aside when someone else needs it more.",
@@ -36,7 +36,7 @@ export default {
   },
   9: {
     sun: "You are here to bring light into dark stretches, your own and other people’s. Someone else’s joy genuinely lifts you, and giving loosens something in you that would otherwise block your growth. The shadow is the modern myth that putting yourself first is the road to happiness, and boredom with the rituals that keep bonds alive. Your task is to create and protect occasions to share. That’s how loss and heavy times turn into connection.",
-    life: "Hosts the same dinner every year, even when everyone's tired of it. Especially then.",
+    life: "In the hardest year, still hosted the annual dinner. Watching everyone else enjoy it is their favorite part.",
   },
   10: {
     sun: "Your identity takes shape through service. The paradox: the less you insist on your own importance, the more clearly you see how much you matter. Needing support is what children do; giving it is what grown-ups do. The shadow is serving for image, doing good so you look good. Your task is to commit to a lasting project that fits your skills and let your convictions show in your ordinary days, until the care matters more than the credit.",
@@ -116,7 +116,7 @@ export default {
   },
   29: {
     sun: "You are here to master a craft with integrity and to discover that you do your best work together with others. Maturity, for you, means holding fewer fixed opinions and staying curious about other ways of being and doing. The shadow is a grey, joyless attitude to work, doing it only for the pay, and positions you defend out of habit. Learn to ask for help and share the load. You tend to understand yourself best by knowing others deeply.",
-    life: "Asks for help without embarrassment and genuinely enjoys watching a colleague do what they can't.",
+    life: "Holds opinions loosely, asks for help easily, and genuinely enjoys watching a colleague do what they can't.",
   },
   30: {
     sun: "You are here to express yourself fully, and you tend to do it against the backdrop of tradition, both honouring and pushing against what came before. Copying people you admire can help you find your own ideal. The shadow is too much self-focus, which turns barren, and the loneliness of never being entirely understood. Treat criticism as a pointer, withdraw regularly to recharge, and look for answers inside yourself, even when public opinion disagrees.",

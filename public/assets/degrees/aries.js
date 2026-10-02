@@ -16,7 +16,7 @@ export default {
   },
   4: {
     sun: "Your path runs through joy, and that isn’t a warm-up for something more serious. It is the thing. Following what genuinely delights you builds self-trust, and self-trust tends to build more of itself. The line you can’t cross: self-interest without conscience turns into complacency. And responsibility that never serves you is usually fear or guilt dressed up as virtue. Your gut knows the difference. Use it.",
-    life: "Says no to the guilt-trip brunch, yes to the beach day. Still texts back the friend who's actually struggling.",
+    life: "Skips the guilt-trip brunch for a phone-free Sunday with their person. No apologies, but still checks on a struggling friend.",
   },
   5: {
     sun: "You are here to build three things together: what you can do, who you stand by, and what you believe in. They give you a solid base and lift you at the same time. The trap is the shortcut, skipping the ordinary work and dismissing daily life as pointless. Your real growth tends to be gradual, not explosive. Trust your first impulse; it shows you who you are when life gets demanding.",
@@ -84,7 +84,7 @@ export default {
   },
   21: {
     sun: "You are here to test yourself against real challenges and find out exactly where you are strong and where you are not. Conflict is the friction that builds you, and the struggle usually starts inside before it shows outside. The shadow: rebelling blindly against every limit and spending yourself on things of little worth. Be willing to risk what you’ve already won. Knowing your strengths and weaknesses is what finally lets you stand firm.",
-    life: "Wants the toughest critic in the room. Thanks them afterward. Picks fights for growth, never for pride.",
+    life: "Wants the toughest critic in the room. Leaves knowing exactly where they're strong and where they're not.",
   },
   22: {
     sun: "You are here to make optimism, cooperation and sharing your way of life. Where others compete, you tend to get further by teaming up. Wanting things is proof you’re alive, and arriving is only ever a rest stop before the next wish. The shadow: dreaming far more than you do. Measure your dream time against your action time. Obstacles aren’t in your way; they are how you grow.",
@@ -92,7 +92,7 @@ export default {
   },
   23: {
     sun: "You are here to protect your own potential: to put your energy into what is truly yours and stay out of what isn’t. That takes boundaries, set with elegance rather than force. The shadow comes from both sides: petty obligations that wear your talent down, and people who pull you toward mediocrity. Then the honest question: is your reserve fair, or a way to avoid giving back? Commit fully where you commit, and waste little.",
-    life: "Says no politely and early, because ending things later is harder. Their calendar has more white space than yours.",
+    life: "Says no early and politely, because goodbyes are harder. Keeps the white space for the one project that matters.",
   },
   24: {
     sun: "You are here to stay open to guidance and inspiration beyond your own planning, and to let it shape your life. Abundance, for you, isn’t a bank balance; it’s the absence of feeling you lack. The shadow: believing you are poor, which is more a mental habit than a fact, and giving so you can admire yourself. Live the golden rule. Happiness is one of the clearest signs you are on track. Abundance grows when it moves.",
@@ -116,7 +116,7 @@ export default {
   },
   29: {
     sun: "You are here to find your part in something larger and give it your full devotion. Both what you do and how you listen help shape the whole, and your hopes act like quiet intentions that steer your life. The shadow: self-deception, flattery and wishful illusion, all rooted in fear. Each has a better twin: honest self-examination, genuine appreciation, real imagination. Feeling devoted isn’t enough. Express it.",
-    life: "Gives real compliments, never flattery. Leaves the conversation the moment it turns cynical.",
+    life: "Says out loud what they love, gives real compliments, never flattery, and leaves when the talk turns cynical.",
   },
   30: {
     sun: "You are here to prove that insight is only worth something if it survives daily life: bills, work, the people who rely on you. Reliable everyday competence is your kind of depth, and it’s rarer than it looks. The shadow is mistaking a comfortable, well-managed life for the whole meaning, which quietly wastes your potential. Honor both your instincts and your higher aims. Your qualities, not your milestones, show what you’re here for.",

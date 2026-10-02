@@ -8,15 +8,15 @@ export default {
   },
   2: {
     sun: "Your core is an openness that lets good things in, as long as you don’t dissect every gift until nothing is left of it. You are here to enjoy, to share and to keep a sense of wonder alive for the people around you. The shadow is guilt: celebrating your own wins in secret, or holding on to plenty instead of passing it on. Practise gratitude on purpose and learn to expect good things. Enjoying without apology is part of your work.",
-    life: "Orders dessert first without explaining. Enjoys the good things out loud, no guilty little jokes about it.",
+    life: "Orders dessert first, thanks the kitchen, no guilty jokes. Simply expects there's more where that came from.",
   },
   3: {
     sun: "You are here to bring order to what you discover: patterns, rules, a clear sense of what is worth more and why. You tend to believe rewards should follow real achievement, which is not always a popular view. The trap is seeing yourself as disadvantaged by birth, a story that never makes anyone happy. Your task is to shape what you have into something refined and well kept. Contentment comes from that, not from how much you start with.",
-    life: "Grew up with little, never blames it. Makes a studio apartment look like a magazine cover.",
+    life: "Grew up with little, never blames it. Made a studio look like a magazine cover and earned every promotion since.",
   },
   4: {
     sun: "Under your rational, grown-up surface sits a longing for something more original and closer to nature, and you are here to reconnect with it. Rituals, inherited or self-made, renew your drive when you know why you keep them. The trap is going through the motions: collecting experiences and traditions without asking what they mean. Choose calmly and honestly. Meaning comes from the inner side of an experience, not from the event itself.",
-    life: "Has a ritual for everything, from Sunday coffee to the first day of spring, and knows why each one matters.",
+    life: "Has a ritual for everything and knows where each one comes from. Old customs, their own meaning, nothing on autopilot.",
   },
   5: {
     sun: "You are here to look past the limits everyone else has agreed on. What stirs you most deeply says a lot about who you are, so pay attention to it. Expect some resistance: people who question the norm tend to be laughed at first. The trap is turning conviction into constant quarrel. Your task is to expose yourself on purpose to views that shake your comfort, and to bring new ideas in a way that makes others think, not just react.",
@@ -24,7 +24,7 @@ export default {
   },
   6: {
     sun: "You are here to go deep, into what is hidden in you as much as into what you study. Your hunger for knowledge needs one point of focus, and the outer effort tends to mirror an inner one. The trap is self-exploitation: burning through your energy and letting your self-worth hang on whether the venture pays off. Growth is a risk by nature. Accept that, stay with the process, and you discover a stamina and depth you didn’t know you had.",
-    life: "Picked one obscure topic and now knows more about it than anyone. Still forgets to eat while reading.",
+    life: "Bet years on one obscure topic, no payoff guaranteed. Knows more about it than anyone, and still forgets to eat.",
   },
   7: {
     sun: "You are here to learn something that sounds banal and runs deep: you are always you, however much others take from you. That frees you to try out different versions of yourself without losing the thread. The trap is straining for more, or fearing that every exchange costs you a piece of yourself. Contact does cost energy, but it doesn’t damage your core. Trust that, and your many sides stop looking fickle. They come from one real source.",
@@ -116,7 +116,7 @@ export default {
   },
   29: {
     sun: "You are here to find what genuinely excites you about life, especially after a hard stretch. Your path often starts with imitation: you learn by echoing others, gain knowledge and belonging, and then your own variations appear. The trap is stopping there, forever sounding like someone else. Grace and courtesy carry you far; you rarely need to argue your truth, just show it. When you bring others to life, you come alive too.",
-    life: "Copied their favorite writer for a year. By year two, people were copying them.",
+    life: "After a rough year, copied their favorite writer purely for fun. A year later, people were copying them.",
   },
   30: {
     sun: "You are here to embody the standards you believe in. Choosing the best and living it visibly sets a benchmark for the people around you. Your self-worth is meant to stand upright, and your charm makes hard situations lighter. The trap is childish vanity or charm that turns manipulative, and on the other side, false modesty. Keep examining your intentions. When you are steady inside, pressure tends to confirm who you are, and freedom becomes an inner state.",
