@@ -64,10 +64,19 @@ p { margin: 0 0 1em; }
 
 /* hero */
 .hero { position: relative; max-width: var(--max); margin: 0 auto; padding: clamp(56px, 10vw, 120px) var(--gutter) 80px; text-align: center; overflow: hidden; }
-.hero-ring { position: absolute; left: 50%; top: 30px; width: min(calc(85vw + 50px), 1040px); transform: translateX(-50%); fill: none; stroke: rgba(201, 164, 92, .3); stroke-width: .6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-.hero-ring .ticks { stroke: rgba(201, 164, 92, .22); stroke-width: .4; }
-.hero-ring .axis { stroke: rgba(201, 164, 92, .22); stroke-width: .5; }
-.hero-ring .zodiac { stroke: rgba(201, 164, 92, .55); stroke-width: .75; }
+.hero-ring { position: absolute; left: 50%; top: 30px; width: min(max(760px, calc(85vw + 80px)), 1060px); transform: translateX(-50%); fill: none; stroke: rgba(201, 164, 92, .3); stroke-width: .6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+/* zodiac wheel after the Starter Kit cover, 0 deg Aries left (assets/wheel.js, Sandra 02.10.2026) */
+.zw-line { fill: none; stroke: currentColor; stroke-width: .5; opacity: .55; }
+.zw-strong { stroke-width: .7; opacity: .8; }
+.zw-faint { opacity: .4; }
+.zw-sign, .zw-planet { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.zw-sign { stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.zw-planet { stroke-width: .9px; vector-effect: non-scaling-stroke; opacity: .9; }
+.zw-name { fill: currentColor; stroke: none; font-family: var(--serif); opacity: .85; }
+.zw-fill { fill: currentColor; stroke: none; }
+.zw-dot { fill: none; stroke: currentColor; stroke-width: .6; }
+.hero-ring { color: rgba(201, 164, 92, .55); }
+.strips-wheel { display: block; width: min(300px, 72vw); height: auto; margin: 0 auto 44px; color: var(--bronze); }
 .hero > *:not(.hero-ring) { position: relative; }
 .hero-title { font-weight: 400; font-size: clamp(44px, 8vw, 92px); line-height: 1.02; margin: 0 0 24px; text-transform: uppercase; letter-spacing: .02em; }
 .hero-sub { max-width: 560px; margin: 0 auto 20px; color: var(--gold-italic); font-style: italic; font-size: clamp(17px, 2vw, 20px); }
@@ -128,7 +137,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .w-faint { stroke: var(--line-faint); }
 .w-axis { stroke: var(--gold); stroke-width: 1.4; }
 .w-tick { stroke: var(--cream); stroke-width: 1; }
-.w-sign { fill: none; stroke: var(--gold); stroke-width: .7; stroke-linecap: round; stroke-linejoin: round; }
+.w-sign { fill: none; stroke: var(--gold); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
 .sign-icon { width: 1.05em; height: 1.05em; vertical-align: -.18em; fill: none; stroke: var(--gold); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .w-house { fill: var(--muted); font-size: 14px; font-family: var(--serif); }
 .w-axislabel { fill: var(--gold-label); font-size: 15px; letter-spacing: .12em; font-family: var(--serif); }
@@ -263,7 +272,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
    Wider screens: the script in index.html centres the ring on the whole text block. */
 @media (max-width: 760px) {
   .hero-ring { width: 100vw; top: calc(clamp(56px, 10vw, 120px) + 44px); }
-  .hero-title { font-size: clamp(30px, 9.2vw, 40px); margin-top: calc(50vw - 13px); margin-bottom: calc(50vw - 10px); }
+  .hero-title { font-size: clamp(30px, 8.6vw, 40px); margin-top: calc(50vw - 13px); margin-bottom: calc(50vw - 10px); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 

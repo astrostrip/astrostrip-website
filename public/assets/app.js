@@ -231,6 +231,7 @@ function wheelSvg(chart) {
   const parts = [];
   parts.push(`<circle cx="${c}" cy="${c}" r="${R.outer}" class="w-line"/>`);
   parts.push(`<circle cx="${c}" cy="${c}" r="${R.zodiacIn}" class="w-line"/>`);
+  parts.push(`<circle cx="${c}" cy="${c}" r="${R.zodiacIn - 5}" class="w-line w-faint"/>`); // double line as on the reading PDF wheel
   parts.push(`<circle cx="${c}" cy="${c}" r="${R.houseIn}" class="w-line w-faint"/>`);
 
   for (let s = 0; s < 12; s++) {
