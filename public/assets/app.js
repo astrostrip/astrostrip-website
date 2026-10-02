@@ -332,11 +332,15 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
   </article>`;
   }
   const dt = degreeKnown ? await degreeText(sign, deg, role) : null;
+  // IN REAL LIFE line: Sun only, shown once a sign has it (Sandra, 02.10.2026).
+  const life = degreeKnown && dt && role === 'sun' ? await degreeText(sign, deg, 'life') : null;
   let degreeBlock = '';
   if (degreeKnown) {
     degreeBlock = `<div class="card-degree">
       <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
       <p class="card-body">${dt ? esc(dt) : 'For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.'}</p>
+      ${life ? `<p class="card-life-label">IN REAL LIFE</p>
+      <p class="card-life">${esc(life)}</p>` : ''}
     </div>`;
   }
   return `<article class="card">

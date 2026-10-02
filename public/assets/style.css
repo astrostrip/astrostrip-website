@@ -117,6 +117,8 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .card-sign { color: var(--muted); opacity: 1; font-size: 15px; }
 .card-degree { border-top: 1px solid var(--line-faint); margin-top: 18px; padding-top: 18px; }
 .card-degree-label { font-size: 11px; letter-spacing: .28em; color: var(--gold-label); margin-bottom: 10px; }
+.card-life-label { font-size: 11px; letter-spacing: .28em; color: var(--gold-label); margin: 18px 0 8px; }
+.card-life { color: var(--gold-italic); font-style: italic; font-size: 16px; margin: 0; }
 .card-note { font-size: 13px; color: var(--gold-italic); font-style: italic; margin: 14px 0 0; }
 
 .chart-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
