@@ -15,8 +15,8 @@
     <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
   </header>
   <main class="legal">
-    <p class="kicker">WITHDRAWAL · WIDERRUF</p>
-    <h1>Vertrag widerrufen <span lang="en">· Withdraw from contract</span></h1>
+    <p class="kicker">WIDERRUF · WITHDRAWAL</p>
+    <h1>Vertrag widerrufen<br><span lang="en">Withdraw from contract</span></h1>
     <p>Hier können Sie Ihre Bestellung während der Widerrufsfrist widerrufen. Sie erhalten sofort eine Eingangsbestätigung per E-Mail.</p>
     <p lang="en">Here you can withdraw from your order during the withdrawal period. You will receive a confirmation of receipt by email straight away.</p>
 
@@ -37,7 +37,7 @@
       </div>
     </section>
     <p id="w-status" class="form-status" role="status" aria-live="polite"></p>
-    <p class="fine">Sie können auch per E-Mail an hello@astrostrip.com widerrufen. · You can also withdraw by email to hello@astrostrip.com.</p>
+    <p class="fine">Sie können auch per E-Mail an hello@astrostrip.com widerrufen.<br><span lang="en">You can also withdraw by email to hello@astrostrip.com.</span></p>
   </main>
   <footer class="site-footer">
     <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a></nav>
@@ -46,14 +46,22 @@
     (function () {
       var $ = function (s) { return document.querySelector(s); };
       var data = null;
+      // German line, then the full English line below it.
+      var two = function (el, de, en) {
+        el.textContent = '';
+        var a = document.createElement('span'); a.textContent = de;
+        var b = document.createElement('span'); b.textContent = en; b.lang = 'en';
+        el.appendChild(a); el.appendChild(document.createElement('br')); el.appendChild(b);
+      };
       $('#w-form').addEventListener('submit', function (e) {
         e.preventDefault();
         data = { name: $('#w-name').value.trim(), contract: $('#w-contract').value.trim(), email: $('#w-email').value.trim() };
         if (data.name.length < 2 || data.contract.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-          $('#w-status').textContent = 'Bitte alle drei Felder ausfüllen. · Please fill in all three fields.'; return;
+          two($('#w-status'), 'Bitte alle drei Felder ausfüllen.', 'Please fill in all three fields.'); return;
         }
         $('#w-status').textContent = '';
-        $('#w-summary').textContent = 'Name: ' + data.name + ' · Contract: ' + data.contract + ' · Confirmation to: ' + data.email;
+        two($('#w-summary'), 'Name: ' + data.name + ' · Vertrag: ' + data.contract + ' · Bestätigung an: ' + data.email,
+          'Name: ' + data.name + ' · Contract: ' + data.contract + ' · Confirmation to: ' + data.email);
         $('#w-form').hidden = true; $('#w-confirm').hidden = false;
       });
       $('#w-back').addEventListener('click', function () { $('#w-form').hidden = false; $('#w-confirm').hidden = true; });
@@ -64,11 +72,14 @@
           .then(function (x) {
             if (!x.ok || !x.j.received) throw new Error(x.j.error || 'error');
             $('#w-confirm').hidden = true;
-            $('#w-status').textContent = 'Ihr Widerruf ist eingegangen am ' + x.j.received + '. Die Bestätigung geht an ' + data.email + '. · Your withdrawal was received. A confirmation is on its way.';
+            two($('#w-status'), 'Ihr Widerruf ist eingegangen am ' + x.j.received + '. Die Bestätigung geht an ' + data.email + '.',
+              'Your withdrawal was received on ' + (x.j.receivedEn || x.j.received) + '. The confirmation is being sent to ' + data.email + '.');
           })
           .catch(function (err) {
             btn.disabled = false;
-            $('#w-status').textContent = (err.message && err.message !== 'error' && err.message.indexOf('fetch') < 0 ? err.message + ' ' : '') + 'Falls das nicht klappt, senden Sie Ihren Widerruf bitte an hello@astrostrip.com; er gilt ab dem Absenden. · If this keeps failing, please email your withdrawal to hello@astrostrip.com. It counts from the moment you send it.';
+            var detail = err.message && err.message !== 'error' && err.message.indexOf('fetch') < 0 ? err.message + ' ' : '';
+            two($('#w-status'), 'Das hat nicht geklappt. Senden Sie Ihren Widerruf bitte an hello@astrostrip.com; er gilt ab dem Absenden.',
+              detail + 'If this keeps failing, please email your withdrawal to hello@astrostrip.com. It counts from the moment you send it.');
           });
       });
     })();

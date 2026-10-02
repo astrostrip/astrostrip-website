@@ -48,8 +48,8 @@ export function weekStart(nowMs = Date.now()) {
   return Math.floor(utc / 1000);
 }
 
-export function berlinStamp(ms = Date.now()) {
-  return new Intl.DateTimeFormat('de-DE', { timeZone: TZ, dateStyle: 'long', timeStyle: 'medium' }).format(new Date(ms)) + ' (Europe/Berlin)';
+export function berlinStamp(ms = Date.now(), lang = 'de') {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'de-DE', { timeZone: TZ, dateStyle: 'long', timeStyle: 'medium' }).format(new Date(ms)) + ' (Europe/Berlin)';
 }
 
 // ---------- Stripe ----------
@@ -323,7 +323,7 @@ export function customerMail(order, id, env) {
     `thank you for your order. This email confirms your contract.`,
     '',
     `Order: ${id}`,
-    `Product: ${s.name} (${s.tag}), a personal astrology reading prepared for your birth chart, personally reviewed and delivered as a PDF by email.`,
+    `Product: ${s.name} (${s.tag}), a personal astrology reading prepared for your birth chart and delivered as a PDF by email.`,
     `Price: ${euro(s.cents)} including 19 % VAT, paid.`,
     `Delivery: ${deliveryText(order)}.`,
     `Language: ${order.language === 'de' ? 'German' : 'English'}`,
@@ -405,6 +405,41 @@ export const WITHDRAWAL_FORM = {
     "(*) Delete as appropriate."
   ]
 };
+
+// Receipt for a withdrawal (§ 356a BGB): full German block, then full English block.
+// The note on partial payment follows the cancellation policy (proportionate amount for work already done;
+// no withdrawal once the strip has been fully delivered).
+export function withdrawalReceipt({ name, contract, email, received, receivedEn }) {
+  return [
+    `Hallo ${name},`,
+    '',
+    'wir haben Ihren Widerruf erhalten. Diese E-Mail bestätigt den Eingang.',
+    '',
+    `Eingegangen: ${received}`,
+    `Name: ${name}`,
+    `Vertrag: ${contract}`,
+    `Bestätigung an: ${email}`,
+    'Ihre Erklärung: Hiermit widerrufe ich den oben genannten Vertrag.',
+    '',
+    'Erstattung: Hatten wir mit Ihrem Strip noch nicht begonnen, erstatten wir Ihnen den vollen Betrag. Hatten wir bereits begonnen, auch wenn der Strip schon fertig, aber noch nicht an Sie geliefert war, zahlen Sie einen angemessenen Betrag für den Anteil, den wir bis zum Eingang Ihres Widerrufs bereits erbracht hatten; den Rest erstatten wir. Die Erstattung erfolgt spätestens vierzehn Tage nach Eingang Ihres Widerrufs über dasselbe Zahlungsmittel. War Ihr Strip bei Eingang des Widerrufs bereits vollständig geliefert, war Ihr Widerrufsrecht erloschen; dann melden wir uns bei Ihnen.',
+    '',
+    '---',
+    '',
+    `Hi ${name},`,
+    '',
+    'we have received your withdrawal. This email confirms its receipt.',
+    '',
+    `Received: ${receivedEn}`,
+    `Name: ${name}`,
+    `Contract: ${contract}`,
+    `Confirmation sent to: ${email}`,
+    'Your declaration: I hereby withdraw from the contract named above.',
+    '',
+    'Refund: If we had not yet started your strip, we refund the full amount. If we had already started, even if the strip was finished but not yet delivered to you, you pay a proportionate amount for the part we had already done by the time your withdrawal reached us; we refund the rest. The refund is made within fourteen days of receiving your withdrawal, using the same means of payment. If your strip had already been fully delivered when your withdrawal reached us, your right of withdrawal had expired; in that case we will get in touch with you.',
+    '',
+    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+  ].join('\n');
+}
 
 // ---------- abuse protection ----------
 // Simple fixed-window counter per IP in KV. Stops someone from blocking all slots
@@ -558,28 +593,13 @@ async function handleWithdraw(request, env) {
   const contract = clean(b.contract, 120);
   if (name.length < 2 || contract.length < 2 || !isEmail(b.email)) return json({ error: 'Please fill in your name, your order number or order details, and your email address.' }, 400);
   if (await rateLimited(env, request, 'withdraw', 3)) return json({ error: 'Too many attempts. Please email your withdrawal to hello@astrostrip.com instead.' }, 429);
-  const received = berlinStamp();
-  const text = [
-    `Hallo ${name}, / Hi ${name},`,
-    '',
-    'wir haben Ihren Widerruf erhalten. Diese E-Mail bestätigt den Eingang.',
-    'We have received your withdrawal. This email confirms its receipt.',
-    '',
-    `Eingegangen / Received: ${received}`,
-    `Name: ${name}`,
-    `Vertrag / Contract: ${contract}`,
-    `Bestätigung an / Confirmation sent to: ${b.email}`,
-    '',
-    'Ihre Erklärung: Hiermit widerrufe ich den oben genannten Vertrag.',
-    'Your declaration: I hereby withdraw from the contract named above.',
-    '',
-    'Die Erstattung erfolgt wie in der Widerrufsbelehrung beschrieben. / We will reimburse your payment as described in our cancellation policy.',
-    '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
-  ].join('\n');
+  const now = Date.now();
+  const received = berlinStamp(now);
+  const receivedEn = berlinStamp(now, 'en');
+  const text = withdrawalReceipt({ name, contract, email: b.email, received, receivedEn });
   await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Widerruf / Receipt of your withdrawal (${contract})`, text });
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde.` , replyTo: b.email });
-  return json({ ok: true, received });
+  return json({ ok: true, received, receivedEn });
 }
 
 async function handleSubscribe(request, env) {

@@ -162,7 +162,10 @@ mails.length = 0;
 r = await worker.fetch(req('/api/withdraw', 'POST', { name: 'Test Person', contract: co.orderId, email: 't@example.com' }), env);
 const w = await r.json();
 assert.equal(r.status, 200); assert.match(w.received, /Europe\/Berlin/);
-assert.equal(mails.length, 2); assert.match(mails[0].text, /Eingegangen \/ Received:/); assert.match(mails[0].text, new RegExp(co.orderId));
+assert.equal(mails.length, 2); assert.match(mails[0].text, /Eingegangen: \d+\. \w+ 20\d\d/); assert.match(mails[0].text, /Received: \d+ \w+ 20\d\d/); assert.match(mails[0].text, new RegExp(co.orderId));
+assert.ok(mails[0].text.indexOf('Hi Test Person') > mails[0].text.indexOf('Erstattung:'), 'German block first, then English');
+assert.match(mails[0].text, /angemessenen Betrag für den Anteil/); assert.match(mails[0].text, /proportionate amount/); assert.match(mails[0].text, /Widerrufsrecht erloschen/);
+assert.match(w.receivedEn, /Europe\/Berlin/);
 r = await worker.fetch(req('/api/withdraw', 'POST', { name: 'x', contract: '', email: 'bad' }), env);
 assert.equal(r.status, 400);
 

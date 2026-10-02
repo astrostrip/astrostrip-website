@@ -310,11 +310,23 @@ async function degreeText(sign, degree, role) {
 }
 
 // ---------- Rendering ----------
-async function bigThreeCard(role, lon, { degreeKnown = true, extra = '' } = {}) {
+// Free calculator: only the Sun is read (Sandra, 02.10.2026). Rising and Moon show sign and degree;
+// their reading is part of the Mini Strip. Their texts are not in the public degree files.
+async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked = false } = {}) {
   const sign = SIGNS[signOf(lon)];
   const deg = sabianDegree(lon);
   const [head, body] = TEXTS[sign][role];
   const r = ROLES[role];
+  if (locked) {
+    return `<article class="card card-locked">
+    <p class="card-role">${r.role}</p>
+    <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
+    ${degreeKnown ? `<p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>` : ''}
+    <p class="card-body card-lock-text">What your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}${degreeKnown ? ' degree' : ''} says about you is part of the Mini Strip, together with your Sun, the houses and the key aspects of your Big Three.</p>
+    <a class="card-lock-link" href="order.html?strip=mini">MINI STRIP · 39 &euro;</a>
+    ${extra}
+  </article>`;
+  }
   const dt = degreeKnown ? await degreeText(sign, deg, role) : null;
   let degreeBlock = '';
   if (degreeKnown) {
@@ -336,7 +348,7 @@ async function renderResult(chart, input) {
   const sun = chart.planets.find(p => p.key === 'Sun');
   const moon = chart.planets.find(p => p.key === 'Moon');
   const cards = [];
-  if (chart.angles) cards.push(await bigThreeCard('rising', chart.angles.asc));
+  if (chart.angles) cards.push(await bigThreeCard('rising', chart.angles.asc, { locked: true }));
   let sunOpts = {};
   if (chart.sunRange) {
     const [s0, s1] = chart.sunRange;
@@ -351,13 +363,14 @@ async function renderResult(chart, input) {
   if (chart.moonRange) {
     const changed = signOf(chart.moonRange[0]) !== signOf(chart.moonRange[1]);
     moonOpts = {
+      locked: true,
       degreeKnown: false,
       extra: `<p class="card-note">${changed
         ? `Without a birth time this is uncertain: on that day the Moon moved from ${SIGNS[signOf(chart.moonRange[0])]} into ${SIGNS[signOf(chart.moonRange[1])]}.`
         : 'The Moon moves about 13 degrees a day, so without a birth time its exact degree, and with it the deeper reading, stays open.'}</p>`,
     };
   }
-  cards.push(await bigThreeCard('moon', moon.lon, moonOpts));
+  cards.push(await bigThreeCard('moon', moon.lon, { locked: true, ...moonOpts }));
 
   const rows = chart.planets.map(p => `<tr>
       <td><span class="glyph">${p.glyph}${VS}</span>${esc(p.key)}</td>

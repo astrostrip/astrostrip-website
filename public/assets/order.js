@@ -37,8 +37,8 @@ function update() {
   const soldOut = !!(s && !s.next);
   const later = !!(s && s.next && !s.thisWeek);
   $('#summary-text').textContent = !strip ? 'Choose a strip above.'
-    : later ? `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone, personally reviewed and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`
-    : `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. Prepared for your chart alone, personally reviewed and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`;
+    : later ? `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`
+    : `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`;
   $('#order-submit').disabled = soldOut;
   status.textContent = soldOut ? `This strip is fully booked until ${longDay(s.until)}. New weeks open every Monday.` : '';
 }

@@ -8,7 +8,7 @@ Landing page with a birth chart calculator and an order form for personal readin
 - Engine: [Swiss Ephemeris](https://www.astro.com/swisseph/) by Astrodienst AG, compiled to WebAssembly by the npm package `swisseph-wasm` 0.1.0 (`vendor/swisseph/`).
 - Conventions: tropical zodiac, Placidus houses (Porphyry above 66° latitude), true node, orbs of the astro.strip school.
 - Places: GeoNames (`data/cities.js`), all places worldwide with at least 15,000 inhabitants plus Germany, Austria and Switzerland from 1,000, each with its IANA time zone. Historical daylight saving time comes from the browser's own time zone data.
-- Big Three texts: `assets/texts.js` (sign level) and `assets/degrees/<sign>.js` (one text per degree and role).
+- Texts: `assets/texts.js` (sign level for Rising, Sun and Moon) and `assets/degrees/<sign>.js` (one Sun text per degree). The free calculator reads the Sun only; Rising and Moon are shown with sign and degree, their reading is part of the paid strips.
 
 ## Ordering
 

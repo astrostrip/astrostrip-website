@@ -56,10 +56,13 @@ p { margin: 0 0 1em; }
 
 /* hero */
 .hero { position: relative; max-width: var(--max); margin: 0 auto; padding: clamp(56px, 10vw, 120px) var(--gutter) 80px; text-align: center; overflow: hidden; }
-.hero-ring { position: absolute; left: 50%; top: 30px; width: min(760px, 130vw); transform: translateX(-50%); fill: none; stroke: var(--line-faint); stroke-width: .6; pointer-events: none; }
+.hero-ring { position: absolute; left: 50%; top: 30px; width: min(760px, 130vw); transform: translateX(-50%); fill: none; stroke: rgba(201, 164, 92, .3); stroke-width: .6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.hero-ring .ticks { stroke: rgba(201, 164, 92, .22); stroke-width: .4; }
+.hero-ring .axis { stroke: rgba(201, 164, 92, .22); stroke-width: .5; }
+.hero-ring .zodiac { stroke: rgba(201, 164, 92, .55); stroke-width: .75; }
 .hero > *:not(.hero-ring) { position: relative; }
 .hero-title { font-weight: 400; font-size: clamp(44px, 8vw, 92px); line-height: 1.02; margin: 0 0 24px; text-transform: uppercase; letter-spacing: .02em; }
-.hero-sub { max-width: 560px; margin: 0 auto 48px; color: var(--gold-italic); font-style: italic; font-size: clamp(17px, 2vw, 20px); }
+.hero-sub { max-width: 560px; margin: 0 auto 20px; color: var(--gold-italic); font-style: italic; font-size: clamp(17px, 2vw, 20px); }
 
 /* form */
 .chart-form { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; max-width: 720px; margin: 0 auto; padding: clamp(24px, 4vw, 40px); border: 1px solid var(--line); background: rgba(10,10,10,.85); text-align: left; }
@@ -227,3 +230,9 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .asp-name { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+.hero-invite { max-width: 560px; margin: 0 auto 48px; color: var(--cream); opacity: .85; font-size: 16px; }
+.hero-invite a { color: var(--gold); }
+/* free calculator: Rising and Moon are part of the Mini Strip */
+.card-lock-text { font-style: italic; opacity: .75; }
+.card-lock-link { display: inline-block; margin-top: 6px; font-size: 12px; letter-spacing: .24em; color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 2px; }
