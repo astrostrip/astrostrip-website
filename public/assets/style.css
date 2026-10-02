@@ -14,8 +14,8 @@
   --muted: #a89c8a;
   --line: rgba(201, 164, 92, .38);
   --line-faint: rgba(201, 164, 92, .16);
-  --band: #26211B;            /* taupe band behind the strips (Sandra, 02.10.2026) */
-  --band-card: #322B23;
+  --band: #24211F;            /* taupe band behind the strips, little yellow so the gold reads (Sandra, 02.10.2026) */
+  --band-card: #14110E;       /* near-black cards on the band */
   --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --glyph: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif;
   --gutter: clamp(16px, 5vw, 56px);
