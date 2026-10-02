@@ -4,92 +4,122 @@
 export default {
   1: {
     sun: "You’re here to build something that outlasts you, and you rarely build it alone. What you put your energy into shows what you actually value, and a clear sense of where you come from gives you character and range. The shadow is inheriting the form without the fire: following the old ways so faithfully that ambition quietly dies and surface habits pass for values. Honour your heritage, but don’t let it do the steering.",
+    life: "Helped friends rebuild the old community center and still defends it. Knows where they come from, so knows where they stand.",
   },
   2: {
     sun: "Your core lesson is that control has limits. Life will reshuffle your plans through loss, change and events you never chose, and those upheavals are often exactly what deepens you and your bonds. The shadow is fighting the inevitable, shouting at what you can’t steer. The way is alertness: prepare, rehearse how you’ll respond, take responsibility for the fallout, and learn to turn a setback into an opening.",
+    life: "Knows plans fall apart, so stays alert and keeps a sense of humor. Gives up control and still comes out ahead.",
   },
   3: {
     sun: "You’re here to choose your loyalties rather than inherit them. Some demands simply betray who you are, and going along with them tends to cost you later. The shadow runs both ways: breaking every rule out of reflex, or staying in pointless commitments because leaving feels scary or inconvenient. Think clearly, decide, and take full responsibility for your life, even if the correction comes late. Late still beats never.",
+    life: "Left a commitment they never should have made, late but for good. Picks their own loyalties, rebels only when it matters.",
   },
   4: {
     sun: "Your strength is discipline practised long enough to become real influence: you can shift situations by acting as if the ability were already there. At your best, you see the best in someone and help it grow simply by noticing it. The shadow is playing with that influence, to impress or to bend another person’s will, and clinging to how things must turn out. Keep the discipline strict and your ego out of it.",
+    life: "Sticks to the daily practice that keeps them in balance. Brings out the best in people, never to impress, never pushing.",
   },
   5: {
     sun: "You’re here to be original on solid foundations. Your vision gains strength from what came before you, and the people before you were pioneers too. Integrity is your real power: authenticity earns trust, and trust brings influence. The shadow is either sterile conservatism or forgetting what you owe. Start by getting clear on your values, because ideals shape you far more than anything you own.",
+    life: "Brings the bold idea and asks the old-timers how to make it work. Big ideals, practical steps, credit to who came first.",
   },
   6: {
     sun: "You’re here to live your roles fully and put your own stamp on patterns much older than you. Your character unfolds through many different relationships; no single one brings out all of you. The shadow is endless self-analysis: finding yourself so fascinating and mysterious that you can’t act wholeheartedly anymore. Use feeling and thinking together to understand why you do, want and fear what you do, then get back in the game.",
+    life: "Moves between roles, host, boss, best friend, giving each a personal twist. Always notices the effect they have on people.",
   },
   7: {
     sun: "Your life tends to move in leaps, not slow steps: sudden breaks after which the old ways no longer bind you. What you came from protected you until you were ready; outgrowing it isn’t betrayal. The shadow is the half-hearted break that leaves you dependent on outside support and success. Paradoxically, your real security comes from throwing yourself completely into your most daring goal, not from holding back.",
+    life: "Grew up in a family of accountants, left at exactly the right time, and chases the wild dream with zero fear.",
   },
   8: {
     sun: "You’re here to turn admiration into direction. What you admire in others is usually what’s waiting to develop in you, so your role models work as a mirror. The shadow is vanity, or trying to revive an old high, a past version of you or someone else that has long turned into a caricature. Name the qualities you admire, sharpen your goals around them, and then make them your own.",
+    life: "Finds something to admire even in people they can't stand, and borrows it. Their idols are blueprints, not altars.",
   },
   9: {
     sun: "You’re here to put your dream into practice. Thinking about change isn’t enough; acting changes you, and only then does anything real shift around you. First picture clearly what you want to grow, then go for it. The shadow is strength without compassion, or trading the ideal for whatever is convenient. Aim for something of lasting value and keep your softer loyalties in the picture.",
+    life: "Complained about the empty lot for years, then organized the cleanup themselves. Pictures the change first, then becomes it.",
   },
   10: {
     sun: "Your core task is to stay yourself whether the applause comes or not. You’re not the ideal others project onto you, and trying to live up to it tends to exhaust you. The shadow is hoarding recognition, replaying past highs, or pushing a lucky streak until it swings back. Anchor yourself in what you’ve actually earned, and check in regularly: who have I become, and who am I really?",
+    life: "Went viral once, enjoyed the day, then went back to work. Knows the crowd's favorite changes weekly; character doesn't.",
   },
   11: {
     sun: "You’re here to trust the creative urge that comes from within, and then make it practical. Inspiration shows you what to create; your inner manager has to work out how. The shadow is devotion without strategy: wanting to serve a big cause while your own foundations wobble, which quietly turns into self-obsession. Stabilise your own ground first. The goal is no gap between what you believe and what you actually do.",
+    life: "Gets their best ideas in silence and trusts them. Then switches from dreamer to project manager and makes them real.",
   },
   12: {
     sun: "You’re here to improve step by step, and to be honest about where you actually are. Wanting to rise is human and reasonable; the goal just keeps moving like the horizon. The shadow is the hectic race to keep up and get ahead, ending in stress and disappointment with yourself, or mistaking a quick win for fulfilment. Build on what you’ve done, and look for your centre inside, not on the next rung.",
+    life: "Knows honestly where they stand: helps the ones a step behind, learns from the ones ahead. Never races the neighbors.",
   },
   13: {
     sun: "You’re here to read patterns and plan ahead. Today already holds the seeds of tomorrow, and understanding cycles lets you anticipate both risks and openings; simply asking what’s coming sharpens your judgement. The shadow is fear of being powerless, which drives you to control everything or to rehearse experiences before they happen. Observe, learn from past signals, check how well you read them, and trust that the world has an order you can learn.",
+    life: "Reads the early signs, the shifting mood, the rising prices, and plans ahead. Rarely surprised, never smug about it.",
   },
   14: {
     sun: "You’re here to push through obstacles, often on a perfectly ordinary path of work, home and friendships that can still lead somewhere remarkable. Your skills sharpen only when you use and share them. The shadow runs two ways: dull conformity that never questions the route, or chasing status in the wrong direction. Fulfil your commitments, not out of selflessness, but because they refine you as much as anyone.",
+    life: "Took the ordinary path, school, job, friends, and still got somewhere remarkable. Gets through every rough patch with good manners intact.",
   },
   15: {
     sun: "You’re here to practise happiness, not wait for it. You tend to feel at home once you’ve found your own direction and stop trying other routes. It’s completely fine to set the terms on which you meet the world. The shadow is jealousy, active or passive, which can eat away at everything you’ve built. Show your intentions clearly, share your abundance, and let joy count as a serious priority.",
+    life: "Sets their own terms for a good life, then shares the overflow freely. Happy for other people's luck, never jealous.",
   },
   16: {
     sun: "You’re here to organise your life and hold your ground where resources and attention are contested. Character grows through challenges that test you, and everyday life with family, home and work counts as one. Real achievement takes attention to detail and foresight. The shadow is ambition without depth, success that never shapes who you are. Put your talent to work for something meaningful beyond your own advancement.",
+    life: "Runs a job, a household and the school committee without dropping a ball. Wins and losses barely shake them.",
   },
   17: {
     sun: "You’re here to create safety through integrity. Shared rules and the reliable expectation that people will act decently are what let you open up to life, and they’re stronger because others carry them too. The shadow is fear: avoiding the unknown and treating strangers as threats. Live honestly, ask the same of others, and protect those who can’t protect themselves. Once the rules are truly yours, they stop feeling like limits and start feeling like freedom.",
+    life: "Honest to the bone, expects the same, and steps in when someone gets pushed around. Their firm boundaries make them freer.",
   },
   18: {
     sun: "You’re here to understand causes. Noticing that something doesn’t work isn’t enough for you; you want to know why, and your life can work like a laboratory. The shadow is stubborn self-sabotage: the same move again and again, as if cause and effect didn’t apply to you. Use trial and error with a purpose, be willing to expose your own motives, and aim to serve others from strength, not from need.",
+    life: "Treats every failed attempt like a lab result: what went wrong, and why? Keeps no secrets that could come out later.",
   },
   19: {
     sun: "Your core strength wakes up when things get serious. Before a crisis you may doubt you can handle it, yet you often discover an extraordinary capacity to cope once it arrives, and believing that helps make it true. The shadow is freezing in worry, or a hidden appetite for drama. Bring your whole personality to the task, then let yourself fully rest; each crisis you get through tends to make the next one feel manageable.",
+    life: "When the pipe bursts at midnight, they're calm, bossy and effective. Afterwards, sleeps soundly and remembers mostly the teamwork.",
   },
   20: {
     sun: "You’re here to act from conviction. When your plans fit into something bigger than you, self-doubt and mixed motives tend to fall away and support arrives more easily. But belief cuts both ways: it can lead to self-righteous delusion, costly mistakes and the wrong alliances. Examine what you believe, because it shapes what you experience. The aim is trust and sound doubt together, held by a disciplined mind.",
+    life: "Believes things will turn out right and acts like it, but checks that belief against reality now and then. Usually rewarded.",
   },
   21: {
     sun: "You’re here to find out what in you is lasting and real. Sometimes hopes break and the future looks empty; your strength is refusing despair and choosing optimism on purpose, because for you it’s a decision, not a mood. The shadow is leaning on outer advantages like looks or strength instead of growing, or treating every defeat as final. Read frustration as a push to become more fully yourself.",
+    life: "Lost what their whole image rested on and chose hope anyway, on purpose. Now builds on substance, not on looks.",
   },
   22: {
     sun: "You’re here to take enjoyment seriously. Deepening your pleasure in life isn’t indulgence; it tells you what you actually want to experience, and looking after your own advantage is a legitimate strategy. People tend to be kinder than their reputation, and you usually find what you look for. The shadow is losing your simple joys to stress and conformity, or seeing bad everywhere. Do your duties carefully, then claim your comfort.",
+    life: "Practices small kindnesses daily, the way others practice yoga. Takes simple comforts seriously too: good socks, slow breakfasts, no guilt.",
   },
   23: {
     sun: "You’re here to turn raw drive into usable strength. Your instincts are powerful and, left unchecked, they can do damage; tamed, they become your biggest resource. First comes discipline from outside, then your own. The shadow is expecting lofty growth while skipping ordinary life, or using emotions to win attention. Prove yourself in the everyday world, test new ideas in practice, and let passion and ambition pull in the same direction.",
+    life: "Trained their impulses the way athletes train muscles. Now that raw energy is under control, and it gets serious things done.",
   },
   24: {
     sun: "You’re here to pass on what you’ve learned, and to learn more by doing it. Your intense experiences show the gap between what you’ve lived and what you’ve understood; once you’ve closed it, you can guide others. Sharing is what gives your gifts their value. The shadow is cynicism, a sensitive spirit worn down into expecting disappointment. Deepen your own convictions rather than trying to solve everyone else’s problems.",
+    life: "Survived their own drama and came out calm. Now walks others through the same mess, and learns something new every time.",
   },
   25: {
     sun: "You’re here to make your imperfections work for you. Nobody is fully balanced, and your particular unevenness is often the real source of your originality and impact. The question worth asking: which of my differences actually matter? The shadow is defiant self-importance, being different as a pose that keeps you unhappy. With inner consistency and persistence, a limitation that comes from being different can turn into your advantage.",
+    life: "Can feel hurt and grateful at the same time without losing their cool. Treats their flaws as the source of their edge.",
   },
   26: {
     sun: "You’re here to understand how things work, and to use that knowledge to shape your circumstances. Measuring, testing and learning the rules of your environment give you steadiness and let you take on more responsibility. The shadow is constant worry over details, which wears you down for nothing. Decide consciously to turn every difficulty into an advantage; your deeper strength is a practical optimism that expects to come out ahead.",
+    life: "Reads the manual, measures twice, and fixes it themselves. Turns every glitch into a shortcut and never frets over small stuff.",
   },
   27: {
     sun: "You’re here to cultivate your finer feelings and give meaning to what you do, rather than borrowing it blindly. Tradition can comfort and strengthen you, but its values belong to a certain time and place. The shadow is treating custom as unquestionable, which turns it into tyranny, or losing yourself in convention. Let your roots feed you, not run you. Well rooted, you can carry the best of the past into what comes next.",
+    life: "Senses the meaning hidden in small things, a handwritten note, a lingering pause. Their gentleness makes rough people act gentler too.",
   },
   28: {
     sun: "You’re here to meet real needs with foresight: prepare for hard times while things still feel easy, not when it’s already too late. Simple, practical work grounds you and quietly builds your ability to handle crises. The shadow is avoiding the concrete, doing things half-heartedly, or looking for pleasure only in easy, noncommittal socialising. Commit to a task with passion and focus, and you tend to find both meaning and presence in it.",
+    life: "Does December's chores in June and wastes nothing: leftovers used, roof fixed. Loves hard physical work done with total focus.",
   },
   29: {
     sun: "You’re here to keep your mind in motion. Growth mostly comes in small steps, then suddenly in a leap to a new level of understanding. You have a real hunger for knowledge and experience, and persistent questioning keeps producing fresh ideas, some fleeting, some lasting. The shadow is mental laziness that hardens into rigid beliefs and stubborn opinions. Renew your thinking regularly, and accept input from those who are further along.",
+    life: "Lets new knowledge overturn their firmest opinions, then levels up for real. Still as curious as on the first day.",
   },
   30: {
     sun: "You’re here to see both the many and the whole: every person adding her own part, and it all still fitting together. Your core belief is that the world is basically friendly, which tends to hold for those who expect it and act accordingly. The shadow is expecting to be looked after without doing your share. Live so that others are glad to rely on you, and help because you enjoy it; good things then feel less like rewards and more like normal life.",
+    life: "Counts on the world being friendly and makes sure people can count on them too. Helps because it's fun; good luck follows.",
   },
 };
