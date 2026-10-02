@@ -14,6 +14,8 @@
   --muted: #a89c8a;
   --line: rgba(201, 164, 92, .38);
   --line-faint: rgba(201, 164, 92, .16);
+  --band: #26211B;            /* taupe band behind the strips (Sandra, 02.10.2026) */
+  --band-card: #322B23;
   --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --glyph: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif;
   --gutter: clamp(16px, 5vw, 56px);
@@ -148,9 +150,14 @@ input::placeholder { color: #6f6556; font-style: italic; }
 /* strips */
 .strips, .method { max-width: var(--max); margin: 0 auto; padding: 110px var(--gutter) 40px; text-align: center; scroll-margin-top: 70px; }
 .strips .section-sub { margin: 0 auto 48px; }
+/* full-width taupe band with thin gold lines, content stays in the max-width column */
+.strips { position: relative; background: var(--band); box-shadow: 0 0 0 100vmax var(--band); clip-path: inset(0 -100vmax); padding-bottom: 80px; }
+.strips::before, .strips::after { content: ''; position: absolute; left: 50%; width: 100vw; height: 1px; transform: translateX(-50%); background: var(--line); }
+.strips::before { top: 0; }
+.strips::after { bottom: 0; }
 .strip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; text-align: center; margin-bottom: 28px; }
-.strip { border: 1px solid var(--line); padding: 40px 28px; display: flex; flex-direction: column; align-items: center; }
-.strip-featured { border-color: var(--gold); background: var(--panel); }
+.strip { border: 1px solid var(--line); background: var(--band-card); padding: 40px 28px; display: flex; flex-direction: column; align-items: center; }
+.strip-featured { border-color: var(--gold); background: var(--band-card); }
 .strip-name { font-size: 24px; letter-spacing: .12em; margin-bottom: 4px; }
 .strip-tag { font-size: 11px; letter-spacing: .3em; color: var(--gold-label); margin-bottom: 22px; }
 .strip-desc { color: var(--gold-italic); font-style: italic; flex: 1; }
