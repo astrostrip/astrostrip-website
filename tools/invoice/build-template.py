@@ -2,7 +2,7 @@
 
 The Worker (free plan, 10 ms CPU per request) cannot lay out a PDF or embed fonts. So everything
 heavy happens here, once: an A4 page with the black header band and the logo, all fixed bilingual
-labels, both fonts fully embedded, sRGB output intent and the Factur-X XMP metadata (PDF/A-3b).
+labels, both fonts embedded (all characters, without hinting and layout tables), sRGB output intent and the Factur-X XMP metadata (PDF/A-3b).
 The Worker then only appends an incremental update: one content stream with the variable text,
 the factur-x.xml attachment, and new versions of the page and the catalog (src/invoice.js).
 
@@ -39,10 +39,31 @@ LAYOUT = {
 }
 
 
+def slim_font(path):
+    """TrueType program without what a PDF never uses (Sandra, 03.10.2026: the full fonts made up half of
+    the 339 KB invoice, and every byte costs CPU in the Worker's 10 ms). All characters stay; dropped are
+    hinting and the layout tables (kerning, ligatures: the Worker sets glyphs one by one with widths from
+    /W). retain_gids keeps every glyph id, so the content streams and src/invoice.js stay valid."""
+    import io
+    from fontTools import subset
+    from fontTools.ttLib import TTFont
+    opt = subset.Options()
+    opt.retain_gids, opt.hinting, opt.layout_features, opt.glyph_names, opt.notdef_outline = True, False, [], False, True
+    opt.name_IDs = [0, 1, 2, 3, 4, 5, 6]
+    opt.drop_tables += ['DSIG', 'GDEF', 'GPOS', 'GSUB', 'kern', 'STAT', 'gasp']
+    f = TTFont(str(path))
+    s = subset.Subsetter(opt)
+    s.populate(unicodes=f.getBestCmap().keys())
+    s.subset(f)
+    out = io.BytesIO()
+    f.save(out)
+    return out.getvalue()
+
+
 class Font:
-    """Full TrueType program, Unicode -> glyph id and advance widths (1/1000 em)."""
+    """Slimmed TrueType program, Unicode -> glyph id and advance widths (1/1000 em)."""
     def __init__(self, path):
-        self.data = path.read_bytes()
+        self.data = slim_font(path)
         self.f = fitz.Font(fontfile=str(path))
         self.cmap, self.widths = {}, {}
         for cp in self.f.valid_codepoints():
@@ -104,7 +125,10 @@ def rule(x1, y, x2, color=GOLD, w=0.6):
 crop = fitz.IRect(196, 76, 1072, 1072)  # visible logo area in pixels (circle, stars and wordmark)
 logo_page = fitz.open(str(LOGO))[0]
 px = logo_page.rect.width / fitz.Pixmap(str(LOGO)).width  # page points per image pixel
-logo_crop = logo_page.get_pixmap(matrix=fitz.Matrix(1 / px, 1 / px), clip=fitz.Rect(crop) * px)
+# Half the source resolution: the logo is shown 112 pt high, so ~320 dpi (full size was ~640 dpi and 129 KB,
+# a third of the PDF; Sandra, 03.10.2026: smaller PDF = less CPU in the Worker). Still sharp in print.
+LOGO_SCALE = 0.5
+logo_crop = logo_page.get_pixmap(matrix=fitz.Matrix(LOGO_SCALE / px, LOGO_SCALE / px), clip=fitz.Rect(crop) * px)
 jpeg = logo_crop.tobytes('jpeg', jpg_quality=90)
 band = 132
 logo_h = 112
