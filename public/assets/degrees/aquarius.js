@@ -119,7 +119,7 @@ export default {
     life: "Lets new knowledge overturn their firmest opinions, then levels up for real. Still as curious as on the first day.",
   },
   30: {
-    sun: "You’re here to see both the many and the whole: every person adding her own part, and it all still fitting together. Your core belief is that the world is basically friendly, which tends to hold for those who expect it and act accordingly. The shadow is expecting to be looked after without doing your share. Live so that others are glad to rely on you, and help because you enjoy it; good things then feel less like rewards and more like normal life.",
+    sun: "You’re here to see both the many and the whole: every person adding their own part, and it all still fitting together. Your core belief is that the world is basically friendly, which tends to hold for those who expect it and act accordingly. The shadow is expecting to be looked after without doing your share. Live so that others are glad to rely on you, and help because you enjoy it; good things then feel less like rewards and more like normal life.",
     life: "Counts on the world being friendly and makes sure people can count on them too. Helps because it's fun; good luck follows.",
   },
 };

@@ -12,11 +12,14 @@
 //   POST /api/subscribe        newsletter signup: stores the consent and sends the double opt-in mail
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
 //   cron (hourly)              retention: buyer list after 3 years without purchase, consent proofs 3 years after the end
+//   cron (every 5 minutes)     invoices: one queued e-invoice per run, mailed to the customer with a copy to Sandra
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
 // Plain variables (wrangler.jsonc "vars"): SITE_URL, MAIL_FROM_NAME, MAIL_FROM_ADDRESS,
 //   MAILJET_NEWSLETTER_LIST_ID (double opt-in list), MAILJET_CUSTOMER_LIST_ID (buyers, § 7 Abs. 3 UWG; empty = off)
+
+import { buildInvoice } from './invoice.js';
 
 export const STRIPS = {
   mini: { name: 'Mini Strip', tag: 'The essentials', cents: 3900, days: 5, weekly: 20 },
@@ -166,7 +169,7 @@ function timingSafeEqual(a, b) {
 // whose consent text (v2) covers it. Never for the list "Kundinnen" (§ 7 Abs. 3 UWG, no consent).
 const mailjetAuth = env => 'Basic ' + btoa(`${env.MAILJET_API_KEY}:${env.MAILJET_SECRET_KEY}`);
 
-async function sendMail(env, { to, subject, text, replyTo }) {
+async function sendMail(env, { to, subject, text, replyTo, attachments }) {
   const res = await fetch('https://api.mailjet.com/v3.1/send', {
     method: 'POST',
     headers: { Authorization: mailjetAuth(env), 'Content-Type': 'application/json' },
@@ -179,6 +182,7 @@ async function sendMail(env, { to, subject, text, replyTo }) {
         TextPart: text,
         TrackOpens: 'disabled',
         TrackClicks: 'disabled',
+        Attachments: attachments?.map(a => ({ ContentType: 'application/pdf', Filename: a.filename, Base64Content: a.base64 })),
       }],
     }),
   });
@@ -271,6 +275,7 @@ export function ownerOrderMail(order, id, session) {
     `Produkt: ${s.name}`,
     `Preis: ${euro(s.cents)} inkl. 19 % USt (${euro(Math.round(s.cents / 1.19))} netto, ${euro(s.cents - Math.round(s.cents / 1.19))} USt), bezahlt`,
     `Bestellt: ${berlinStamp(order.createdAt)}`,
+    'Rechnung: folgt automatisch in den nächsten Minuten als eigene Mail (E-Rechnung, Kopie an diese Adresse).',
     deliveryText(order, 'de'),
     '',
     `Name: ${order.name}`,
@@ -326,6 +331,7 @@ export function customerMail(order, id, env) {
     `Order: ${id}`,
     `Product: ${s.name} (${s.tag}), a personal astrology reading prepared for your birth chart and delivered as a PDF by email.`,
     `Price: ${euro(s.cents)} including 19 % VAT, paid.`,
+    'Invoice: follows in a separate email within a few minutes (PDF e-invoice).',
     `Delivery: ${deliveryText(order)}.`,
     `Language: ${order.language === 'de' ? 'German' : 'English'}`,
     '',
@@ -588,6 +594,73 @@ export async function runRetention(env, now = Date.now()) {
   return result;
 }
 
+// ---------- invoices (Sandra, 02.10.2026) ----------
+// The webhook only queues the invoice; a cron run every 5 minutes builds and mails it in its own
+// invocation. Reason: the free plan stops an invocation after 10 ms CPU without any chance to catch
+// it, and the order mails must never depend on the PDF. A job is retried up to INVOICE_TRIES times,
+// then Sandra gets a warning. The job holds the billing address only until the invoice is sent.
+export const INVOICE_CRON = '*/5 * * * *';
+export const INVOICE_TRIES = 3;
+const INVOICE_TTL = 14 * 86400;
+
+async function queueInvoice(env, order, session) {
+  const job = {
+    order: { id: order.id, name: order.name, email: order.email, strip: order.strip, week: order.week || '', thisWeek: order.thisWeek !== false },
+    customer_details: { name: session.customer_details?.name || '', address: session.customer_details?.address || {} },
+    paidAt: Date.now(), attempts: 0,
+  };
+  await env.ORDERS.put(`invoice:${order.id}`, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+}
+
+export function invoiceMailText(d, strip) {
+  const amount = `${(d.amounts.gross / 100).toFixed(2).replace('.', ',')} €`;
+  return [
+    `Hi ${d.buyer.name},`,
+    '',
+    `attached is the invoice ${d.number} for your ${strip.name} (${amount} including 19 % VAT, already paid).`,
+    'The PDF is an e-invoice: besides the page you see, it contains the invoice data as a machine-readable file (ZUGFeRD). You can open and print it like any PDF.',
+    '',
+    `Anbei die Rechnung ${d.number} für den ${strip.name} (${amount} inkl. 19 % USt, bereits bezahlt).`,
+    'Die PDF ist eine E-Rechnung: Sie enthält die Rechnungsdaten zusätzlich als maschinenlesbare Datei (ZUGFeRD) und lässt sich wie jede PDF öffnen und drucken.',
+    '',
+    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+  ].join('\n');
+}
+
+export async function runInvoices(env, nowMs = Date.now()) {
+  if (!env.MAILJET_API_KEY) return { skipped: true };
+  const page = await env.ORDERS.list({ prefix: 'invoice:', limit: 1 });
+  if (!page.keys.length) return { sent: 0 };
+  const key = page.keys[0].name;
+  const raw = await env.ORDERS.get(key);
+  if (!raw) return { sent: 0 };
+  const job = JSON.parse(raw);
+  job.attempts = (job.attempts || 0) + 1;
+  if (job.attempts > INVOICE_TRIES) {
+    await sendMail(env, { to: env.OWNER_EMAIL, subject: `RECHNUNG FEHLT: ${job.order.id}`, text: `Die E-Rechnung zu Bestellung ${job.order.id} (${job.order.email}) konnte nach ${INVOICE_TRIES} Versuchen nicht erzeugt werden. Bitte von Hand ausstellen; die Angaben stehen in der Buchhaltungs-Mail „Bestellung ${job.order.id}“.` });
+    await env.ORDERS.delete(key);
+    return { failed: job.order.id };
+  }
+  // Count the try before the CPU-heavy part: if the invocation is cut off, the next run knows.
+  await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  const strip = STRIPS[job.order.strip];
+  const inv = buildInvoice(job.order, { customer_details: job.customer_details }, strip, nowMs, job.paidAt);
+  const attachments = [{ filename: inv.filename, base64: inv.base64 }];
+  if (!job.customerSent) {
+    await sendMail(env, { to: job.order.email, subject: `Your invoice ${inv.data.number} · Deine Rechnung`, text: invoiceMailText(inv.data, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+    job.customerSent = true;
+    await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  }
+  await sendMail(env, {
+    to: env.OWNER_EMAIL,
+    subject: `Rechnung ${inv.data.number} (Buchhaltung, 8 Jahre aufbewahren)`,
+    text: `Ausgangsrechnung ${inv.data.number} · ${strip.name} · ${(inv.data.amounts.gross / 100).toFixed(2).replace('.', ',')} € inkl. 19 % USt · ausgestellt ${inv.data.issueDate} · an ${job.order.email} verschickt.${inv.data.missingCountry ? '\n\nACHTUNG: Stripe hat kein Land geliefert; in der Rechnung steht DE. Bitte prüfen.' : ''}\n\nDiese Mail mit Anhang 8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`,
+    attachments,
+  });
+  await env.ORDERS.delete(key);
+  return { sent: inv.data.number };
+}
+
 // ---------- handlers ----------
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
@@ -619,6 +692,7 @@ async function handleCheckout(request, env) {
     mode: 'payment',
     locale: order.language === 'de' ? 'de' : 'en',
     customer_email: order.email,
+    billing_address_collection: 'required', // for the invoice (Sandra, 02.10.2026)
     submit_type: 'pay',
     client_reference_id: id,
     expires_at: Math.floor(now / 1000) + SESSION_MINUTES * 60,
@@ -653,6 +727,7 @@ async function handleWebhook(request, env) {
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `Bestellung ${order.id}: ${STRIPS[order.strip].name}`, text: ownerOrderMail(order, order.id, session), replyTo: order.email });
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `Deutungsdaten ${order.id}`, text: ownerReadingMail(order, order.id) });
   await sendMail(env, { to: order.email, subject: `Your ${STRIPS[order.strip].name} order ${order.id}`, text: customerMail(order, order.id, env), replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+  await queueInvoice(env, order, session);
   await env.ORDERS.delete(key);
   await afterOrderMarketing(env, order);
   return new Response('ok');
@@ -721,6 +796,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runRetention(env).then(r => console.log('retention', JSON.stringify(r))));
+    const job = event.cron === INVOICE_CRON ? runInvoices(env) : runRetention(env);
+    ctx.waitUntil(job.then(r => console.log(event.cron, JSON.stringify(r))));
   },
 };

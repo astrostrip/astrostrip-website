@@ -51,7 +51,7 @@ export default {
     life: "Remembers everyone's name and joins the conversation instead of performing in it. People leave feeling they were part of something.",
   },
   13: {
-    sun: "You’re here to turn experience into insight. Replaying what happened helps you understand cause and effect, and the past often shows you the key moments of the next situation before they arrive. What you love remembering reveals what you value most. The shadow is living there, becoming someone whose best chapter is always behind her. Treat reflection as a tool, not a residence, and your history becomes fresh strength.",
+    sun: "You’re here to turn experience into insight. Replaying what happened helps you understand cause and effect, and the past often shows you the key moments of the next situation before they arrive. What you love remembering reveals what you value most. The shadow is living there, becoming someone whose best chapter is always behind them. Treat reflection as a tool, not a residence, and your history becomes fresh strength.",
     life: "Keeps a journal of past decisions and rereads it before every big one. Learns from the past, never lives there.",
   },
   14: {

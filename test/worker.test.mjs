@@ -38,7 +38,10 @@ console.log('validation ok');
 const kv = new Map();
 const env = {
   STRIPE_SECRET_KEY: 'sk_test', STRIPE_WEBHOOK_SECRET: secret, MAILJET_API_KEY: 'k', MAILJET_SECRET_KEY: 's', MAILJET_NEWSLETTER_LIST_ID: '111', MAILJET_CUSTOMER_LIST_ID: '222', OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://astrostrip.com',
-  ORDERS: { get: async k => kv.get(k) ?? null, put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); } },
+  ORDERS: {
+    get: async k => kv.get(k) ?? null, put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); },
+    list: async ({ prefix, limit }) => { const keys = [...kv.keys()].filter(k => k.startsWith(prefix)).sort().slice(0, limit).map(name => ({ name })); return { keys, list_complete: true }; },
+  },
   ASSETS: { fetch: async () => new Response('asset') },
 };
 const sessions = []; const mails = []; const lists = [];
@@ -53,6 +56,7 @@ globalThis.fetch = async (url, init = {}) => {
     const s = { id: 'cs_' + sessions.length, created: Math.floor(Date.now() / 1000), expires_at: Number(p.get('expires_at')), status: 'open', payment_status: 'unpaid', metadata: { strip: p.get('metadata[strip]'), order_id: p.get('metadata[order_id]'), week: p.get('metadata[week]') }, description: p.get('line_items[0][price_data][product_data][description]'), url: 'https://checkout.stripe.com/x' };
     assert.equal(p.get('line_items[0][price_data][unit_amount]'), String(STRIPS[s.metadata.strip].cents));
     assert.ok(!init.body.includes('1990-05-01'), 'birth data must not go to Stripe');
+    assert.equal(p.get('billing_address_collection'), 'required', 'billing address for the invoice');
     sessions.push(s);
     return new Response(JSON.stringify(s));
   }
@@ -61,7 +65,7 @@ globalThis.fetch = async (url, init = {}) => {
     const m = JSON.parse(init.body).Messages[0];
     assert.equal(m.TrackOpens, 'disabled'); assert.equal(m.TrackClicks, 'disabled');
     assert.equal(m.From.Name, 'astro.strip');
-    mails.push({ to: m.To.map(t => t.Email), subject: m.Subject, text: m.TextPart });
+    mails.push({ to: m.To.map(t => t.Email), subject: m.Subject, text: m.TextPart, attachments: m.Attachments });
     return new Response(JSON.stringify({ Messages: [{ Status: 'success' }] }));
   }
   if (/^https:\/\/api\.mailjet\.com\/v3\/REST\/contactslist\/\w+\/managecontact$/.test(url)) {
@@ -94,6 +98,7 @@ assert.equal((await r.json()).ultra.left, 2, 'open session holds a slot');
 
 // payment completes -> webhook
 sessions[0].status = 'complete'; sessions[0].payment_status = 'paid';
+sessions[0].customer_details = { name: 'Test Person', email: 't@example.com', address: { line1: 'Teststraße 5', line2: null, postal_code: '20149', city: 'Hamburg', state: null, country: 'DE' } };
 const evt = JSON.stringify({ type: 'checkout.session.completed', data: { object: sessions[0] } });
 const t2 = Math.floor(Date.now() / 1000);
 const sig = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${t2}.${evt}`)))].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -107,6 +112,48 @@ assert.equal(mails[1].to[0], 'owner@example.com'); assert.match(mails[1].text, /
 assert.ok(!mails[1].text.includes('Test Person') && !mails[1].text.includes('t@example.com'), 'reading mail is pseudonymous');
 assert.equal(mails[2].to[0], 't@example.com'); assert.match(mails[2].text, /Cancellation policy \(English\)/); assert.match(mails[2].text, /Widerrufsbelehrung \(Deutsch\)/); assert.ok(!mails[2].text.includes('Designer'), 'questionnaire not echoed to customer');
 assert.ok(!kv.has('order:cs_0'), 'birth data deleted after mailing');
+assert.match(mails[2].text, /Invoice: follows in a separate email/);
+// invoice: queued by the webhook, built and mailed by the 5-minute cron in its own invocation
+{
+  const { INVOICE_CRON, INVOICE_TRIES } = await import('../src/worker.js');
+  const orderId = sessions[0].metadata.order_id;
+  const jobKey = `invoice:${orderId}`;
+  assert.ok(kv.has(jobKey), 'invoice job queued');
+  assert.ok(!kv.get(jobKey).includes('1990-05-01'), 'no birth data in the invoice job');
+  const before = mails.length;
+  const run = async () => { const p = []; await worker.scheduled({ cron: INVOICE_CRON }, env, { waitUntil: x => p.push(x) }); await Promise.all(p); };
+  await run();
+  const [toCustomer, toOwner] = mails.slice(before);
+  assert.equal(mails.length, before + 2, 'invoice to customer and copy to owner');
+  assert.equal(toCustomer.to[0], 't@example.com'); assert.match(toCustomer.subject, new RegExp(`Your invoice ${orderId}`));
+  assert.equal(toOwner.to[0], 'owner@example.com'); assert.match(toOwner.subject, /Buchhaltung, 8 Jahre/);
+  for (const m of [toCustomer, toOwner]) {
+    assert.equal(m.attachments.length, 1); assert.equal(m.attachments[0].ContentType, 'application/pdf');
+    assert.equal(m.attachments[0].Filename, `astro.strip-Rechnung-${orderId}.pdf`);
+  }
+  const pdf = Buffer.from(toCustomer.attachments[0].Base64Content, 'base64').toString('latin1');
+  assert.ok(pdf.startsWith('%PDF-1.7') && pdf.trimEnd().endsWith('%%EOF'), 'complete PDF');
+  assert.ok(pdf.includes('/AFRelationship /Alternative') && pdf.includes('(factur-x.xml)'), 'ZUGFeRD attachment');
+  const xml = Buffer.from(toCustomer.attachments[0].Base64Content, 'base64').toString('utf8');
+  assert.ok(xml.includes(`<ram:ID>${orderId}</ram:ID>`) && xml.includes('<ram:LineOne>Teststraße 5</ram:LineOne>') && xml.includes('<ram:GrandTotalAmount>129.00</ram:GrandTotalAmount>'), 'XML with order number, address, total');
+  assert.ok(!kv.has(jobKey), 'job removed after sending');
+  // a job that keeps failing: retried, then Sandra is warned
+  kv.set('invoice:AS-BROKEN', JSON.stringify({ order: { id: 'AS-BROKEN', email: 'x@example.com', strip: 'nope' }, customer_details: {}, paidAt: Date.now(), attempts: 0 }));
+  for (let i = 0; i < INVOICE_TRIES; i++) await run().catch(() => {});
+  assert.equal(JSON.parse(kv.get('invoice:AS-BROKEN')).attempts, INVOICE_TRIES, 'each try is counted before the work');
+  const n = mails.length;
+  await run();
+  assert.match(mails[n].subject, /RECHNUNG FEHLT: AS-BROKEN/); assert.ok(!kv.has('invoice:AS-BROKEN'));
+  // amounts for every strip satisfy EN 16931 BR-CO-17 (VAT = basis × rate, rounded) and add up
+  const { splitGross, servicePeriod } = await import('../src/invoice.js');
+  // service period = delivery promise: from payment N working days, or a booked week from its Monday (day 1)
+  assert.deepEqual(servicePeriod({ thisWeek: true }, STRIPS.mini, '2026-10-02'), { start: '2026-10-02', end: '2026-10-09' });
+  assert.deepEqual(servicePeriod({ thisWeek: false, week: '2026-10-12' }, STRIPS.ultra, '2026-10-02'), { start: '2026-10-12', end: '2026-10-23' });
+  assert.deepEqual(servicePeriod({ thisWeek: false, week: '2026-10-12' }, STRIPS.maxi, '2026-10-02'), { start: '2026-10-12', end: '2026-10-20' });
+  assert.ok(xml.includes('<ram:BillingSpecifiedPeriod>') && xml.includes('<ram:ShipToTradeParty><ram:Name>Test Person</ram:Name>'), 'service period and delivery party in the XML');
+  for (const s of Object.values(STRIPS)) { const a = splitGross(s.cents); assert.equal(a.vat, Math.round(a.net * 0.19)); assert.equal(a.net + a.vat, s.cents); }
+  console.log('invoice ok');
+}
 // bad signature
 r = await worker.fetch(req('/api/stripe-webhook', 'POST', evt, { 'Stripe-Signature': `t=${t2},v1=00` }), env);
 assert.equal(r.status, 400);

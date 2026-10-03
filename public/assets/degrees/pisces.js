@@ -51,7 +51,7 @@ export default {
     life: "Says they want to grow, then welcomes every hard test that proves it. Sees each tough situation as an exam worth passing.",
   },
   13: {
-    sun: "Your core is focused will. When you direct it at one purpose, your thinking sharpens and your drive gains passion. You tend to be the one who holds her position in a crisis when others back off. The shadow is the epic self-image, or putting your own sensitivities ahead of what the moment needs. Set the personal aside when it counts, and you become an example others steer by.",
+    sun: "Your core is focused will. When you direct it at one purpose, your thinking sharpens and your drive gains passion. You tend to be the one who holds their position in a crisis when others back off. The shadow is the epic self-image, or putting your own sensitivities ahead of what the moment needs. Set the personal aside when it counts, and you become an example others steer by.",
     life: "Locks onto one purpose and doesn't budge. When others wobble, they stand firm, and become the example people point to later.",
   },
   14: {

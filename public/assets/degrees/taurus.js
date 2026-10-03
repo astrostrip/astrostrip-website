@@ -95,7 +95,7 @@ export default {
     life: "Asked for the raise without apologizing. Spends the money on things that last, not on things that impress.",
   },
   24: {
-    sun: "You are built to lead, and part of that is a fighting energy that switches on when you feel threatened, including by competition close to home. Your task is to steer that force, not deny it. The shadow is ruthlessness: winning against others and savouring a short-lived superiority. Real mastery is beating your own lesser impulses through discipline. Whoever can lead herself can lead others, and what looks like luck tends to be the echo of that work.",
+    sun: "You are built to lead, and part of that is a fighting energy that switches on when you feel threatened, including by competition close to home. Your task is to steer that force, not deny it. The shadow is ruthlessness: winning against others and savouring a short-lived superiority. Real mastery is beating your own lesser impulses through discipline. Whoever can lead themselves can lead others, and what looks like luck tends to be the echo of that work.",
     life: "Feels the rage, counts to ten, then wins the argument calmly. Their luck is mostly self-control.",
   },
   25: {

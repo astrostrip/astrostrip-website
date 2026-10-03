@@ -59,7 +59,7 @@ export default {
     life: "Connects the right people across every circle they're in, but stays out of everyone's private business.",
   },
   15: {
-    sun: "You’re here to stay true to yourself with an unguarded simplicity, and to admit how little anyone really knows. That humility is a strength, not a gap. The shadow is being so caught up in social duty and ambition that you forget who you are and what you love, and life loses meaning and joy. Every so often, check what deserves your full commitment by asking what your inner child would throw herself into.",
+    sun: "You’re here to stay true to yourself with an unguarded simplicity, and to admit how little anyone really knows. That humility is a strength, not a gap. The shadow is being so caught up in social duty and ambition that you forget who you are and what you love, and life loses meaning and joy. Every so often, check what deserves your full commitment by asking what your inner child would throw themselves into.",
     life: "Admits how little they really know and stays playful about it. Being themselves keeps everyone around them relaxed.",
   },
   16: {
