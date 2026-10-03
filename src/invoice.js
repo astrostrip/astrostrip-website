@@ -248,6 +248,18 @@ function base64(u8) {
 }
 const pdfDate = ms => { const t = new Date(ms); return `D:${ymdUtc(t).replace(/-/g, '')}${p2(t.getUTCHours())}${p2(t.getUTCMinutes())}${p2(t.getUTCSeconds())}+00'00'`; };
 
+// Second file ID of the trailer: differs per document (number and time), without crypto. FNV-1a,
+// four rounds with different seeds -> 32 hex digits, like the 16 bytes PDF expects.
+function docId(s) {
+  let out = '';
+  for (let r = 1; r <= 4; r++) {
+    let h = 0x811c9dc5 ^ Math.imul(r, 0x9e3779b1);
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+    out += (h >>> 0).toString(16).padStart(8, '0');
+  }
+  return out;
+}
+
 // Returns the bytes appended to the template (incremental update with xref section and trailer).
 export function invoiceUpdate(d, xml, nowMs = Date.now(), fileId = null) {
   const dyn = T.size, ef = T.size + 1, fs = T.size + 2;
@@ -288,7 +300,7 @@ export function invoiceUpdate(d, xml, nowMs = Date.now(), fileId = null) {
     for (let k = i; k <= j; k++) xref += `${String(offsets[nums[k]]).padStart(10, '0')} 00000 n\r\n`;
     i = j + 1;
   }
-  const newId = fileId || [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
+  const newId = fileId || docId(`${d.number}|${nowMs}`);
   xref += `trailer\n<< /Size ${T.size + (corr ? 5 : 3)} /Root ${T.root} 0 R /Prev ${T.prevXref} /ID [<${T.id}> <${newId}>] >>\nstartxref\n${pos}\n%%EOF\n`;
   chunks.push(enc.encode(xref));
   return concat(chunks);

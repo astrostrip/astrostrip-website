@@ -48,6 +48,7 @@ const env = {
 };
 const sessions = []; const mails = []; const lists = [];
 const pis = {}; const refunds = {}; // Stripe payments and refunds for the invoice correction
+let failMail = () => false; // a test sets it to let Mailjet refuse certain mails
 globalThis.fetch = async (url, init = {}) => {
   url = String(url);
   if (url.startsWith('https://api.stripe.com/v1/checkout/sessions') && (init.method || 'GET') === 'GET') {
@@ -84,6 +85,7 @@ globalThis.fetch = async (url, init = {}) => {
     const m = JSON.parse(init.body).Messages[0];
     assert.equal(m.TrackOpens, 'disabled'); assert.equal(m.TrackClicks, 'disabled');
     assert.equal(m.From.Name, 'astro.strip');
+    if (failMail(m)) return new Response('{"ErrorMessage":"test"}', { status: 500 });
     mails.push({ to: m.To.map(t => t.Email), subject: m.Subject, text: m.TextPart, attachments: m.Attachments });
     return new Response(JSON.stringify({ Messages: [{ Status: 'success' }] }));
   }
@@ -142,9 +144,21 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.ok(!kv.get(jobKey).includes('1990-05-01'), 'no birth data in the invoice job');
   const before = mails.length;
   const run = async () => { const p = []; await worker.scheduled({ cron: INVOICE_CRON }, env, { waitUntil: x => p.push(x) }); await Promise.all(p); };
+  const pdfKey = `invoicepdf:${orderId}`;
+  const stepOf = k => JSON.parse(kv.get(k)).step;
+  // run 1: only builds the PDF and keeps it in the KV
+  await run();
+  assert.equal(mails.length, before, 'building sends nothing');
+  assert.ok(kv.has(pdfKey), 'PDF kept for the next steps'); assert.equal(stepOf(jobKey), 'customer'); assert.equal(JSON.parse(kv.get(jobKey)).attempts, 0, 'tries counted per step');
+  // run 2: only the mail to the customer
+  await run();
+  assert.equal(mails.length, before + 1, 'one mail per run'); assert.equal(stepOf(jobKey), 'owner'); assert.equal(JSON.parse(kv.get(jobKey)).customerSent, true);
+  // run 3: copy to Sandra, invoice date at Stripe, job and PDF deleted
   await run();
   const [toCustomer, toOwner] = mails.slice(before);
   assert.equal(mails.length, before + 2, 'invoice to customer and copy to owner');
+  assert.ok(!kv.has(pdfKey), 'stored PDF deleted after sending');
+  assert.equal(toOwner.attachments[0].Base64Content, toCustomer.attachments[0].Base64Content, 'the same PDF to both');
   assert.equal(toCustomer.to[0], 't@example.com'); assert.match(toCustomer.subject, new RegExp(`Your invoice ${orderId}`));
   assert.equal(toOwner.to[0], 'owner@example.com'); assert.match(toOwner.subject, /Buchhaltung, 8 Jahre/);
   for (const m of [toCustomer, toOwner]) {
@@ -164,6 +178,38 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   const n = mails.length;
   await run();
   assert.match(mails[n].subject, /RECHNUNG FEHLT: AS-BROKEN/); assert.ok(!kv.has('invoice:AS-BROKEN'));
+  assert.match(mails[n].text, /nicht erzeugt werden/); assert.ok(!mails[n].attachments, 'no PDF to attach yet');
+  // second ID of the PDF trailer: 32 hex digits, different for another document (no crypto call)
+  const trailerId = b64 => Buffer.from(b64, 'base64').toString('latin1').match(/\/ID \[<[0-9A-Fa-f]+> <([0-9a-f]{32})>\]/)?.[1];
+  assert.ok(trailerId(toCustomer.attachments[0].Base64Content), 'document id in the trailer');
+  // a run cut off after the customer mail but before the step was saved: no second mail to the customer
+  const twice = { order: { id: 'AS-TWICE', email: 'tw@example.com', strip: 'mini' }, customer_details: {}, paidAt: Date.now(), step: 'customer', attempts: 1, customerSent: true, inv: { number: 'AS-TWICE', filename: 'astro.strip-Rechnung-AS-TWICE.pdf', issueDate: '2026-10-03', period: { start: '2026-10-03', end: '2026-10-08' }, amounts: { gross: 3900 }, buyer: { name: 'Tw' }, missingCountry: false } };
+  kv.set('invoice:AS-TWICE', JSON.stringify(twice)); kv.set('invoicepdf:AS-TWICE', toCustomer.attachments[0].Base64Content);
+  let m0 = mails.length;
+  await run();
+  assert.equal(mails.length, m0, 'customer already has it'); assert.equal(stepOf('invoice:AS-TWICE'), 'owner');
+  await run();
+  assert.equal(mails.length, m0 + 1); assert.equal(mails[m0].to[0], 'owner@example.com'); assert.ok(!kv.has('invoice:AS-TWICE') && !kv.has('invoicepdf:AS-TWICE'));
+  // the customer mail keeps failing: retried per step, then Sandra gets the warning with the PDF to forward
+  kv.set('invoice:AS-NOMAIL', JSON.stringify({ ...twice, order: { ...twice.order, id: 'AS-NOMAIL', email: 'bounce@example.com' }, customerSent: false, attempts: 0, inv: { ...twice.inv, number: 'AS-NOMAIL', filename: 'astro.strip-Rechnung-AS-NOMAIL.pdf' } }));
+  kv.set('invoicepdf:AS-NOMAIL', toCustomer.attachments[0].Base64Content);
+  failMail = m => m.To[0].Email === 'bounce@example.com';
+  for (let i = 0; i < INVOICE_TRIES; i++) await run().catch(() => {});
+  assert.equal(JSON.parse(kv.get('invoice:AS-NOMAIL')).attempts, INVOICE_TRIES); assert.equal(stepOf('invoice:AS-NOMAIL'), 'customer');
+  m0 = mails.length;
+  await run();
+  assert.equal(mails.length, m0 + 1); assert.match(mails[m0].subject, /RECHNUNG FEHLT: AS-NOMAIL/); assert.match(mails[m0].text, /nicht an die Kundin verschickt/); assert.match(mails[m0].text, /an die Kundin weiterleiten/);
+  assert.equal(mails[m0].attachments[0].Filename, 'astro.strip-Rechnung-AS-NOMAIL.pdf', 'warning carries the PDF');
+  assert.ok(!kv.has('invoice:AS-NOMAIL') && !kv.has('invoicepdf:AS-NOMAIL'), 'nothing left in the KV');
+  // the copy to Sandra keeps failing, and the warning with attachment too: warning goes without the PDF
+  kv.set('invoice:AS-NOCOPY', JSON.stringify({ ...twice, order: { ...twice.order, id: 'AS-NOCOPY' }, step: 'owner', attempts: INVOICE_TRIES, inv: { ...twice.inv, number: 'AS-NOCOPY' } }));
+  kv.set('invoicepdf:AS-NOCOPY', toCustomer.attachments[0].Base64Content);
+  failMail = m => !!m.Attachments;
+  m0 = mails.length;
+  await run();
+  failMail = () => false;
+  assert.equal(mails.length, m0 + 1); assert.match(mails[m0].text, /Kopie für die Buchhaltung/); assert.match(mails[m0].text, /ließ sich nicht anhängen/); assert.ok(!mails[m0].attachments);
+  assert.ok(!kv.has('invoice:AS-NOCOPY') && !kv.has('invoicepdf:AS-NOCOPY'));
   // amounts for every strip satisfy EN 16931 BR-CO-17 (VAT = basis × rate, rounded) and add up
   const { splitGross, servicePeriod } = await import('../src/invoice.js');
   // service period = delivery promise: from payment N working days, or a booked week from its Monday (day 1)

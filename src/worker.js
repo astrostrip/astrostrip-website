@@ -12,7 +12,7 @@
 //   POST /api/subscribe        newsletter signup: stores the consent and sends the double opt-in mail
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
 //   cron (hourly)              retention: buyer list after 3 years without purchase, consent proofs 3 years after the end
-//   cron (every 5 minutes)     invoices: one queued e-invoice per run, mailed to the customer with a copy to Sandra
+//   cron (every 5 minutes)     invoices: one step of one queued e-invoice per run (build, mail to the customer, copy to Sandra)
 //   cron (every 5 minutes, +2) invoice corrections: one refund per run (Rechnungskorrektur), same way as the invoices
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
@@ -606,9 +606,14 @@ export async function runRetention(env, now = Date.now()) {
 // invocation. Reason: the free plan stops an invocation after 10 ms CPU without any chance to catch
 // it, and the order mails must never depend on the PDF. A job is retried up to INVOICE_TRIES times,
 // then Sandra gets a warning. The job holds the billing address only until the invoice is sent.
+// Split into steps (Sandra, 03.10.2026): Cloudflare Metrics showed up to ~13 ms CPU around the first
+// test purchase, above the 10 ms. Each run now does one step of one job: 'build' (PDF as base64 into
+// the KV), 'customer' (mail to the customer), 'owner' (copy to Sandra, invoice date at Stripe). Every
+// step has its own INVOICE_TRIES. The customer gets the invoice after at most ~10 instead of 5 minutes.
 export const INVOICE_CRON = '*/5 * * * *';
 export const INVOICE_TRIES = 3;
 const INVOICE_TTL = 14 * 86400;
+const invoicePdfKey = id => `invoicepdf:${id}`; // not under 'invoice:', so the job list stays small
 
 async function queueInvoice(env, order, session) {
   const job = {
@@ -649,37 +654,81 @@ export async function runInvoices(env, nowMs = Date.now()) {
   const raw = await env.ORDERS.get(key);
   if (!raw) return { sent: 0 };
   const job = JSON.parse(raw);
+  const id = job.order.id;
+  const step = job.step || 'build';
+  const pdfKey = invoicePdfKey(id);
+  const strip = STRIPS[job.order.strip];
   job.attempts = (job.attempts || 0) + 1;
   if (job.attempts > INVOICE_TRIES) {
-    await sendMail(env, { to: env.OWNER_EMAIL, subject: `RECHNUNG FEHLT: ${job.order.id}`, text: `Die E-Rechnung zu Bestellung ${job.order.id} (${job.order.email}) konnte nach ${INVOICE_TRIES} Versuchen nicht erzeugt werden. Bitte von Hand ausstellen; die Angaben stehen in der Buchhaltungs-Mail „Bestellung ${job.order.id}“.` });
+    await warnInvoiceMissing(env, job, step, step === 'build' ? null : await env.ORDERS.get(pdfKey));
+    await env.ORDERS.delete(pdfKey);
     await env.ORDERS.delete(key);
-    return { failed: job.order.id };
+    return { failed: id, step };
   }
-  // Count the try before the CPU-heavy part: if the invocation is cut off, the next run knows.
+  // Count the try before the work: if the invocation is cut off, the next run knows.
   await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
-  const strip = STRIPS[job.order.strip];
-  const inv = buildInvoice(job.order, { customer_details: job.customer_details }, strip, nowMs, job.paidAt);
-  const attachments = [{ filename: inv.filename, base64: inv.base64 }];
-  if (!job.customerSent) {
-    await sendMail(env, { to: job.order.email, subject: `Your invoice ${inv.data.number} · Deine Rechnung`, text: invoiceMailText(inv.data, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
-    job.customerSent = true;
+  const next = async (s, result) => {
+    job.step = s; job.attempts = 0;
     await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+    return result;
+  };
+
+  if (step === 'build') {
+    const inv = buildInvoice(job.order, { customer_details: job.customer_details }, strip, nowMs, job.paidAt);
+    await env.ORDERS.put(pdfKey, inv.base64, { expirationTtl: INVOICE_TTL });
+    const d = inv.data;
+    job.inv = { number: d.number, filename: inv.filename, issueDate: d.issueDate, period: d.period, amounts: { gross: d.amounts.gross }, buyer: { name: d.buyer.name }, missingCountry: d.missingCountry };
+    return next('customer', { built: d.number });
   }
+
+  const base64 = await env.ORDERS.get(pdfKey);
+  if (!base64) return next('build', { rebuild: id }); // stored PDF gone: build it again, customerSent still holds
+  const inv = job.inv;
+  const attachments = [{ filename: inv.filename, base64 }];
+  if (step === 'customer') {
+    if (!job.customerSent) {
+      await sendMail(env, { to: job.order.email, subject: `Your invoice ${inv.number} · Deine Rechnung`, text: invoiceMailText(inv, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+      job.customerSent = true;
+    }
+    return next('owner', { customer: inv.number });
+  }
+
   await sendMail(env, {
     to: env.OWNER_EMAIL,
-    subject: `Rechnung ${inv.data.number} (Buchhaltung, 8 Jahre aufbewahren)`,
-    text: `Ausgangsrechnung ${inv.data.number} · ${strip.name} · ${(inv.data.amounts.gross / 100).toFixed(2).replace('.', ',')} € inkl. 19 % USt · ausgestellt ${inv.data.issueDate} · an ${job.order.email} verschickt.${inv.data.missingCountry ? '\n\nACHTUNG: Stripe hat kein Land geliefert; in der Rechnung steht DE. Bitte prüfen.' : ''}\n\nDiese Mail mit Anhang 8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`,
+    subject: `Rechnung ${inv.number} (Buchhaltung, 8 Jahre aufbewahren)`,
+    text: `Ausgangsrechnung ${inv.number} · ${strip.name} · ${(inv.amounts.gross / 100).toFixed(2).replace('.', ',')} € inkl. 19 % USt · ausgestellt ${inv.issueDate} · an ${job.order.email} verschickt.${inv.missingCountry ? '\n\nACHTUNG: Stripe hat kein Land geliefert; in der Rechnung steht DE. Bitte prüfen.' : ''}\n\nDiese Mail mit Anhang 8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`,
     attachments,
   });
   // The invoice correction needs the invoice date and service period later, when the job is long gone.
   // They go to the payment at Stripe (no personal data). A failure here must not resend the invoice.
   if (job.pi) {
     try {
-      await stripe(env, 'POST', `payment_intents/${job.pi}`, { metadata: { invoice_date: inv.data.issueDate, invoice_period: `${inv.data.period.start}/${inv.data.period.end}` } });
+      await stripe(env, 'POST', `payment_intents/${job.pi}`, { metadata: { invoice_date: inv.issueDate, invoice_period: `${inv.period.start}/${inv.period.end}` } });
     } catch (err) { console.error('invoice metadata', err); }
   }
+  await env.ORDERS.delete(pdfKey);
   await env.ORDERS.delete(key);
-  return { sent: inv.data.number };
+  return { sent: inv.number };
+}
+
+// Warning after INVOICE_TRIES failed tries of one step. If the PDF already exists, it goes along, so
+// Sandra can forward it; if the mail fails with the attachment, it goes again without.
+async function warnInvoiceMissing(env, job, step, base64) {
+  const id = job.order.id;
+  const what = {
+    build: `konnte nach ${INVOICE_TRIES} Versuchen nicht erzeugt werden. Bitte von Hand ausstellen; die Angaben stehen in der Buchhaltungs-Mail „Bestellung ${id}“.`,
+    customer: `ist erzeugt, konnte aber nach ${INVOICE_TRIES} Versuchen nicht an die Kundin verschickt werden. Die Kundin hat noch keine Rechnung.`,
+    owner: `ist an die Kundin verschickt, aber die Kopie für die Buchhaltung kam nach ${INVOICE_TRIES} Versuchen nicht zustande.`,
+  }[step];
+  const text = `Die E-Rechnung zu Bestellung ${id} (${job.order.email}) ${what}`;
+  const mail = { to: env.OWNER_EMAIL, subject: `RECHNUNG FEHLT: ${id}` };
+  if (base64 && job.inv) {
+    try {
+      await sendMail(env, { ...mail, text: `${text}\n\nDie Rechnung hängt an: bitte ${step === 'customer' ? 'an die Kundin weiterleiten und ' : ''}8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`, attachments: [{ filename: job.inv.filename, base64 }] });
+      return;
+    } catch (err) { console.error('invoice warning with attachment', err); }
+  }
+  await sendMail(env, { ...mail, text: step === 'build' ? text : `${text}\n\nDie Rechnung ließ sich nicht anhängen. Bitte von Hand ausstellen.` });
 }
 
 // ---------- invoice corrections for refunds (Sandra, 03.10.2026) ----------
