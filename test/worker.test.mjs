@@ -11,6 +11,30 @@ assert.equal(iso(weekStart(Date.parse('2026-10-18T22:00:00Z'))), '2026-10-18T22:
 assert.equal(iso(weekStart(Date.parse('2027-03-29T10:00:00Z'))), '2027-03-28T22:00:00.000Z'); // Monday after DST start (CEST)
 console.log('weekStart ok');
 
+// Berlin time without Intl (src/time.js) gives the same strings as Intl: every 15 minutes around each
+// DST change 2026–2032, plus spread-out instants
+{
+  const { berlinOffsetMinutes, berlinYmd, longDateText, berlinStampText, isoUtc } = await import('../src/time.js');
+  const TZ = 'Europe/Berlin';
+  const parts = ms => Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+  const offset = ms => { const p = parts(ms); return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - ms) / 60000); };
+  const pts = [];
+  for (let y = 2026; y <= 2032; y++) for (const mo of [2, 9]) for (let h = 0; h < 8 * 24 * 4; h++) pts.push(Date.UTC(y, mo, 24) + h * 900000);
+  for (let i = 0; i < 2000; i++) pts.push(Date.UTC(2026, 0, 1) + i * 104729831);
+  for (const ms of pts) {
+    assert.equal(berlinOffsetMinutes(ms), offset(ms));
+    const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+    assert.equal(berlinYmd(ms), ymd);
+    for (const [lang, loc] of [['de', 'de-DE'], ['en', 'en-GB']]) {
+      assert.equal(berlinStampText(ms, lang), new Intl.DateTimeFormat(loc, { timeZone: TZ, dateStyle: 'long', timeStyle: 'medium' }).format(new Date(ms)));
+      assert.equal(longDateText(ymd, lang), new Intl.DateTimeFormat(loc, { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${ymd}T00:00:00Z`)));
+    }
+    assert.equal(isoUtc(ms), new Date(ms).toISOString());
+  }
+  assert.ok(!/Intl\.|toISOString/.test(readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '')), 'no Intl or toISOString in the Worker');
+}
+console.log('berlin time ok');
+
 // signature
 const secret = 'whsec_test';
 const body = '{"a":1}';
@@ -232,6 +256,7 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   };
   const refundEvent = (type, r) => signed(JSON.stringify({ type, data: { object: r } }));
   const run = async () => { const p = []; await worker.scheduled({ cron: CORRECTION_CRON }, env, { waitUntil: x => p.push(x) }); await Promise.all(p); };
+  const run3 = async () => { for (let i = 0; i < 3; i++) await run(); }; // build, customer, owner: one step per run
   const orderId = sessions[0].metadata.order_id;
   const xmlOf = m => Buffer.from(m.attachments[0].Base64Content, 'base64').toString('utf8');
   const leftUltra = async () => (await (await worker.fetch(req('/api/slots'), env)).json()).ultra.left;
@@ -245,8 +270,14 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.deepEqual(JSON.parse(kv.get('correction:re_1')), { refund: 're_1', attempts: 0 }, 'job holds only the refund id');
   let before = mails.length;
   await run();
+  assert.equal(mails.length, before, 'step 1 only builds');
+  assert.ok(kv.has('correctionpdf:re_1') && JSON.parse(kv.get('correction:re_1')).step === 'customer', 'PDF waits for step 2');
+  await run();
+  assert.equal(mails.length, before + 1, 'step 2: customer'); assert.equal(JSON.parse(kv.get('correction:re_1')).step, 'owner');
+  await run();
   let [toCustomer, toOwner] = mails.slice(before);
   assert.equal(mails.length, before + 2, 'correction to customer and copy to owner');
+  assert.ok(!kv.has('correctionpdf:re_1'), 'stored PDF removed after the copy');
   assert.equal(toCustomer.to[0], 't@example.com'); assert.match(toCustomer.subject, new RegExp(`Your invoice correction ${orderId}-K1`));
   assert.match(toCustomer.text, /refunded 129,00 €/); assert.match(toCustomer.text, /Rechnungskorrektur/); assert.ok(!/Gutschrift/.test(toCustomer.text));
   assert.equal(toOwner.to[0], 'owner@example.com'); assert.match(toOwner.subject, new RegExp(`Rechnungskorrektur ${orderId}-K1 \\(Buchhaltung, 8 Jahre`));
@@ -259,7 +290,7 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.ok(!kv.has('correction:re_1') && kv.has('correction:re_1') === false);
   assert.equal(await leftUltra(), ultraBefore + 1, 'refunded order frees its week slot');
   // Stripe delivers the same event again: no second correction
-  await refundEvent('refund.created', refunds.re_1); before = mails.length; await run();
+  await refundEvent('refund.created', refunds.re_1); before = mails.length; await run3();
   assert.equal(mails.length, before, 'one refund, one correction'); assert.ok(!kv.has('correction:re_1'));
 
   // two partial refunds of an older order (no invoice date at Stripe yet): K follows Stripe's order, not the queue's
@@ -268,10 +299,10 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   pis.pi_1 = { id: 'pi_1', amount: 7900, created: now - 86400, metadata: { order_id: 'AS-20261001-PART1', strip: 'maxi' } };
   refunds.re_2 = { id: 're_2', amount: 3950, payment_intent: 'pi_1', status: 'succeeded', created: now - 60 };
   refunds.re_3 = { id: 're_3', amount: 1000, payment_intent: 'pi_1', status: 'pending', created: now };
-  await refundEvent('refund.created', refunds.re_3); before = mails.length; await run();
+  await refundEvent('refund.created', refunds.re_3); before = mails.length; await run3();
   [toCustomer, toOwner] = mails.slice(before);
   assert.match(toCustomer.subject, /AS-20261001-PART1-K2/); assert.equal(toCustomer.to[0], 'k@example.com');
-  await refundEvent('refund.created', refunds.re_2); before = mails.length; await run();
+  await refundEvent('refund.created', refunds.re_2); before = mails.length; await run3();
   [toCustomer, toOwner] = mails.slice(before);
   assert.match(toCustomer.subject, /AS-20261001-PART1-K1/); assert.match(toCustomer.text, /^Hi Kim Test,/);
   assert.match(toOwner.text, /Teilerstattung 39,50 € inkl\. 19 % USt \(netto 33,19 €, USt 6,31 €\)/); assert.match(toOwner.text, /Rechnungsdatum nicht bei Stripe hinterlegt/);
@@ -298,6 +329,17 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.equal(JSON.parse(kv.get('correction:re_broken')).attempts, INVOICE_TRIES);
   before = mails.length; await run();
   assert.match(mails[before].subject, /RECHNUNGSKORREKTUR FEHLT: Erstattung re_broken/); assert.ok(!kv.has('correction:re_broken'));
+  // the customer mail keeps failing: after INVOICE_TRIES the warning to Sandra carries the PDF
+  refunds.re_6 = { id: 're_6', amount: 1000, payment_intent: 'pi_1', status: 'succeeded', created: now + 20 };
+  await refundEvent('refund.created', refunds.re_6); await run();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => (String(url) === 'https://api.mailjet.com/v3.1/send' && JSON.parse(init.body).Messages[0].To[0].Email === 'k@example.com') ? new Response('{"ErrorMessage":"test"}', { status: 500 }) : realFetch(url, init);
+  for (let i = 0; i < INVOICE_TRIES; i++) await run().catch(() => {});
+  before = mails.length; await run();
+  globalThis.fetch = realFetch;
+  assert.equal(mails.length, before + 1); assert.match(mails[before].subject, /RECHNUNGSKORREKTUR FEHLT: Erstattung re_6/);
+  assert.match(mails[before].text, /nicht an die Kundin/); assert.equal(mails[before].attachments[0].Filename, 'astro.strip-Rechnungskorrektur-AS-20261001-PART1-K4.pdf'); // K3 is the failed re_4: numbers stay stable, gaps allowed
+  assert.ok(!kv.has('correction:re_6') && !kv.has('correctionpdf:re_6'));
   // the slot tests below count the original bookings
   kv.delete('slots:freed'); sessions.splice(sessions.findIndex(x => x.id === 'cs_part'), 1);
   console.log('correction ok');
