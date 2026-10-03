@@ -125,7 +125,7 @@ let r = await worker.fetch(req('/api/slots'), env);
 const thisWeek = weekDate(weekStart());
 let sl = await r.json();
 assert.deepEqual(Object.keys(sl), ['mini', 'maxi', 'ultra']);
-for (const [k, n] of [['mini', 20], ['maxi', 5], ['ultra', 3]]) { assert.equal(sl[k].limit, n); assert.equal(sl[k].left, n); assert.equal(sl[k].next, thisWeek); assert.equal(sl[k].thisWeek, true); }
+for (const [k, n] of [['mini', 20], ['maxi', 10], ['ultra', 6]]) { assert.equal(sl[k].limit, n); assert.equal(sl[k].left, n); assert.equal(sl[k].next, thisWeek); assert.equal(sl[k].thisWeek, true); }
 assert.equal(sl.ultra.until, weekDate(addWeeks(weekStart(), WEEKS_AHEAD) - 86400 + 43200), 'booking window ends on a Sunday');
 assert.equal(new Date(sl.ultra.until + 'T12:00:00Z').getUTCDay(), 0);
 // week helpers across the DST change on 25 Oct 2026
@@ -139,7 +139,7 @@ assert.equal(r.status, 200, JSON.stringify(co));
 assert.match(co.orderId, /^AS-\d{8}-[A-Z0-9]{5}$/);
 assert.ok(kv.has('order:cs_0'));
 r = await worker.fetch(req('/api/slots'), env);
-assert.equal((await r.json()).ultra.left, 2, 'open session holds a slot');
+assert.equal((await r.json()).ultra.left, STRIPS.ultra.weekly - 1, 'open session holds a slot');
 
 // payment completes -> webhook
 sessions[0].status = 'complete'; sessions[0].payment_status = 'paid'; sessions[0].payment_intent = 'pi_0';
@@ -348,10 +348,10 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
 r = await worker.fetch(req('/api/stripe-webhook', 'POST', evt, { 'Stripe-Signature': `t=${t2},v1=00` }), env);
 assert.equal(r.status, 400);
 
-// fill ultra: 2 more -> sold out
+// fill this week's ultra slots -> sold out
 assert.equal(sessions[0].metadata.week, String(weekStart()), 'first order books this week');
 assert.match(sessions[0].description, /within 10 working days\./);
-for (const ip of ['2.2.2.2', '3.3.3.3']) { r = await worker.fetch(req('/api/checkout', 'POST', { ...good, week: thisWeek }, { ip }), env); assert.equal(r.status, 200); }
+for (const ip of Array.from({ length: STRIPS.ultra.weekly - 1 }, (_, i) => `2.2.${i}.2`)) { r = await worker.fetch(req('/api/checkout', 'POST', { ...good, week: thisWeek }, { ip }), env); assert.equal(r.status, 200); }
 // this week is full: the customer who still saw this week is told, not silently moved
 r = await worker.fetch(req('/api/checkout', 'POST', { ...good, week: thisWeek }, { ip: '4.4.4.4' }), env);
 let out = await r.json();
@@ -371,7 +371,7 @@ assert.match(booked.description, new RegExp('booked for the week of ' + longDate
   assert.match(customerMail(stored, stored.id, env), new RegExp('Delivery: booked for the week of ' + longDate(nextWeek) + ', delivered within 10 working days from that Monday'));
   assert.match(ownerOrderMail(stored, stored.id, { id: 'cs', payment_status: 'paid' }), new RegExp('Gebuchte Woche ab Montag, ' + longDate(nextWeek, 'de'))); }
 // fill every week of the window -> fully booked until the last Sunday
-for (let i = 0; i < WEEKS_AHEAD * 3; i++) {
+for (let i = 0; i < WEEKS_AHEAD * STRIPS.ultra.weekly; i++) {
   r = await worker.fetch(req('/api/slots'), env); const x = (await r.json()).ultra;
   if (!x.next) break;
   r = await worker.fetch(req('/api/checkout', 'POST', { ...good, week: x.next }, { ip: '6.6.' + i + '.1' }), env); assert.equal(r.status, 200);
@@ -379,7 +379,7 @@ for (let i = 0; i < WEEKS_AHEAD * 3; i++) {
 r = await worker.fetch(req('/api/checkout', 'POST', good, { ip: '7.7.7.7' }), env);
 out = await r.json();
 assert.equal(r.status, 409); assert.equal(out.soldOut, true); assert.match(out.error, new RegExp('fully booked until ' + longDate(sl.ultra.until)));
-assert.equal(sessions.filter(s => s.metadata.strip === 'ultra').length, WEEKS_AHEAD * 3, 'exactly 3 per week in the window');
+assert.equal(sessions.filter(s => s.metadata.strip === 'ultra').length, WEEKS_AHEAD * STRIPS.ultra.weekly, 'exactly the weekly limit per week in the window');
 // expired open session frees the slot in its week
 sessions[1].expires_at = Math.floor(Date.now() / 1000) - 10;
 r = await worker.fetch(req('/api/slots'), env);
@@ -388,7 +388,7 @@ assert.equal(sl.ultra.left, 1); assert.equal(sl.ultra.next, thisWeek); assert.eq
 // a booking from 7 weeks ago for this week still counts; one from 9 weeks ago does not
 { const w0 = weekStart(); sessions.push({ id: 'cs_old', created: addWeeks(w0, -7) + 100, expires_at: 0, status: 'complete', metadata: { strip: 'maxi', week: String(w0) } });
   sessions.push({ id: 'cs_older', created: addWeeks(w0, -9), expires_at: 0, status: 'complete', metadata: { strip: 'maxi', week: String(w0) } });
-  r = await worker.fetch(req('/api/slots'), env); assert.equal((await r.json()).maxi.left, 4); }
+  r = await worker.fetch(req('/api/slots'), env); assert.equal((await r.json()).maxi.left, STRIPS.maxi.weekly - 1); }
 // rate limit: 5 per hour per IP
 for (let i = 0; i < 5; i++) await worker.fetch(req('/api/checkout', 'POST', { ...good, strip: 'mini', lifeArea: '' }, { ip: '9.9.9.9' }), env);
 r = await worker.fetch(req('/api/checkout', 'POST', { ...good, strip: 'mini', lifeArea: '' }, { ip: '9.9.9.9' }), env);
