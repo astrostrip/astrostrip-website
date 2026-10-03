@@ -84,7 +84,12 @@ def wrap(s, font, size, width):
             line = word
         else:
             line = test
-    return lines + [line]
+    lines.append(line)
+    # no single word alone on the last line: take one word along from the line before
+    if len(lines) > 1 and ' ' not in lines[-1] and ' ' in lines[-2]:
+        head, last = lines[-2].rsplit(' ', 1)
+        lines[-2:] = [head, last + ' ' + lines[-1]]
+    return lines
 
 
 def label(x, y, s, align='left'):
@@ -138,8 +143,8 @@ notes = [
     ('B', 'Hinweise · Notes'),
     ('R', 'Der Betrag wurde bei der Bestellung über Stripe bezahlt. Leistung: persönliches astrologisches Reading, als PDF per E-Mail geliefert.'),
     ('R', 'The amount was paid via Stripe when you ordered. Service: a personal astrology reading, delivered as a PDF by email.'),
-    ('R', 'Diese Rechnung ist eine E-Rechnung (ZUGFeRD, Profil EN 16931). Die maschinenlesbaren Rechnungsdaten sind als factur-x.xml eingebettet.'),
-    ('R', 'This invoice is an e-invoice (ZUGFeRD, EN 16931 profile). The machine-readable invoice data is embedded as factur-x.xml.'),
+    ('R', 'Die PDF ist eine E-Rechnung: Neben der sichtbaren Seite enthält sie die Rechnungsdaten als maschinenlesbare Datei (ZUGFeRD). Sie lässt sich wie jede PDF öffnen und drucken.'),
+    ('R', 'The PDF is an e-invoice: besides the page you see, it contains the invoice data as a machine-readable file (ZUGFeRD). You can open and print it like any PDF.'),
 ]
 y = 285
 for f, s in notes:
@@ -147,10 +152,10 @@ for f, s in notes:
         c.append(label(LEFT, y, s))
         y -= 16
         continue
-    for line in wrap(s, 'R', 8.8, RIGHT - LEFT):
-        c.append(text(LEFT, y, line, 'R', 8.8, INK))
-        y -= 12.5
-    y -= 5
+    for line in wrap(s, 'R', 7.6, RIGHT - LEFT):
+        c.append(text(LEFT, y, line, 'R', 7.6, INK))
+        y -= 10.6
+    y -= 4
 
 c.append(rule(LEFT, 62, RIGHT, GOLD, 0.5))
 c.append(text(W / 2, 48, 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Deutschland', 'R', 7.8, GREY, 'center'))
