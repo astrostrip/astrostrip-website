@@ -13,13 +13,14 @@
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
 //   cron (hourly)              retention: buyer list after 3 years without purchase, consent proofs 3 years after the end
 //   cron (every 5 minutes)     invoices: one queued e-invoice per run, mailed to the customer with a copy to Sandra
+//   cron (every 5 minutes, +2) invoice corrections: one refund per run (Rechnungskorrektur), same way as the invoices
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
 // Plain variables (wrangler.jsonc "vars"): SITE_URL, MAIL_FROM_NAME, MAIL_FROM_ADDRESS,
 //   MAILJET_NEWSLETTER_LIST_ID (double opt-in list), MAILJET_CUSTOMER_LIST_ID (buyers, § 7 Abs. 3 UWG; empty = off)
 
-import { buildInvoice } from './invoice.js';
+import { buildInvoice, buildCorrection, berlinDate } from './invoice.js';
 
 export const STRIPS = {
   mini: { name: 'Mini Strip', tag: 'The essentials', cents: 3900, days: 5, weekly: 20 },
@@ -82,6 +83,8 @@ async function stripe(env, method, path, params) {
 // Booking ahead (Sandra, 30.09.2026): when a week is full, the customer books the next free week,
 // at most WEEKS_AHEAD weeks including the current one. Each session carries its week in metadata.week.
 export const WEEKS_AHEAD = 8;
+// Refunded orders (order id, week, strip), counted back into the free slots; see runCorrections.
+const FREED_KEY = 'slots:freed';
 
 // Monday 00:00 (Berlin) n weeks after the week starting at weekSec. Noon offset keeps DST shifts harmless.
 export const addWeeks = (weekSec, n) => weekStart((weekSec + n * 7 * 86400 + 12 * 3600) * 1000);
@@ -106,6 +109,10 @@ export async function usedSlots(env, nowMs = Date.now()) {
     }
     if (!list.has_more) break;
     starting_after = list.data[list.data.length - 1].id;
+  }
+  // Refunded orders give their slot back (Sandra, 03.10.2026: always, also after a partial refund).
+  for (const f of JSON.parse(await env.ORDERS.get(FREED_KEY) || '[]')) {
+    if (used[f.w] && used[f.w][f.s] > 0) used[f.w][f.s]--;
   }
   return { weeks, used };
 }
@@ -607,7 +614,7 @@ async function queueInvoice(env, order, session) {
   const job = {
     order: { id: order.id, name: order.name, email: order.email, strip: order.strip, week: order.week || '', thisWeek: order.thisWeek !== false },
     customer_details: { name: session.customer_details?.name || '', address: session.customer_details?.address || {} },
-    paidAt: Date.now(), attempts: 0,
+    paidAt: Date.now(), attempts: 0, pi: typeof session.payment_intent === 'string' ? session.payment_intent : '',
   };
   await env.ORDERS.put(`invoice:${order.id}`, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
 }
@@ -664,8 +671,123 @@ export async function runInvoices(env, nowMs = Date.now()) {
     text: `Ausgangsrechnung ${inv.data.number} · ${strip.name} · ${(inv.data.amounts.gross / 100).toFixed(2).replace('.', ',')} € inkl. 19 % USt · ausgestellt ${inv.data.issueDate} · an ${job.order.email} verschickt.${inv.data.missingCountry ? '\n\nACHTUNG: Stripe hat kein Land geliefert; in der Rechnung steht DE. Bitte prüfen.' : ''}\n\nDiese Mail mit Anhang 8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`,
     attachments,
   });
+  // The invoice correction needs the invoice date and service period later, when the job is long gone.
+  // They go to the payment at Stripe (no personal data). A failure here must not resend the invoice.
+  if (job.pi) {
+    try {
+      await stripe(env, 'POST', `payment_intents/${job.pi}`, { metadata: { invoice_date: inv.data.issueDate, invoice_period: `${inv.data.period.start}/${inv.data.period.end}` } });
+    } catch (err) { console.error('invoice metadata', err); }
+  }
   await env.ORDERS.delete(key);
   return { sent: inv.data.number };
+}
+
+// ---------- invoice corrections for refunds (Sandra, 03.10.2026) ----------
+// Sandra refunds in the Stripe dashboard. Stripe sends refund.created; the webhook only queues the refund id.
+// A cron run of its own (never together with the invoices, so a cut-off run cannot take other mails along)
+// fetches refund, payment and Checkout Session from Stripe, frees the week slot, builds the correction
+// (number = invoice number + K1, K2 …) and mails it to the customer with a copy to Sandra. Name and billing
+// address come from Stripe again; the job itself holds only the refund id.
+export const CORRECTION_CRON = '2,7,12,17,22,27,32,37,42,47,52,57 * * * *';
+const FREED_KEEP_MS = (WEEKS_AHEAD + 1) * 7 * 86400000;
+const CORRECTED_TTL = 30 * 86400; // Stripe retries webhooks for up to 3 days
+
+async function freeSlot(env, session, orderId, nowMs) {
+  const w = Number(session.metadata?.week);
+  const s = session.metadata?.strip;
+  if (!w || !STRIPS[s]) return false;
+  const list = JSON.parse(await env.ORDERS.get(FREED_KEY) || '[]').filter(f => f.w * 1000 > nowMs - FREED_KEEP_MS);
+  if (list.some(f => f.o === orderId)) return false;
+  list.push({ o: orderId, w, s });
+  await env.ORDERS.put(FREED_KEY, JSON.stringify(list));
+  return true;
+}
+
+export function correctionMailText(d, strip) {
+  const amount = `${(d.amounts.gross / 100).toFixed(2).replace('.', ',')} €`;
+  const name = d.buyer.name ? ` ${d.buyer.name}` : '';
+  return [
+    `Hi${name},`,
+    '',
+    `we have refunded ${amount} (including 19 % VAT) for your ${strip.name} (invoice ${d.correction.invoice}) to your original payment method. Depending on your bank, it shows up within 5 to 10 working days.`,
+    `Attached is the invoice correction ${d.number}. Please keep it together with your invoice.`,
+    '',
+    '',
+    `Hallo${name},`,
+    '',
+    `wir haben dir ${amount} (inkl. 19 % USt) für deinen ${strip.name} (Rechnung ${d.correction.invoice}) auf dein ursprüngliches Zahlungsmittel erstattet. Je nach Bank ist der Betrag in 5 bis 10 Werktagen sichtbar.`,
+    `Anbei die Rechnungskorrektur ${d.number}. Bitte bewahre sie zusammen mit der Rechnung auf.`,
+    '',
+    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+  ].join('\n');
+}
+
+export async function runCorrections(env, nowMs = Date.now()) {
+  if (!env.MAILJET_API_KEY) return { skipped: true };
+  const page = await env.ORDERS.list({ prefix: 'correction:', limit: 1 });
+  if (!page.keys.length) return { sent: 0 };
+  const key = page.keys[0].name;
+  const raw = await env.ORDERS.get(key);
+  if (!raw) return { sent: 0 };
+  const job = JSON.parse(raw);
+  // Stripe may deliver refund.created more than once: a refund gets exactly one correction.
+  if (await env.ORDERS.get(`corrected:${job.refund}`)) { await env.ORDERS.delete(key); return { duplicate: job.refund }; }
+  job.attempts = (job.attempts || 0) + 1;
+  if (job.attempts > INVOICE_TRIES) {
+    await sendMail(env, { to: env.OWNER_EMAIL, subject: `RECHNUNGSKORREKTUR FEHLT: Erstattung ${job.refund}`, text: `Zur Erstattung ${job.refund} konnte nach ${INVOICE_TRIES} Versuchen keine Rechnungskorrektur erzeugt werden. Bitte von Hand ausstellen (Bestellnummer und Betrag stehen bei der Zahlung im Stripe-Dashboard).` });
+    await env.ORDERS.delete(key);
+    return { failed: job.refund };
+  }
+  await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  const refund = await stripe(env, 'GET', `refunds/${job.refund}`);
+  if (refund.status === 'failed' || refund.status === 'canceled') {
+    await sendMail(env, { to: env.OWNER_EMAIL, subject: `Erstattung ${refund.id}: ${refund.status}, keine Rechnungskorrektur`, text: `Stripe meldet die Erstattung ${refund.id} als „${refund.status}“. Es wurde keine Rechnungskorrektur verschickt. Bitte im Stripe-Dashboard nachsehen und der Kundin das Geld auf anderem Weg erstatten.` });
+    await env.ORDERS.delete(key);
+    return { skipped: refund.status };
+  }
+  const pi = await stripe(env, 'GET', `payment_intents/${refund.payment_intent}`);
+  const orderId = pi.metadata?.order_id;
+  const strip = STRIPS[pi.metadata?.strip];
+  if (!orderId || !strip) {
+    await sendMail(env, { to: env.OWNER_EMAIL, subject: `Erstattung ohne Website-Bestellung: ${refund.id}`, text: `Die Erstattung ${refund.id} (${(refund.amount / 100).toFixed(2).replace('.', ',')} €) gehört zu keiner Bestellung über astrostrip.com. Es wurde keine Rechnungskorrektur verschickt.` });
+    await env.ORDERS.delete(key);
+    return { skipped: 'no order' };
+  }
+  const session = (await stripe(env, 'GET', 'checkout/sessions', { payment_intent: pi.id, limit: 1 })).data[0] || {};
+  const freed = await freeSlot(env, session, orderId, nowMs);
+  // K1, K2 …: position of this refund among all refunds of the payment, oldest first (stable on retries).
+  const all = (await stripe(env, 'GET', 'refunds', { payment_intent: pi.id, limit: 100 })).data.slice().sort((a, b) => a.created - b.created || (a.id < b.id ? -1 : 1));
+  const n = all.findIndex(r => r.id === refund.id) + 1 || all.length + 1;
+  const [start, end] = String(pi.metadata.invoice_period || '').split('/');
+  const knownDate = /^\d{4}-\d{2}-\d{2}$/.test(pi.metadata.invoice_date || '');
+  const k = {
+    orderId, n, refundCents: refund.amount, refundMs: refund.created * 1000, full: refund.amount >= pi.amount,
+    invoiceDate: knownDate ? pi.metadata.invoice_date : berlinDate(pi.created * 1000),
+    period: start && end ? { start, end } : null,
+  };
+  const email = session.customer_details?.email || session.customer_email || pi.receipt_email;
+  const corr = buildCorrection(k, session.customer_details, email, strip, nowMs);
+  const attachments = [{ filename: corr.filename, base64: corr.base64 }];
+  if (!job.customerSent && email) {
+    await sendMail(env, { to: email, subject: `Your invoice correction ${corr.data.number} · Deine Rechnungskorrektur`, text: correctionMailText(corr.data, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+    job.customerSent = true;
+    await env.ORDERS.put(key, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  }
+  const notes = [
+    !knownDate ? 'ACHTUNG: Rechnungsdatum nicht bei Stripe hinterlegt (Bestellung vor dem 03.10.2026?); angenommen wurde der Zahltag. Bitte mit der Rechnung vergleichen.' : '',
+    corr.data.missingCountry ? 'ACHTUNG: Stripe hat kein Land geliefert; in der Korrektur steht DE. Bitte prüfen.' : '',
+    !email ? 'ACHTUNG: keine E-Mail-Adresse bei Stripe, die Kundin hat die Korrektur nicht bekommen.' : '',
+    freed ? 'Der Wochenplatz ist wieder frei.' : '',
+  ].filter(Boolean);
+  await sendMail(env, {
+    to: env.OWNER_EMAIL,
+    subject: `Rechnungskorrektur ${corr.data.number} (Buchhaltung, 8 Jahre aufbewahren)`,
+    text: `Rechnungskorrektur ${corr.data.number} zur Rechnung ${orderId} vom ${k.invoiceDate} · ${strip.name} · ${k.full ? 'volle Erstattung' : 'Teilerstattung'} ${(refund.amount / 100).toFixed(2).replace('.', ',')} € inkl. 19 % USt (netto ${(corr.data.amounts.net / 100).toFixed(2).replace('.', ',')} €, USt ${(corr.data.amounts.vat / 100).toFixed(2).replace('.', ',')} €) · Stripe-Erstattung ${refund.id} · ausgestellt ${corr.data.issueDate}${email ? ` · an ${email} verschickt` : ''}.${notes.length ? '\n\n' + notes.join('\n') : ''}\n\nDiese Mail mit Anhang 8 Jahre aufbewahren (§ 147 AO, § 14b UStG).`,
+    attachments,
+  });
+  await env.ORDERS.put(`corrected:${refund.id}`, corr.data.number, { expirationTtl: CORRECTED_TTL });
+  await env.ORDERS.delete(key);
+  return { sent: corr.data.number };
 }
 
 // ---------- handlers ----------
@@ -720,6 +842,16 @@ async function handleWebhook(request, env) {
   const ok = await verifyStripeSignature(body, request.headers.get('Stripe-Signature'), env.STRIPE_WEBHOOK_SECRET);
   if (!ok) return new Response('Invalid signature', { status: 400 });
   const event = JSON.parse(body);
+  if (event.type === 'refund.created') {
+    const refund = event.data.object;
+    await env.ORDERS.put(`correction:${refund.id}`, JSON.stringify({ refund: refund.id, attempts: 0 }), { expirationTtl: INVOICE_TTL });
+    return new Response('queued');
+  }
+  if (event.type === 'refund.failed') {
+    const refund = event.data.object;
+    await sendMail(env, { to: env.OWNER_EMAIL, subject: `ERSTATTUNG FEHLGESCHLAGEN: ${refund.id}`, text: `Stripe meldet, dass die Erstattung ${refund.id} (${(refund.amount / 100).toFixed(2).replace('.', ',')} €, Zahlung ${refund.payment_intent}) fehlgeschlagen ist. Falls schon eine Rechnungskorrektur verschickt wurde, stimmt sie jetzt nicht mehr: Kundin anschreiben, Geld auf anderem Weg erstatten oder die Korrektur von Hand aufheben.` });
+    return new Response('ok');
+  }
   if (event.type !== 'checkout.session.completed' && event.type !== 'checkout.session.async_payment_succeeded') return new Response('ignored');
   const session = event.data.object;
   if (session.payment_status !== 'paid') return new Response('not paid yet');
@@ -752,7 +884,7 @@ async function handleWithdraw(request, env) {
   const receivedEn = berlinStamp(now, 'en');
   const text = withdrawalReceipt({ name, contract, email: b.email, received, receivedEn });
   await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Widerruf / Receipt of your withdrawal (${contract})`, text });
-  await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde.` , replyTo: b.email });
+  await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde. Erstatten im Stripe-Dashboard; die Rechnungskorrektur geht dann automatisch an die Kundin.` , replyTo: b.email });
   return json({ ok: true, received, receivedEn });
 }
 
@@ -803,7 +935,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
   async scheduled(event, env, ctx) {
-    const job = event.cron === INVOICE_CRON ? runInvoices(env) : runRetention(env);
+    const job = event.cron === INVOICE_CRON ? runInvoices(env) : event.cron === CORRECTION_CRON ? runCorrections(env) : runRetention(env);
     ctx.waitUntil(job.then(r => console.log(event.cron, JSON.stringify(r))));
   },
 };

@@ -110,57 +110,91 @@ band = 132
 logo_h = 112
 logo_w = logo_h * crop.width / crop.height
 
-c = []
-c.append(f'q {BLACK[0]:.3f} {BLACK[1]:.3f} {BLACK[2]:.3f} rg 0 {H - band:.2f} {W:.2f} {band:.2f} re f Q\n')
-c.append(f'q {logo_w:.2f} 0 0 {logo_h:.2f} {LEFT - 6:.2f} {H - band + (band - logo_h) / 2:.2f} cm /Im1 Do Q\n')
-c.append(text(RIGHT, H - 62, 'RECHNUNG · INVOICE', 'B', 17, CREME, 'right', spacing=1.2))
-c.append(text(RIGHT, H - 80, 'Birth charts, stripped down.', 'R', 9.5, GOLD, 'right'))
+# Fixed labels of the two documents. The invoice correction for refunds (Sandra, 03.10.2026) uses the same
+# page, fonts and logo; src/invoice.js swaps in its labels (CORRECTION) in the incremental update.
+# Not "Gutschrift": that is a self-billing invoice by the buyer (§ 14 Abs. 2 Satz 5 UStG).
+INVOICE = {
+    'title': [('RECHNUNG · INVOICE', 17, 62)],  # text, size, distance from the top edge
+    'tagline': 80,
+    'meta': ['Rechnungsnummer · Invoice no.', 'Rechnungsdatum · Invoice date', 'Bezahlt am · Paid on', 'Leistungszeitraum · Service period'],
+    'totals': ['Summe netto · Net total', 'USt 19 % · VAT 19 %', 'Gesamtbetrag · Total', 'Bereits bezahlt · Paid', 'Offener Betrag · Amount due'],
+    'notes': [
+        ('B', 'Hinweise · Notes'),
+        ('R', 'Der Betrag wurde bei der Bestellung über Stripe bezahlt. Leistung: persönliches astrologisches Reading, als PDF per E-Mail geliefert.'),
+        ('R', 'The amount was paid via Stripe when you ordered. Service: a personal astrology reading, delivered as a PDF by email.'),
+        ('R', 'Die PDF ist eine E-Rechnung: Neben der sichtbaren Seite enthält sie die Rechnungsdaten als maschinenlesbare Datei (ZUGFeRD). Sie lässt sich wie jede PDF öffnen und drucken.'),
+        ('R', 'The PDF is an e-invoice: besides the page you see, it contains the invoice data as a machine-readable file (ZUGFeRD). You can open and print it like any PDF.'),
+    ],
+}
+CORRECTION = {
+    'title': [('RECHNUNGSKORREKTUR', 17, 56), ('INVOICE CORRECTION', 11, 73)],  # one line would only fit at 13 pt
+    'tagline': 89,
+    'meta': ['Korrekturnummer · Correction no.', 'Korrekturdatum · Correction date', 'Zur Rechnung · Corrects invoice', 'Leistungszeitraum · Service period', 'Erstattet am · Refunded on'],
+    'totals': ['Erstattung netto · Net refund', 'USt 19 % · VAT 19 %', 'Erstattungsbetrag · Total refund', 'Bereits erstattet · Refunded', 'Offener Betrag · Amount due'],
+    'notes': [
+        ('B', 'Hinweise · Notes'),
+        ('R', 'Diese Rechnungskorrektur bezieht sich auf die oben genannte Rechnung und mindert sie um den ausgewiesenen Betrag. Der Betrag wurde über Stripe auf das ursprüngliche Zahlungsmittel erstattet.'),
+        ('R', 'This invoice correction refers to the invoice named above and reduces it by the amount shown. The amount was refunded via Stripe to the original payment method.'),
+        ('R', 'Die PDF ist eine E-Rechnung: Neben der sichtbaren Seite enthält sie die Daten der Rechnungskorrektur als maschinenlesbare Datei (ZUGFeRD). Sie lässt sich wie jede PDF öffnen und drucken.'),
+        ('R', 'The PDF is an e-invoice: besides the page you see, it contains the correction data as a machine-readable file (ZUGFeRD). You can open and print it like any PDF.'),
+    ],
+}
+CORRECTION_META_YS = [560, 545, 530, 515, 500]
 
-c.append(label(LEFT, 675, 'Rechnungsempfänger · Billed to'))
-c.append(label(330, 675, 'Von · From'))
-for i, (s, f) in enumerate([('Sandra Willuweit · astro.strip', 'B'), ('Bundesweg 4', 'R'), ('20149 Hamburg, Deutschland', 'R'),
-                             ('hello@astrostrip.com', 'R'), ('USt-IdNr. · VAT ID: DE317306093', 'R')]):
-    c.append(text(330, 660 - 14 * i, s, f, 10 if f == 'B' else 9.5))
 
-for y, s in zip(LAYOUT['meta']['ys'], ['Rechnungsnummer · Invoice no.', 'Rechnungsdatum · Invoice date', 'Bezahlt am · Paid on', 'Leistungszeitraum · Service period']):
-    c.append(text(LEFT, y, s, 'R', 9, GREY))
+def static_content(v, meta_ys):
+    c = []
+    c.append(f'q {BLACK[0]:.3f} {BLACK[1]:.3f} {BLACK[2]:.3f} rg 0 {H - band:.2f} {W:.2f} {band:.2f} re f Q\n')
+    c.append(f'q {logo_w:.2f} 0 0 {logo_h:.2f} {LEFT - 6:.2f} {H - band + (band - logo_h) / 2:.2f} cm /Im1 Do Q\n')
+    for title, size, top in v['title']:
+        c.append(text(RIGHT, H - top, title, 'B', size, CREME, 'right', spacing=1.2))
+    c.append(text(RIGHT, H - v['tagline'], 'Birth charts, stripped down.', 'R', 9.5, GOLD, 'right'))
 
-c.append(rule(LEFT, 482, RIGHT))
-c.append(label(LEFT, 470, 'Pos.'))
-c.append(label(68, 470, 'Beschreibung · Description'))
-c.append(label(LAYOUT['row']['qty_x'], 470, 'Menge · Qty', 'right'))
-c.append(label(LAYOUT['row']['vat_x'], 470, 'Steuer · VAT', 'right'))
-c.append(label(RIGHT, 470, 'Netto · Net', 'right'))
-c.append(rule(LEFT, 463, RIGHT, GOLD, 0.4))
-c.append(rule(LEFT, 425, RIGHT, GOLD, 0.4))
+    c.append(label(LEFT, 675, 'Rechnungsempfänger · Billed to'))
+    c.append(label(330, 675, 'Von · From'))
+    for i, (s, f) in enumerate([('Sandra Willuweit · astro.strip', 'B'), ('Bundesweg 4', 'R'), ('20149 Hamburg, Deutschland', 'R'),
+                                 ('hello@astrostrip.com', 'R'), ('USt-IdNr. · VAT ID: DE317306093', 'R')]):
+        c.append(text(330, 660 - 14 * i, s, f, 10 if f == 'B' else 9.5))
 
-tl = 300
-for y, s, f in zip(LAYOUT['totals']['ys'], ['Summe netto · Net total', 'USt 19 % · VAT 19 %', 'Gesamtbetrag · Total', 'Bereits bezahlt · Paid', 'Offener Betrag · Amount due'], 'RRBRR'):
-    c.append(text(tl, y, s, f, 10.5 if f == 'B' else 9.5, INK if f == 'B' else GREY))
-c.append(rule(tl, 380, RIGHT, GOLD, 0.6))
+    for y, s in zip(meta_ys, v['meta']):
+        c.append(text(LEFT, y, s, 'R', 9, GREY))
 
-notes = [
-    ('B', 'Hinweise · Notes'),
-    ('R', 'Der Betrag wurde bei der Bestellung über Stripe bezahlt. Leistung: persönliches astrologisches Reading, als PDF per E-Mail geliefert.'),
-    ('R', 'The amount was paid via Stripe when you ordered. Service: a personal astrology reading, delivered as a PDF by email.'),
-    ('R', 'Die PDF ist eine E-Rechnung: Neben der sichtbaren Seite enthält sie die Rechnungsdaten als maschinenlesbare Datei (ZUGFeRD). Sie lässt sich wie jede PDF öffnen und drucken.'),
-    ('R', 'The PDF is an e-invoice: besides the page you see, it contains the invoice data as a machine-readable file (ZUGFeRD). You can open and print it like any PDF.'),
-]
-y = 285
-for f, s in notes:
-    if f == 'B':
-        c.append(label(LEFT, y, s))
-        y -= 16
-        continue
-    for line in wrap(s, 'R', 7.6, RIGHT - LEFT):
-        c.append(text(LEFT, y, line, 'R', 7.6, INK))
-        y -= 10.6
-    y -= 4
+    c.append(rule(LEFT, 482, RIGHT))
+    c.append(label(LEFT, 470, 'Pos.'))
+    c.append(label(68, 470, 'Beschreibung · Description'))
+    c.append(label(LAYOUT['row']['qty_x'], 470, 'Menge · Qty', 'right'))
+    c.append(label(LAYOUT['row']['vat_x'], 470, 'Steuer · VAT', 'right'))
+    c.append(label(RIGHT, 470, 'Netto · Net', 'right'))
+    c.append(rule(LEFT, 463, RIGHT, GOLD, 0.4))
+    c.append(rule(LEFT, 425, RIGHT, GOLD, 0.4))
 
-c.append(rule(LEFT, 62, RIGHT, GOLD, 0.5))
-c.append(text(W / 2, 48, 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Deutschland', 'R', 7.8, GREY, 'center'))
-c.append(text(W / 2, 37, 'hello@astrostrip.com · astrostrip.com · USt-IdNr. DE317306093', 'R', 7.8, GREY, 'center'))
-static_stream = ('q\n' + ''.join(c) + 'Q\n').encode('latin-1')
+    tl = 300
+    for y, s, f in zip(LAYOUT['totals']['ys'], v['totals'], 'RRBRR'):
+        c.append(text(tl, y, s, f, 10.5 if f == 'B' else 9.5, INK if f == 'B' else GREY))
+    c.append(rule(tl, 380, RIGHT, GOLD, 0.6))
+
+    y = 285
+    for f, s in v['notes']:
+        if f == 'B':
+            c.append(label(LEFT, y, s))
+            y -= 16
+            continue
+        for line in wrap(s, 'R', 7.6, RIGHT - LEFT):
+            c.append(text(LEFT, y, line, 'R', 7.6, INK))
+            y -= 10.6
+        y -= 4
+
+    c.append(rule(LEFT, 62, RIGHT, GOLD, 0.5))
+    c.append(text(W / 2, 48, 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Deutschland', 'R', 7.8, GREY, 'center'))
+    c.append(text(W / 2, 37, 'hello@astrostrip.com · astrostrip.com · USt-IdNr. DE317306093', 'R', 7.8, GREY, 'center'))
+    return ('q\n' + ''.join(c) + 'Q\n').encode('latin-1')
+
+
+static_stream = static_content(INVOICE, LAYOUT['meta']['ys'])
+correction_stream = static_content(CORRECTION, CORRECTION_META_YS)
+# the long title must stay clear of the logo on the left
+for title, size, _ in CORRECTION['title']:
+    assert RIGHT - fonts['B'].width(title, size, 1.2) > LEFT - 6 + logo_w + 20, 'correction title runs into the logo'
 
 # ---------- PDF objects ----------
 doc = fitz.open()
@@ -295,3 +329,16 @@ js = ('// Generated by website/tools/invoice/build-template.py — do not edit b
       f'export const TEMPLATE_B64 = "{base64.b64encode(raw).decode()}";\n')
 OUT.write_text(js, encoding='utf-8')
 print(f'{OUT.relative_to(ROOT)}: template {len(raw)} bytes, objects {size}, page {pg}, root {cat}, startxref {startxref}')
+
+# Invoice correction: its fixed labels (an uncompressed content stream that replaces the invoice's in the
+# update) and its XMP title. Written separately, so rebuilding it never touches the checked invoice template
+# above unless that is rebuilt too (only its random file ID changes then). Glyph ids and resource names
+# (/FR, /FB, /Im1) are the same in every build.
+XMP_CORRECTION = XMP.replace('Rechnung · Invoice astro.strip', 'Rechnungskorrektur · Invoice correction astro.strip')
+assert XMP_CORRECTION != XMP
+cmeta = {'static': correction_stream.decode('latin-1'), 'xmp': XMP_CORRECTION, 'metaYs': CORRECTION_META_YS}
+OUT_C = ROOT / 'website' / 'src' / 'invoice-correction-template.js'
+OUT_C.write_text('// Generated by website/tools/invoice/build-template.py — do not edit by hand.\n'
+                 '// Fixed labels and XMP title of the invoice correction (Rechnungskorrektur); see src/invoice.js.\n'
+                 f'export const CORRECTION_META = {json.dumps(cmeta, ensure_ascii=False, separators=(",", ":"))};\n', encoding='utf-8')
+print(f'{OUT_C.relative_to(ROOT)}: labels {len(correction_stream)} bytes')

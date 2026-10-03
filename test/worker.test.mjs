@@ -47,11 +47,28 @@ const env = {
   ASSETS: { fetch: async () => new Response('asset') },
 };
 const sessions = []; const mails = []; const lists = [];
+const pis = {}; const refunds = {}; // Stripe payments and refunds for the invoice correction
 globalThis.fetch = async (url, init = {}) => {
   url = String(url);
   if (url.startsWith('https://api.stripe.com/v1/checkout/sessions') && (init.method || 'GET') === 'GET') {
-    const gte = Number(new URL(url).searchParams.get('created[gte]'));
+    const q = new URL(url).searchParams;
+    if (q.get('payment_intent')) return new Response(JSON.stringify({ data: sessions.filter(s => s.payment_intent === q.get('payment_intent')).slice(0, 1), has_more: false }));
+    const gte = Number(q.get('created[gte]'));
     return new Response(JSON.stringify({ data: sessions.filter(s => s.created >= gte), has_more: false }));
+  }
+  let m;
+  if ((m = url.match(/^https:\/\/api\.stripe\.com\/v1\/payment_intents\/(\w+)$/))) {
+    const pi = pis[m[1]];
+    if (!pi) return new Response('{"error":{"message":"No such payment_intent"}}', { status: 404 });
+    if (init.method === 'POST') { for (const [k, v] of new URLSearchParams(init.body)) pi.metadata[k.slice(9, -1)] = v; }
+    return new Response(JSON.stringify(pi));
+  }
+  if ((m = url.match(/^https:\/\/api\.stripe\.com\/v1\/refunds\/(\w+)$/))) {
+    return refunds[m[1]] ? new Response(JSON.stringify(refunds[m[1]])) : new Response('{"error":{"message":"No such refund"}}', { status: 404 });
+  }
+  if (url.startsWith('https://api.stripe.com/v1/refunds?')) {
+    const pi = new URL(url).searchParams.get('payment_intent');
+    return new Response(JSON.stringify({ data: Object.values(refunds).filter(r => r.payment_intent === pi).reverse(), has_more: false })); // Stripe lists newest first
   }
   if (url === 'https://api.stripe.com/v1/checkout/sessions' && init.method === 'POST') {
     const p = new URLSearchParams(init.body);
@@ -99,7 +116,8 @@ r = await worker.fetch(req('/api/slots'), env);
 assert.equal((await r.json()).ultra.left, 2, 'open session holds a slot');
 
 // payment completes -> webhook
-sessions[0].status = 'complete'; sessions[0].payment_status = 'paid';
+sessions[0].status = 'complete'; sessions[0].payment_status = 'paid'; sessions[0].payment_intent = 'pi_0';
+pis.pi_0 = { id: 'pi_0', amount: 12900, created: sessions[0].created, metadata: { order_id: sessions[0].metadata.order_id, strip: 'ultra', week: thisWeek } };
 sessions[0].customer_details = { name: 'Test Person', email: 't@example.com', address: { line1: 'Teststraße 5', line2: null, postal_code: '20149', city: 'Hamburg', state: null, country: 'DE' } };
 const evt = JSON.stringify({ type: 'checkout.session.completed', data: { object: sessions[0] } });
 const t2 = Math.floor(Date.now() / 1000);
@@ -154,7 +172,89 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.deepEqual(servicePeriod({ thisWeek: false, week: '2026-10-12' }, STRIPS.maxi, '2026-10-02'), { start: '2026-10-12', end: '2026-10-20' });
   assert.ok(xml.includes('<ram:BillingSpecifiedPeriod>') && xml.includes('<ram:ShipToTradeParty><ram:Name>Test Person</ram:Name>'), 'service period and delivery party in the XML');
   for (const s of Object.values(STRIPS)) { const a = splitGross(s.cents); assert.equal(a.vat, Math.round(a.net * 0.19)); assert.equal(a.net + a.vat, s.cents); }
+  // the invoice date and service period are noted at the payment, for a later correction
+  assert.match(pis.pi_0.metadata.invoice_date, /^\d{4}-\d{2}-\d{2}$/); assert.match(pis.pi_0.metadata.invoice_period, /^\d{4}-\d{2}-\d{2}\/\d{4}-\d{2}-\d{2}$/);
   console.log('invoice ok');
+}
+// invoice correction (Rechnungskorrektur) for refunds: refund.created queues, a cron run of its own sends
+{
+  const { CORRECTION_CRON, INVOICE_TRIES } = await import('../src/worker.js');
+  const signed = async evtBody => {
+    const ts = Math.floor(Date.now() / 1000);
+    const sg = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${ts}.${evtBody}`)))].map(b => b.toString(16).padStart(2, '0')).join('');
+    return worker.fetch(req('/api/stripe-webhook', 'POST', evtBody, { 'Stripe-Signature': `t=${ts},v1=${sg}` }), env);
+  };
+  const refundEvent = (type, r) => signed(JSON.stringify({ type, data: { object: r } }));
+  const run = async () => { const p = []; await worker.scheduled({ cron: CORRECTION_CRON }, env, { waitUntil: x => p.push(x) }); await Promise.all(p); };
+  const orderId = sessions[0].metadata.order_id;
+  const xmlOf = m => Buffer.from(m.attachments[0].Base64Content, 'base64').toString('utf8');
+  const leftUltra = async () => (await (await worker.fetch(req('/api/slots'), env)).json()).ultra.left;
+  const ultraBefore = await leftUltra();
+
+  // full refund of the paid Ultra Strip
+  const now = Math.floor(Date.now() / 1000);
+  refunds.re_1 = { id: 're_1', amount: 12900, payment_intent: 'pi_0', status: 'succeeded', created: now };
+  r = await refundEvent('refund.created', refunds.re_1);
+  assert.equal(await r.text(), 'queued');
+  assert.deepEqual(JSON.parse(kv.get('correction:re_1')), { refund: 're_1', attempts: 0 }, 'job holds only the refund id');
+  let before = mails.length;
+  await run();
+  let [toCustomer, toOwner] = mails.slice(before);
+  assert.equal(mails.length, before + 2, 'correction to customer and copy to owner');
+  assert.equal(toCustomer.to[0], 't@example.com'); assert.match(toCustomer.subject, new RegExp(`Your invoice correction ${orderId}-K1`));
+  assert.match(toCustomer.text, /refunded 129,00 €/); assert.match(toCustomer.text, /Rechnungskorrektur/); assert.ok(!/Gutschrift/.test(toCustomer.text));
+  assert.equal(toOwner.to[0], 'owner@example.com'); assert.match(toOwner.subject, new RegExp(`Rechnungskorrektur ${orderId}-K1 \\(Buchhaltung, 8 Jahre`));
+  assert.match(toOwner.text, /volle Erstattung 129,00 €/); assert.match(toOwner.text, /Wochenplatz ist wieder frei/); assert.ok(!/ACHTUNG/.test(toOwner.text), 'invoice date known');
+  assert.equal(toCustomer.attachments[0].Filename, `astro.strip-Rechnungskorrektur-${orderId}-K1.pdf`);
+  let xml = xmlOf(toCustomer);
+  assert.ok(xml.includes('<ram:TypeCode>381</ram:TypeCode>'), 'document type 381');
+  assert.ok(xml.includes(`<ram:InvoiceReferencedDocument><ram:IssuerAssignedID>${orderId}</ram:IssuerAssignedID><ram:FormattedIssueDateTime><qdt:DateTimeString format="102">${pis.pi_0.metadata.invoice_date.replace(/-/g, '')}</qdt:DateTimeString>`), 'refers to the invoice (BT-25, BT-26)');
+  assert.ok(xml.includes('<ram:GrandTotalAmount>129.00</ram:GrandTotalAmount>') && xml.includes('<ram:LineOne>Teststraße 5</ram:LineOne>') && xml.includes('<ram:BillingSpecifiedPeriod>'));
+  assert.ok(!kv.has('correction:re_1') && kv.has('correction:re_1') === false);
+  assert.equal(await leftUltra(), ultraBefore + 1, 'refunded order frees its week slot');
+  // Stripe delivers the same event again: no second correction
+  await refundEvent('refund.created', refunds.re_1); before = mails.length; await run();
+  assert.equal(mails.length, before, 'one refund, one correction'); assert.ok(!kv.has('correction:re_1'));
+
+  // two partial refunds of an older order (no invoice date at Stripe yet): K follows Stripe's order, not the queue's
+  sessions.push({ id: 'cs_part', created: now - 86400, expires_at: 0, status: 'expired', payment_intent: 'pi_1', metadata: { strip: 'maxi', order_id: 'AS-20261001-PART1', week: String(addWeeks(weekStart(), -3)) },
+    customer_details: { name: 'Kim Test', email: 'k@example.com', address: { line1: 'Ring 1', postal_code: '1010', city: 'Wien', country: 'AT' } } });
+  pis.pi_1 = { id: 'pi_1', amount: 7900, created: now - 86400, metadata: { order_id: 'AS-20261001-PART1', strip: 'maxi' } };
+  refunds.re_2 = { id: 're_2', amount: 3950, payment_intent: 'pi_1', status: 'succeeded', created: now - 60 };
+  refunds.re_3 = { id: 're_3', amount: 1000, payment_intent: 'pi_1', status: 'pending', created: now };
+  await refundEvent('refund.created', refunds.re_3); before = mails.length; await run();
+  [toCustomer, toOwner] = mails.slice(before);
+  assert.match(toCustomer.subject, /AS-20261001-PART1-K2/); assert.equal(toCustomer.to[0], 'k@example.com');
+  await refundEvent('refund.created', refunds.re_2); before = mails.length; await run();
+  [toCustomer, toOwner] = mails.slice(before);
+  assert.match(toCustomer.subject, /AS-20261001-PART1-K1/); assert.match(toCustomer.text, /^Hi Kim Test,/);
+  assert.match(toOwner.text, /Teilerstattung 39,50 € inkl\. 19 % USt \(netto 33,19 €, USt 6,31 €\)/); assert.match(toOwner.text, /Rechnungsdatum nicht bei Stripe hinterlegt/);
+  xml = xmlOf(toCustomer);
+  assert.ok(xml.includes('<ram:LineTotalAmount>33.19</ram:LineTotalAmount>') && xml.includes('<ram:TaxTotalAmount currencyID="EUR">6.31</ram:TaxTotalAmount>') && xml.includes('<ram:GrandTotalAmount>39.50</ram:GrandTotalAmount>'), 'partial amounts');
+  assert.equal(Math.round(3319 * 0.19), 631, 'BR-CO-17'); assert.ok(xml.includes('Teilerstattung') && xml.includes('<ram:CountryID>AT</ram:CountryID>') && !xml.includes('<ram:BillingSpecifiedPeriod>'));
+  // a slot outside the booking window changes nothing
+  assert.equal(await leftUltra(), ultraBefore + 1);
+
+  // failed refund, refund without a website order, refund.failed event: only Sandra is told
+  refunds.re_4 = { id: 're_4', amount: 3900, payment_intent: 'pi_1', status: 'failed', created: now + 5 };
+  pis.pi_2 = { id: 'pi_2', amount: 5000, created: now, metadata: {} };
+  refunds.re_5 = { id: 're_5', amount: 5000, payment_intent: 'pi_2', status: 'succeeded', created: now };
+  for (const [id, pattern] of [['re_4', /re_4: failed, keine Rechnungskorrektur/], ['re_5', /Erstattung ohne Website-Bestellung: re_5/]]) {
+    await refundEvent('refund.created', refunds[id]); before = mails.length; await run();
+    assert.equal(mails.length, before + 1); assert.equal(mails[before].to[0], 'owner@example.com'); assert.match(mails[before].subject, pattern);
+  }
+  before = mails.length;
+  r = await refundEvent('refund.failed', refunds.re_4);
+  assert.equal(mails.length, before + 1); assert.match(mails[before].subject, /ERSTATTUNG FEHLGESCHLAGEN: re_4/);
+  // a job that keeps failing: retried, then Sandra is warned
+  kv.set('correction:re_broken', JSON.stringify({ refund: 're_broken', attempts: 0 }));
+  for (let i = 0; i < INVOICE_TRIES; i++) await run().catch(() => {});
+  assert.equal(JSON.parse(kv.get('correction:re_broken')).attempts, INVOICE_TRIES);
+  before = mails.length; await run();
+  assert.match(mails[before].subject, /RECHNUNGSKORREKTUR FEHLT: Erstattung re_broken/); assert.ok(!kv.has('correction:re_broken'));
+  // the slot tests below count the original bookings
+  kv.delete('slots:freed'); sessions.splice(sessions.findIndex(x => x.id === 'cs_part'), 1);
+  console.log('correction ok');
 }
 // bad signature
 r = await worker.fetch(req('/api/stripe-webhook', 'POST', evt, { 'Stripe-Signature': `t=${t2},v1=00` }), env);

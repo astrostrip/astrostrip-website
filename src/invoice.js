@@ -10,6 +10,7 @@
 // The template length is a multiple of 3, so its base64 can be reused as is.
 
 import { TEMPLATE_B64, TEMPLATE_META as T } from './invoice-template.js';
+import { CORRECTION_META as C } from './invoice-correction-template.js';
 
 export const SELLER = {
   name: 'Sandra Willuweit', trading: 'astro.strip', street: 'Bundesweg 4', zip: '20149', city: 'Hamburg',
@@ -66,23 +67,29 @@ const COUNTRIES = {
 };
 const countryName = code => COUNTRIES[code] || code;
 
+// Buyer as Stripe collected it (name and billing address of the Checkout Session).
+function buyerData(cd, fallbackName, email) {
+  const a = cd.address || {};
+  const country = /^[A-Z]{2}$/.test(a.country || '') ? a.country : '';
+  return {
+    name: (cd.name || fallbackName || '').trim(),
+    lines: [a.line1, a.line2, [a.postal_code, a.city].filter(Boolean).join(' '), a.state].map(s => (s || '').trim()).filter(Boolean),
+    country, countryName: country ? countryName(country) : '',
+    email,
+    raw: a,
+  };
+}
+
 // Everything the invoice shows, from the stored order and the paid Stripe session.
 export function invoiceData(order, session, strip, nowMs = Date.now(), paidMs = nowMs) {
   const cd = session.customer_details || {};
-  const a = cd.address || {};
-  const country = /^[A-Z]{2}$/.test(a.country || '') ? a.country : '';
+  const country = buyerData(cd, order.name, order.email).country;
   const date = berlinDate(nowMs);
   return {
     number: order.id,
     issueDate: date, paidDate: berlinDate(paidMs),
     period: servicePeriod(order, strip, berlinDate(paidMs)),
-    buyer: {
-      name: (cd.name || order.name || '').trim(),
-      lines: [a.line1, a.line2, [a.postal_code, a.city].filter(Boolean).join(' '), a.state].map(s => (s || '').trim()).filter(Boolean),
-      country, countryName: country ? countryName(country) : '',
-      email: order.email,
-      raw: a,
-    },
+    buyer: buyerData(cd, order.name, order.email),
     item: { name: `${strip.name} – ${strip.tag}`, short: strip.name },
     amounts: splitGross(strip.cents),
     missingCountry: !country,
@@ -92,23 +99,35 @@ export function invoiceData(order, session, strip, nowMs = Date.now(), paidMs = 
 // ---------- XML (UN/CEFACT CII D16B, Factur-X / ZUGFeRD profile EN 16931) ----------
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// The invoice correction (d.correction set) uses the same structure: document type 381 (credit note /
+// Rechnungskorrektur, EN 16931 BT-3), the refunded amount as positive values, and the reference to the
+// corrected invoice (BT-25 number, BT-26 date), as § 31 Abs. 5 UStDV asks.
 export function invoiceXml(d) {
   const { net, vat, gross } = d.amounts;
   const b = d.buyer;
   const addr = buyerPostal(b);
+  const k = d.correction;
+  const note = k
+    ? `Rechnungskorrektur zur Rechnung ${k.invoice} vom ${dmy(k.invoiceDate)}: ${k.full ? 'Erstattung des vollen Betrags' : 'Teilerstattung; der nicht erstattete Betrag bleibt Entgelt für die bereits erbrachte Leistung'}. Erstattet am ${dmy(k.refundDate)} über Stripe.`
+    : `Leistungszeitraum ${dmy(d.period.start)} bis ${dmy(d.period.end)}: persönliches astrologisches Reading als PDF per E-Mail. Bezahlt am ${dmy(d.paidDate)} über Stripe.`;
+  const terms = k
+    ? `Erstattet am ${dmy(k.refundDate)} über Stripe auf das ursprüngliche Zahlungsmittel / refunded on ${enDate(k.refundDate)} via Stripe to the original payment method`
+    : `Bezahlt am ${dmy(d.paidDate)} über Stripe / paid on ${enDate(d.paidDate)} via Stripe`;
+  const period = d.period ? `<ram:BillingSpecifiedPeriod><ram:StartDateTime><udt:DateTimeString format="102">${d.period.start.replace(/-/g, '')}</udt:DateTimeString></ram:StartDateTime><ram:EndDateTime><udt:DateTimeString format="102">${d.period.end.replace(/-/g, '')}</udt:DateTimeString></ram:EndDateTime></ram:BillingSpecifiedPeriod>\n` : '';
+  const ref = k ? `<ram:InvoiceReferencedDocument><ram:IssuerAssignedID>${esc(k.invoice)}</ram:IssuerAssignedID><ram:FormattedIssueDateTime><qdt:DateTimeString format="102">${k.invoiceDate.replace(/-/g, '')}</qdt:DateTimeString></ram:FormattedIssueDateTime></ram:InvoiceReferencedDocument>\n` : '';
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
 <rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
 <rsm:ExchangedDocument>
 <ram:ID>${esc(d.number)}</ram:ID>
-<ram:TypeCode>380</ram:TypeCode>
+<ram:TypeCode>${k ? 381 : 380}</ram:TypeCode>
 <ram:IssueDateTime><udt:DateTimeString format="102">${d.issueDate.replace(/-/g, '')}</udt:DateTimeString></ram:IssueDateTime>
-<ram:IncludedNote><ram:Content>Leistungszeitraum ${dmy(d.period.start)} bis ${dmy(d.period.end)}: persönliches astrologisches Reading als PDF per E-Mail. Bezahlt am ${dmy(d.paidDate)} über Stripe.</ram:Content></ram:IncludedNote>
+<ram:IncludedNote><ram:Content>${esc(note)}</ram:Content></ram:IncludedNote>
 </rsm:ExchangedDocument>
 <rsm:SupplyChainTradeTransaction>
 <ram:IncludedSupplyChainTradeLineItem>
 <ram:AssociatedDocumentLineDocument><ram:LineID>1</ram:LineID></ram:AssociatedDocumentLineDocument>
-<ram:SpecifiedTradeProduct><ram:Name>${esc(d.item.name)}</ram:Name><ram:Description>Persönliches astrologisches Reading als PDF / personal astrology reading (PDF)</ram:Description></ram:SpecifiedTradeProduct>
+<ram:SpecifiedTradeProduct><ram:Name>${esc(d.item.name)}</ram:Name><ram:Description>${esc(d.item.xmlDesc || 'Persönliches astrologisches Reading als PDF / personal astrology reading (PDF)')}</ram:Description></ram:SpecifiedTradeProduct>
 <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${xmlAmount(net)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
 <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
 <ram:SpecifiedLineTradeSettlement>
@@ -134,8 +153,7 @@ ${addr}
 <ram:ApplicableHeaderTradeSettlement>
 <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
 <ram:ApplicableTradeTax><ram:CalculatedAmount>${xmlAmount(vat)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${xmlAmount(net)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${VAT_RATE}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
-<ram:BillingSpecifiedPeriod><ram:StartDateTime><udt:DateTimeString format="102">${d.period.start.replace(/-/g, '')}</udt:DateTimeString></ram:StartDateTime><ram:EndDateTime><udt:DateTimeString format="102">${d.period.end.replace(/-/g, '')}</udt:DateTimeString></ram:EndDateTime></ram:BillingSpecifiedPeriod>
-<ram:SpecifiedTradePaymentTerms><ram:Description>Bezahlt am ${dmy(d.paidDate)} über Stripe / paid on ${enDate(d.paidDate)} via Stripe</ram:Description></ram:SpecifiedTradePaymentTerms>
+${period}<ram:SpecifiedTradePaymentTerms><ram:Description>${terms}</ram:Description></ram:SpecifiedTradePaymentTerms>
 <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
 <ram:LineTotalAmount>${xmlAmount(net)}</ram:LineTotalAmount>
 <ram:TaxBasisTotalAmount>${xmlAmount(net)}</ram:TaxBasisTotalAmount>
@@ -144,7 +162,7 @@ ${addr}
 <ram:TotalPrepaidAmount>${xmlAmount(gross)}</ram:TotalPrepaidAmount>
 <ram:DuePayableAmount>0.00</ram:DuePayableAmount>
 </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-</ram:ApplicableHeaderTradeSettlement>
+${ref}</ram:ApplicableHeaderTradeSettlement>
 </rsm:SupplyChainTradeTransaction>
 </rsm:CrossIndustryInvoice>
 `;
@@ -197,11 +215,12 @@ function pageContent(d) {
   [...d.buyer.lines, d.buyer.countryName].filter(Boolean).slice(0, 4).forEach((line, i) => {
     out.push(text(L.buyer.x, L.buyer.y - L.buyer.step * (i + 1), fit(line, 'R', 9.5, colW), 'R', 9.5));
   });
-  const meta = [d.number, dmy(d.issueDate), dmy(d.paidDate), `${dmy(d.period.start)} – ${dmy(d.period.end)}`];
-  meta.forEach((v, i) => out.push(text(L.meta.x, L.meta.ys[i], v, i === 0 ? 'B' : 'R', 9.5)));
+  const meta = d.meta || [d.number, dmy(d.issueDate), dmy(d.paidDate), `${dmy(d.period.start)} – ${dmy(d.period.end)}`];
+  const metaYs = d.correction ? C.metaYs : L.meta.ys;
+  meta.forEach((v, i) => out.push(text(L.meta.x, metaYs[i], v, i === 0 ? 'B' : 'R', 9.5)));
   out.push(text(40, L.row.y, '1', 'R', 9.5));
-  out.push(text(68, L.row.y, d.item.name, 'B', 10));
-  out.push(text(68, L.row.desc_y, 'Persönliches astrologisches Reading als PDF · Personal astrology reading (PDF)', 'R', 8.5, COLORS.grey));
+  out.push(text(68, L.row.y, fit(d.item.name, 'B', 10, L.row.qty_x - 68 - 40), 'B', 10));
+  out.push(text(68, L.row.desc_y, fit(d.item.desc || 'Persönliches astrologisches Reading als PDF · Personal astrology reading (PDF)', 'R', 8.5, L.row.net_x - 68), 'R', 8.5, COLORS.grey));
   out.push(text(L.row.qty_x, L.row.y, '1', 'R', 9.5, COLORS.ink, 'right'));
   out.push(text(L.row.vat_x, L.row.y, `${VAT_RATE} %`, 'R', 9.5, COLORS.ink, 'right'));
   out.push(text(L.row.net_x, L.row.y, money(net), 'R', 9.5, COLORS.ink, 'right'));
@@ -234,12 +253,23 @@ export function invoiceUpdate(d, xml, nowMs = Date.now(), fileId = null) {
   const dyn = T.size, ef = T.size + 1, fs = T.size + 2;
   const content = enc.encode(pageContent(d));
   const xmlBytes = enc.encode(xml);
+  // The correction replaces the invoice's fixed labels (its own content stream) and the XMP title.
+  const lab = T.size + 3, xmp = T.size + 4;
+  const corr = !!d.correction;
+  let pageDict = T.pageDict.replace('{dyn}', dyn);
+  let catalog = T.catalog;
+  if (corr) {
+    pageDict = pageDict.replace(/\/Contents \[\d+ 0 R /, `/Contents [${lab} 0 R `);
+    catalog = catalog.replace(/\/Metadata \d+ 0 R/, `/Metadata ${xmp} 0 R`);
+  }
+  const stream = (num, dict, bytes) => [num, [enc.encode(`${num} 0 obj\n<< ${dict}/Length ${bytes.length} >>\nstream\n`), bytes, enc.encode('\nendstream\nendobj\n')]];
   const objs = [
     [dyn, [enc.encode(`${dyn} 0 obj\n<< /Length ${content.length} >>\nstream\n`), content, enc.encode('\nendstream\nendobj\n')]],
     [ef, [enc.encode(`${ef} 0 obj\n<< /Type /EmbeddedFile /Subtype /text#2Fxml /Params << /ModDate (${pdfDate(nowMs)}) /Size ${xmlBytes.length} >> /Length ${xmlBytes.length} >>\nstream\n`), xmlBytes, enc.encode('\nendstream\nendobj\n')]],
     [fs, [enc.encode(`${fs} 0 obj\n<< /Type /Filespec /F (factur-x.xml) /UF (factur-x.xml) /Desc (Factur-X invoice) /AFRelationship /Alternative /EF << /F ${ef} 0 R /UF ${ef} 0 R >> >>\nendobj\n`)]],
-    [T.page, [enc.encode(`${T.page} 0 obj\n${T.pageDict.replace('{dyn}', dyn)}\nendobj\n`)]],
-    [T.root, [enc.encode(`${T.root} 0 obj\n${T.catalog.replace(/>>\s*$/, `/Names << /EmbeddedFiles << /Names [(factur-x.xml) ${fs} 0 R] >> >> /AF [${fs} 0 R]>>`)}\nendobj\n`)]],
+    ...(corr ? [stream(lab, '', enc.encode(C.static)), stream(xmp, '/Type /Metadata /Subtype /XML ', enc.encode(C.xmp))] : []),
+    [T.page, [enc.encode(`${T.page} 0 obj\n${pageDict}\nendobj\n`)]],
+    [T.root, [enc.encode(`${T.root} 0 obj\n${catalog.replace(/>>\s*$/, `/Names << /EmbeddedFiles << /Names [(factur-x.xml) ${fs} 0 R] >> >> /AF [${fs} 0 R]>>`)}\nendobj\n`)]],
   ];
   const chunks = [];
   const offsets = {};
@@ -259,7 +289,7 @@ export function invoiceUpdate(d, xml, nowMs = Date.now(), fileId = null) {
     i = j + 1;
   }
   const newId = fileId || [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
-  xref += `trailer\n<< /Size ${T.size + 3} /Root ${T.root} 0 R /Prev ${T.prevXref} /ID [<${T.id}> <${newId}>] >>\nstartxref\n${pos}\n%%EOF\n`;
+  xref += `trailer\n<< /Size ${T.size + (corr ? 5 : 3)} /Root ${T.root} 0 R /Prev ${T.prevXref} /ID [<${T.id}> <${newId}>] >>\nstartxref\n${pos}\n%%EOF\n`;
   chunks.push(enc.encode(xref));
   return concat(chunks);
 }
@@ -277,6 +307,39 @@ export function invoicePdfBytes(d, xml, nowMs = Date.now(), fileId = null) {
   const tpl = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) tpl[i] = bin.charCodeAt(i);
   return concat([tpl, invoiceUpdate(d, xml, nowMs, fileId)]);
+}
+
+// ---------- invoice correction for refunds (Sandra, 03.10.2026) ----------
+// Not called "Gutschrift": in VAT law that is a self-billing invoice issued by the buyer (§ 14 Abs. 2 Satz 5
+// UStG). A refund changes the taxable amount (§ 17 UStG); the correction documents it and refers to the
+// invoice (§ 31 Abs. 5 UStDV). Number = invoice number + K1, K2 … (one per refund of the same payment).
+// k: { orderId, n, invoiceDate (YYYY-MM-DD), period ({start, end} or null), refundCents, refundMs, full }
+export function correctionData(k, customerDetails, email, strip, nowMs = Date.now()) {
+  const cd = customerDetails || {};
+  const buyer = buyerData(cd, '', email);
+  const refundDate = berlinDate(k.refundMs);
+  const issueDate = berlinDate(nowMs);
+  const number = `${k.orderId}-K${k.n}`;
+  return {
+    number, issueDate, period: k.period || null,
+    correction: { invoice: k.orderId, invoiceDate: k.invoiceDate, refundDate, full: k.full },
+    meta: [number, dmy(issueDate), `${k.orderId} · ${dmy(k.invoiceDate)}`, k.period ? `${dmy(k.period.start)} – ${dmy(k.period.end)}` : '–', dmy(refundDate)],
+    buyer,
+    item: {
+      name: `Erstattung · Refund: ${strip.name}`, short: strip.name,
+      desc: k.full ? 'Erstattung des vollen Betrags · Full refund' : 'Teilerstattung, der Rest bleibt Entgelt für die erbrachte Leistung · Partial refund',
+      xmlDesc: k.full ? 'Erstattung des vollen Betrags / full refund' : 'Teilerstattung; der nicht erstattete Betrag bleibt Entgelt für die bereits erbrachte Leistung / partial refund',
+    },
+    amounts: splitGross(k.refundCents),
+    missingCountry: !buyer.country,
+  };
+}
+export const correctionFilename = d => `astro.strip-Rechnungskorrektur-${d.number}.pdf`;
+
+export function buildCorrection(k, customerDetails, email, strip, nowMs = Date.now()) {
+  const d = correctionData(k, customerDetails, email, strip, nowMs);
+  const xml = invoiceXml(d);
+  return { data: d, xml, filename: correctionFilename(d), base64: invoicePdfBase64(d, xml, nowMs) };
 }
 
 export function buildInvoice(order, session, strip, nowMs = Date.now(), paidMs = nowMs) {
