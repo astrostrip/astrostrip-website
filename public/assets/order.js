@@ -33,6 +33,9 @@ function update() {
   $('#residence-req').hidden = !ultra;
   $('#ancestry-row').hidden = !ultra;
   if (!ultra) $('#ancestry').checked = false;
+  // The Mini Strip reads only the Big Three: no karmic nodes layer (Sandra, 03.10.2026).
+  $('#options').hidden = strip === 'mini';
+  if (strip === 'mini') $('#nodes').checked = false;
   const s = strip && slots ? slots[strip] : null;
   const soldOut = !!(s && !s.next);
   const later = !!(s && s.next && !s.thisWeek);
@@ -111,7 +114,7 @@ form.addEventListener('submit', async e => {
     place: place ? { label: [place.name, place.region, place.country].filter(Boolean).join(', '), lat: place.lat, lon: place.lon, tz: place.tz } : null,
     lifeArea: strip === 'ultra' ? $('#life-area').value : '',
     language: $('#language').value,
-    nodes: $('#nodes').checked,
+    nodes: strip !== 'mini' && $('#nodes').checked,
     ancestry: strip === 'ultra' && $('#ancestry').checked,
     note: $('#note').value.trim(),
     questionnaire: withQ ? {

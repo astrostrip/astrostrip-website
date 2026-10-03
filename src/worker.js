@@ -247,7 +247,7 @@ export function validateOrder(o) {
     strip, name, email: String(o.email || '').trim(), language: lang,
     birthDate: o.birthDate, birthTime: o.birthTime, timeSource: o.timeSource,
     place: { label: clean(place.label), lat: Number(place.lat), lon: Number(place.lon), tz: clean(place.tz, 60) },
-    lifeArea, nodes: o.nodes === true, ancestry: strip === 'ultra' && o.ancestry === true,
+    lifeArea, nodes: strip !== 'mini' && o.nodes === true, ancestry: strip === 'ultra' && o.ancestry === true, // Mini = Big Three only, no nodes layer
     note: clean(o.note, 500),
     questionnaire,
     newsletter: o.newsletter === true,

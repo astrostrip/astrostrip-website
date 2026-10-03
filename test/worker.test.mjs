@@ -28,6 +28,8 @@ assert.equal(validateOrder(good).errors.length, 0);
 assert.ok(validateOrder({ ...good, earlyStart: false }).errors.length);
 assert.ok(validateOrder({ ...good, lifeArea: 'Health' }).errors.length);
 assert.equal(validateOrder({ ...good, strip: 'mini', lifeArea: '' }).order.ancestry, false);
+assert.equal(validateOrder({ ...good, strip: 'mini', lifeArea: '' }).order.nodes, false, 'no karmic nodes layer in the Mini Strip');
+assert.equal(validateOrder({ ...good, strip: 'maxi', lifeArea: '', questionnaire: {} }).order.nodes, true);
 assert.ok(validateOrder({ ...good, questionnaire: { ...good.questionnaire, residence: null } }).errors.length, 'ultra needs residence');
 assert.equal(validateOrder({ ...good, strip: 'maxi', lifeArea: '', questionnaire: { relationship: 'Complicated' } }).errors.length, 0, 'maxi residence optional');
 assert.equal(validateOrder({ ...good, strip: 'maxi', lifeArea: '', questionnaire: { relationship: 'Complicated' } }).order.questionnaire.relationship, '', 'unknown status dropped');
