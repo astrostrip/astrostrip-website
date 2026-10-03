@@ -625,12 +625,11 @@ async function queueInvoice(env, order, session) {
 }
 
 export function invoiceMailText(d, strip) {
-  const amount = `${(d.amounts.gross / 100).toFixed(2).replace('.', ',')} €`;
   return [
     `Hi ${d.buyer.name},`,
     '',
     'thank you for trusting astro.strip with your stars.',
-    `Attached is the invoice ${d.number} for your ${strip.name} (${amount} including 19 % VAT, already paid).`,
+    `Attached is the invoice for your ${strip.name}.`,
     '',
     'Enjoy exploring your chart. Soon your stars will be stripped down to what really matters.',
     '',
@@ -638,7 +637,7 @@ export function invoiceMailText(d, strip) {
     `Hallo ${d.buyer.name},`,
     '',
     'danke, dass du astro.strip deine Sterne anvertraust.',
-    `Anbei die Rechnung ${d.number} für deinen ${strip.name} (${amount} inkl. 19 % USt, bereits bezahlt).`,
+    `Anbei die Rechnung für deinen ${strip.name}.`,
     '',
     'Viel Freude beim Erforschen deiner Sterne. Bald lassen sie für dich die Hüllen fallen.',
     '',
@@ -758,14 +757,14 @@ export function correctionMailText(d, strip) {
   return [
     `Hi${name},`,
     '',
-    `we have refunded ${amount} (including 19 % VAT) for your ${strip.name} (invoice ${d.correction.invoice}) to your original payment method. Depending on your bank, it shows up within 5 to 10 working days.`,
-    `Attached is the invoice correction ${d.number}. Please keep it together with your invoice.`,
+    `we have refunded ${amount} for your ${strip.name} to your original payment method. Depending on your bank, it shows up within 5 to 10 working days.`,
+    'Attached is the invoice correction. Please keep it together with your invoice.',
     '',
     '',
     `Hallo${name},`,
     '',
-    `wir haben dir ${amount} (inkl. 19 % USt) für deinen ${strip.name} (Rechnung ${d.correction.invoice}) auf dein ursprüngliches Zahlungsmittel erstattet. Je nach Bank ist der Betrag in 5 bis 10 Werktagen sichtbar.`,
-    `Anbei die Rechnungskorrektur ${d.number}. Bitte bewahre sie zusammen mit der Rechnung auf.`,
+    `wir haben dir ${amount} für deinen ${strip.name} auf dein ursprüngliches Zahlungsmittel erstattet. Je nach Bank ist der Betrag in 5 bis 10 Werktagen sichtbar.`,
+    'Anbei die Rechnungskorrektur. Bitte bewahre sie zusammen mit der Rechnung auf.',
     '',
     'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
   ].join('\n');
