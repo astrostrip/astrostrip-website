@@ -310,6 +310,76 @@ async function degreeText(sign, degree, role) {
   return degreeCache[key]?.[degree]?.[role] ?? null;
 }
 
+// ---------- This week's transits to the Sun (one file per week, built by tools/build-transits.py) ----------
+// Same rules as the weekly transit posts: major aspects without orb, whole-sign houses from 0° of the Sun sign,
+// weeks run Monday to Sunday in German time. No file for the week, no block.
+const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const ordinal = n => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+
+function berlinMonday(nowMs = Date.now()) {
+  const local = nowMs + tzOffsetMinutes(nowMs, 'Europe/Berlin') * 60000; // Berlin wall clock as if UTC
+  const d = new Date(local);
+  const back = (d.getUTCDay() + 6) % 7; // days since Monday
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
+}
+
+async function loadTransitWeek(monday) {
+  try {
+    const res = await fetch(new URL(`../data/transits/${monday}.json`, import.meta.url));
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+const dayOf = s => (new Date(s.slice(0, 10) + 'T00:00:00Z').getUTCDay() + 6) % 7;
+function whenLabel(hit) {
+  if (hit.whole) return 'ALL WEEK';
+  const a = dayOf(hit.spans[0].from);
+  const b = dayOf(hit.spans[hit.spans.length - 1].to);
+  return a === b ? WEEKDAYS[a] : `${WEEKDAYS[a]}–${WEEKDAYS[b]}`;
+}
+
+function weekLabel(data) {
+  const [, m1, d1] = data.week.split('-').map(Number);
+  const [, m2, d2] = data.until.split('-').map(Number);
+  return m1 === m2 ? `${MONTHS[m1 - 1]} ${d1}–${d2}` : `${MONTHS[m1 - 1]} ${d1}–${MONTHS[m2 - 1]} ${d2}`;
+}
+
+async function transitBlock(sunLon) {
+  const data = await loadTransitWeek(berlinMonday());
+  if (!data) return '';
+  const deg = Math.floor(norm360(sunLon));
+  const sign = SIGNS[signOf(sunLon)];
+  const hits = data.hits[String(deg)] || [];
+  let body;
+  if (hits.length) {
+    body = `<ul class="transit-list">${hits.map(h => {
+      const text = data.texts[h.key];
+      return `<li>
+        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()} · FROM YOUR ${ordinal(h.house).toUpperCase()} HOUSE</span><span class="tr-when">${whenLabel(h)}</span></p>
+        ${text ? `<p class="tr-text">${esc(text)}</p>` : ''}
+      </li>`;
+    }).join('')}</ul>`;
+  } else {
+    // quiet week: only the houses the slow planets move through, as background
+    const sunSign = signOf(sunLon);
+    const bg = data.planets.filter(p => !p.fast).map(p => {
+      const house = (Math.floor(p.stays[0].deg / 30) - sunSign + 12) % 12 + 1;
+      return `<li><p class="tr-head"><span class="tr-label">${p.planet.toUpperCase()} · IN YOUR ${ordinal(house).toUpperCase()} HOUSE</span></p></li>`;
+    }).join('');
+    body = `<p class="tr-quiet">A quieter week for your degree. Nothing hits it exactly; the slow planets set the background.</p>
+      <ul class="transit-list">${bg}</ul>`;
+  }
+  return `<div class="transits">
+    <p class="kicker">YOUR WEEK · ${weekLabel(data)}</p>
+    <h3 class="sub-title">What moves your Sun on ${sign} ${deg % 30 + 1}</h3>
+    ${body}
+    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds what moves it now: your coming transits, read against your whole chart.</p>
+    <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
+    <p class="fine">Transits to your Sun only, without orbs: just what hits your exact degree. Houses counted from 0° of your Sun sign. Week from Monday to Sunday, German time.</p>
+  </div>`;
+}
+
 // ---------- Rendering ----------
 // Free calculator (Sandra, 02.10.2026): every card keeps its sign text; only the Sun gets its degree text.
 // Rising and Moon show their degree with a pointer to the strips. Their degree texts are not in the public files.
@@ -380,6 +450,7 @@ async function renderResult(chart, input) {
     };
   }
   cards.push(await bigThreeCard('moon', moon.lon, { locked: true, ...moonOpts }));
+  const transits = await transitBlock(sun.lon).catch(() => '');
 
   const rows = chart.planets.map(p => `<tr>
       <td><span class="glyph">${p.glyph}${VS}</span>${esc(p.key)}</td>
@@ -412,6 +483,7 @@ async function renderResult(chart, input) {
     </div>
     ${chart.timeKnown ? '' : '<p class="notice">No birth time, no Rising and no houses. The chart is set for noon. The planets almost always stay in their signs, but their exact degrees can shift, and the Moon can move by up to seven degrees either way.</p>'}
     <div class="big-three">${cards.join('')}</div>
+    ${transits}
     <div class="chart-grid">
       <figure class="wheel-wrap">${wheelSvg(chart)}</figure>
       <div class="tables">

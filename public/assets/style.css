@@ -130,6 +130,17 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .card-life { color: var(--gold-italic); font-style: italic; font-size: 16px; margin: 0; }
 .card-note { font-size: 13px; color: var(--gold-italic); font-style: italic; margin: 14px 0 0; }
 
+/* this week's transits to the Sun */
+.transits { max-width: 760px; margin: 0 auto 64px; }
+.transit-list { list-style: none; padding: 0; margin: 18px 0 0; }
+.transit-list li { padding: 14px 0; border-bottom: 1px solid var(--line-faint); }
+.tr-head { display: flex; justify-content: space-between; gap: 16px; margin: 0; }
+.tr-label { font-size: 11px; letter-spacing: .24em; color: var(--gold-label); }
+.tr-when { font-size: 11px; letter-spacing: .24em; color: var(--muted); white-space: nowrap; }
+.tr-text { color: var(--cream); opacity: .9; font-size: 16px; margin: 8px 0 0; }
+.tr-quiet { color: var(--gold-italic); font-style: italic; margin: 0; }
+.tr-more { color: var(--gold-italic); font-style: italic; margin: 24px 0 12px; }
+
 .chart-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
 .wheel-wrap { margin: 0; }
 .wheel { width: 100%; height: auto; display: block; }
@@ -152,6 +163,8 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .positions .num { text-align: right; font-variant-numeric: tabular-nums; }
 .glyph { font-family: var(--glyph); color: var(--gold); display: inline-block; min-width: 1.6em; }
 .glyph-txt { font-family: var(--serif); font-size: 12px; letter-spacing: .08em; }
+/* one fixed column in the positions table, so AC/MC get the same gap to their name as the planet glyphs (Sandra, 04.10.2026) */
+.positions .glyph { min-width: 32px; }
 .retro { color: var(--gold-italic); font-style: italic; font-size: 13px; }
 
 .aspects { margin-top: 56px; }
@@ -264,6 +277,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .nav a:not(:first-child):not(:nth-child(2)) { display: none; }
   .chart-form { grid-template-columns: 1fr; }
   .positions td, .positions th { padding-left: 4px; padding-right: 4px; font-size: 14px; }
+  .positions .glyph { min-width: 26px; }
   .aspect-list li { grid-template-columns: 1fr auto; }
   .asp-name { display: none; }
 }
