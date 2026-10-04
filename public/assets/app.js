@@ -345,7 +345,18 @@ function weekLabel(data) {
   return m1 === m2 ? `${MONTHS[m1 - 1]} ${d1}–${d2}` : `${MONTHS[m1 - 1]} ${d1}–${MONTHS[m2 - 1]} ${d2}`;
 }
 
-function weekBody(data, sunLon) {
+// Houses here are counted from the Sun sign, like the transit posts (no birth time there). With a birth time,
+// the chart's own house of the transiting planet is named underneath, so the two never contradict silently
+// (Sandra, 04.10.2026: Saturn showed "4th house" here while her chart below has it in the 10th).
+function realHouseLine(planet, lon, sunSignHouse, cusps) {
+  if (!cusps) return '';
+  const real = houseOf(lon, cusps);
+  return `<p class="fine tr-real">${real === sunSignHouse
+    ? `In your full chart, ${planet} moves through your ${ordinal(real)} house too.`
+    : `In your full chart, ${planet} moves through your ${ordinal(real)} house. That's the house the strips read.`}</p>`;
+}
+
+function weekBody(data, sunLon, cusps) {
   const deg = Math.floor(norm360(sunLon));
   const hits = data.hits[String(deg)] || [];
   let body;
@@ -353,8 +364,9 @@ function weekBody(data, sunLon) {
     body = `<ul class="transit-list">${hits.map(h => {
       const text = data.texts[h.key];
       return `<li>
-        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()} · FROM YOUR ${ordinal(h.house).toUpperCase()} HOUSE</span><span class="tr-when">${whenLabel(h)}</span></p>
+        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()} · FROM THE ${ordinal(h.house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span><span class="tr-when">${whenLabel(h)}</span></p>
         ${text ? `<p class="tr-text">${esc(text)}</p>` : ''}
+        ${realHouseLine(h.planet, h.deg + 0.5, h.house, cusps)}
       </li>`;
     }).join('')}</ul>`;
   } else {
@@ -362,7 +374,8 @@ function weekBody(data, sunLon) {
     const sunSign = signOf(sunLon);
     const bg = data.planets.filter(p => !p.fast).map(p => {
       const house = (Math.floor(p.stays[0].deg / 30) - sunSign + 12) % 12 + 1;
-      return `<li><p class="tr-head"><span class="tr-label">${p.planet.toUpperCase()} · IN YOUR ${ordinal(house).toUpperCase()} HOUSE</span></p></li>`;
+      return `<li><p class="tr-head"><span class="tr-label">${p.planet.toUpperCase()} · IN THE ${ordinal(house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span></p>
+        ${realHouseLine(p.planet, p.stays[0].deg + 0.5, house, cusps)}</li>`;
     }).join('');
     body = `<p class="tr-quiet">A quieter week for your degree. Nothing hits it exactly; the slow planets set the background.</p>
       <ul class="transit-list">${bg}</ul>`;
@@ -372,7 +385,7 @@ function weekBody(data, sunLon) {
 
 // From Friday on, next week's file is shown too: the weekend transit posts read the coming week
 // (Sandra, 04.10.2026), and the calculator should match what the post says.
-async function transitBlock(sunLon, nowMs = Date.now()) {
+async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   const monday = berlinMonday(nowMs);
   const local = new Date(nowMs + tzOffsetMinutes(nowMs, 'Europe/Berlin') * 60000);
   const weekend = (local.getUTCDay() + 6) % 7 >= 4; // Friday, Saturday, Sunday
@@ -381,14 +394,14 @@ async function transitBlock(sunLon, nowMs = Date.now()) {
   if (!now && !next) return '';
   const deg = Math.floor(norm360(sunLon));
   const sign = SIGNS[signOf(sunLon)];
-  const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon)}`;
+  const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon, cusps)}`;
   return `<div class="transits">
     <h3 class="sub-title">What moves your Sun on ${sign} ${deg % 30 + 1}</h3>
     ${now ? section(now, 'YOUR WEEK') : ''}
     ${next ? section(next, 'NEXT WEEK') : ''}
     <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds what moves it now: your coming transits, read against your whole chart.</p>
     <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
-    <p class="fine">Transits to your Sun only, without orbs: just what hits your exact degree. Houses counted from 0° of your Sun sign. Week from Monday to Sunday, German time.</p>
+    <p class="fine">Transits to your Sun only, without orbs: just what hits your exact degree. Houses here are counted from 0° of your Sun sign, as in a Sun-sign horoscope; ${cusps ? 'your own houses from your birth time are named under each transit and in the table below' : 'your own houses need a birth time'}. Week from Monday to Sunday, German time.</p>
   </div>`;
 }
 
@@ -462,7 +475,7 @@ async function renderResult(chart, input) {
     };
   }
   cards.push(await bigThreeCard('moon', moon.lon, { locked: true, ...moonOpts }));
-  const transits = await transitBlock(sun.lon).catch(() => '');
+  const transits = await transitBlock(sun.lon, chart.houses).catch(() => '');
 
   const rows = chart.planets.map(p => `<tr>
       <td><span class="glyph">${p.glyph}${VS}</span>${esc(p.key)}</td>
