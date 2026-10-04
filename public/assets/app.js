@@ -345,11 +345,8 @@ function weekLabel(data) {
   return m1 === m2 ? `${MONTHS[m1 - 1]} ${d1}–${d2}` : `${MONTHS[m1 - 1]} ${d1}–${MONTHS[m2 - 1]} ${d2}`;
 }
 
-async function transitBlock(sunLon) {
-  const data = await loadTransitWeek(berlinMonday());
-  if (!data) return '';
+function weekBody(data, sunLon) {
   const deg = Math.floor(norm360(sunLon));
-  const sign = SIGNS[signOf(sunLon)];
   const hits = data.hits[String(deg)] || [];
   let body;
   if (hits.length) {
@@ -370,10 +367,25 @@ async function transitBlock(sunLon) {
     body = `<p class="tr-quiet">A quieter week for your degree. Nothing hits it exactly; the slow planets set the background.</p>
       <ul class="transit-list">${bg}</ul>`;
   }
+  return body;
+}
+
+// From Friday on, next week's file is shown too: the weekend transit posts read the coming week
+// (Sandra, 04.10.2026), and the calculator should match what the post says.
+async function transitBlock(sunLon, nowMs = Date.now()) {
+  const monday = berlinMonday(nowMs);
+  const local = new Date(nowMs + tzOffsetMinutes(nowMs, 'Europe/Berlin') * 60000);
+  const weekend = (local.getUTCDay() + 6) % 7 >= 4; // Friday, Saturday, Sunday
+  const nextMonday = new Date(Date.parse(monday + 'T00:00:00Z') + 7 * 86400000).toISOString().slice(0, 10);
+  const [now, next] = await Promise.all([loadTransitWeek(monday), weekend ? loadTransitWeek(nextMonday) : null]);
+  if (!now && !next) return '';
+  const deg = Math.floor(norm360(sunLon));
+  const sign = SIGNS[signOf(sunLon)];
+  const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon)}`;
   return `<div class="transits">
-    <p class="kicker">YOUR WEEK · ${weekLabel(data)}</p>
     <h3 class="sub-title">What moves your Sun on ${sign} ${deg % 30 + 1}</h3>
-    ${body}
+    ${now ? section(now, 'YOUR WEEK') : ''}
+    ${next ? section(next, 'NEXT WEEK') : ''}
     <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds what moves it now: your coming transits, read against your whole chart.</p>
     <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
     <p class="fine">Transits to your Sun only, without orbs: just what hits your exact degree. Houses counted from 0° of your Sun sign. Week from Monday to Sunday, German time.</p>
