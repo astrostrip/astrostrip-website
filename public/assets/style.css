@@ -141,11 +141,6 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .tr-quiet { color: var(--gold-italic); font-style: italic; margin: 0; }
 .tr-more { color: var(--gold-italic); font-style: italic; margin: 24px 0 12px; }
 
-/* progressed Moon phase */
-.lunation { max-width: 760px; margin: 0 auto 64px; }
-.lunation .kicker { margin-bottom: 10px; }
-.lu-lead { color: var(--cream); font-style: italic; font-size: 18px; margin: 0 0 4px; }
-
 .chart-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
 .wheel-wrap { margin: 0; }
 .wheel { width: 100%; height: auto; display: block; }
