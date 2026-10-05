@@ -147,7 +147,10 @@ async function calculateChart({ y, mo, d, h, mi, place, timeKnown, offsetOverrid
     sunRange = [at(a, 0), at(b, 0)];
   }
 
-  return { planets, houses, angles, houseSystem, offset, note, jd, timeKnown, moonRange, sunRange, aspects: findAspects(planets, angles, timeKnown) };
+  let lunation = null;
+  try { lunation = progressedLunation(swe, jd); } catch (err) { console.error(err); }
+
+  return { planets, houses, angles, houseSystem, offset, note, jd, timeKnown, moonRange, sunRange, lunation, aspects: findAspects(planets, angles, timeKnown) };
 }
 
 function houseOf(lon, cusps) {
@@ -415,6 +418,63 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   </div>`;
 }
 
+// ---------- Progressed Moon phase (Sandra, 05.10.2026) ----------
+// Secondary progressions, one day after birth = one tropical year. The progressed Moon meets the progressed Sun
+// about every 29.5 years; the school teaches four phases of about 7.4 years (L17 pp. 23-24). Texts approved by Sandra.
+const TROP_YEAR = 365.24219;
+const LUNATION = [
+  { label: 'NEW MOON PHASE', text: 'Something new is taking shape in you, often below the surface and before you can put it into words. You may not know yet where it\'s heading. You\'re also more open than usual to whatever wants to begin.' },
+  { label: 'FIRST QUARTER', text: 'What started some years ago now wants to become real. This is a phase of pushing ahead and of running into resistance, around you or within you. Frustration is part of it when the new demands feel like a lot. What helps is acting on purpose and facing the obstacles instead of waiting them out.' },
+  { label: 'FULL MOON PHASE', text: 'This is the high point of your current cycle: what you started years ago is showing its results. It can feel fulfilling, eye-opening, or like a crisis. Goals, relationships and the way you\'ve set up your life get a hard look. Sudden insights are likely, and so is a wobble when your past and your future no longer fit together.' },
+  { label: 'LAST QUARTER', text: 'The direction that has carried you for years starts to matter less. This is a phase of looking back, reorganising things inside and letting go of old habits and ideas. The task now is to see clearly what you\'re ready to leave behind, so there\'s room for what comes next.' },
+];
+
+// Phase now, with the calendar years it began and ends (never a future year for the start). Same method as
+// prog_lunation() in the /psychologisch calculator. start is null when the phase began before birth.
+function progressedLunation(swe, jdBirth, nowMs = Date.now()) {
+  const flags = swe.SEFLG_SWIEPH;
+  const elong = t => norm360(swe.calc_ut(t, 1, flags)[0] - swe.calc_ut(t, 0, flags)[0]);
+  const dev = (t, target) => ((elong(t) - target + 540) % 360) - 180; // rises through 0 at the crossing
+  const crossing = (t0, target, dir) => {
+    let a = t0;
+    for (let i = 0; i < 200; i++) { // steps of half a progressed day (~6° of elongation)
+      const b = a + 0.5 * dir;
+      let [lo, hi] = dir < 0 ? [b, a] : [a, b];
+      const dl = dev(lo, target), dh = dev(hi, target);
+      if (dl < 0 && dh >= 0 && dh - dl < 90) {
+        for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (dev(mid, target) < 0) lo = mid; else hi = mid; }
+        return (lo + hi) / 2;
+      }
+      a = b;
+    }
+    return null;
+  };
+  const n = new Date(nowMs);
+  const jdNow = swe.julday(n.getUTCFullYear(), n.getUTCMonth() + 1, n.getUTCDate(), n.getUTCHours() + n.getUTCMinutes() / 60);
+  const pj = jdBirth + (jdNow - jdBirth) / TROP_YEAR;
+  const phase = Math.floor(elong(pj) / 90);
+  const start = crossing(pj, 90 * phase, -1);
+  const end = crossing(pj, (90 * (phase + 1)) % 360, 1);
+  // progressed moment -> calendar date -> its year
+  const year = t => new Date((jdBirth + (t - jdBirth) * TROP_YEAR - 2440587.5) * 86400000).getUTCFullYear();
+  return { phase, start: start === null || start < jdBirth ? null : year(start), end: end === null ? null : year(end) };
+}
+
+function lunationBlock(lu, timeKnown) {
+  if (!lu || lu.end === null) return '';
+  const L = LUNATION[lu.phase];
+  const since = lu.start === null ? 'SINCE BIRTH' : `SINCE ABOUT ${lu.start}`;
+  return `<div class="lunation">
+    <h3 class="sub-title">Your progressed Moon phase</h3>
+    <p class="kicker">${L.label} · ${since} · UNTIL ABOUT ${lu.end}</p>
+    ${lu.phase === 0 ? '<p class="lu-lead">A new chapter of your life has begun, and it often takes a while before its direction is clear.</p>' : ''}
+    <p class="tr-text">${esc(L.text)}</p>
+    <p class="tr-more">What is this chapter about for you? The Ultra Strip reads where it began: the sign and the area of your life.</p>
+    <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
+    <p class="fine">Calculated with secondary progressions: each day after your birth stands for one year of your life. Your progressed Moon meets your progressed Sun about every 29.5 years, and each of the four phases lasts about seven years.${timeKnown ? '' : ' Without a birth time the chart is set for noon, so the start and end of your phase can shift by up to half a year either way.'}</p>
+  </div>`;
+}
+
 // ---------- Rendering ----------
 // Free calculator (Sandra, 02.10.2026): every card keeps its sign text; only the Sun gets its degree text.
 // Rising and Moon show their degree with a pointer to the strips. Their degree texts are not in the public files.
@@ -519,6 +579,7 @@ async function renderResult(chart, input) {
     ${chart.timeKnown ? '' : '<p class="notice">No birth time, no Rising and no houses. The chart is set for noon. The planets almost always stay in their signs, but their exact degrees can shift, and the Moon can move by up to seven degrees either way.</p>'}
     <div class="big-three">${cards.join('')}</div>
     ${transits}
+    ${lunationBlock(chart.lunation, chart.timeKnown)}
     <div class="chart-grid">
       <figure class="wheel-wrap">${wheelSvg(chart)}</figure>
       <div class="tables">
