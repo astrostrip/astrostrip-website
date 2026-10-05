@@ -85,7 +85,7 @@ function restoreDraft() {
   $('#passions').value = q.passions || '';
   $('#relationship').value = q.relationship || '';
   $('#focus').value = q.focus || '';
-  $('#sensitive-consent').checked = !!q.sensitiveConsent;
+  $('#sensitive-consent').checked = !!(d.sensitiveConsent || q.sensitiveConsent);
 }
 
 const params = new URLSearchParams(location.search);
@@ -117,13 +117,13 @@ form.addEventListener('submit', async e => {
     nodes: strip !== 'mini' && $('#nodes').checked,
     ancestry: strip === 'ultra' && $('#ancestry').checked,
     note: $('#note').value.trim(),
+    sensitiveConsent: $('#sensitive-consent').checked,
     questionnaire: withQ ? {
       residence: residence ? { label: [residence.name, residence.region, residence.country].filter(Boolean).join(', '), lat: residence.lat, lon: residence.lon, tz: residence.tz } : null,
       occupation: $('#occupation').value.trim(),
       passions: $('#passions').value.trim(),
       relationship: $('#relationship').value,
       focus: $('#focus').value.trim(),
-      sensitiveConsent: $('#sensitive-consent').checked,
     } : null,
     newsletter: $('#newsletter').checked,
     week: slots?.[strip]?.next || '', // the server checks that this is still the next free week
@@ -141,6 +141,9 @@ form.addEventListener('submit', async e => {
   if (strip === 'ultra' && !data.lifeArea) missing.push('the life area');
   if (strip === 'ultra' && !data.questionnaire.residence) missing.push('where you live now (choose it from the list)');
   if (missing.length) { status.textContent = `Please add ${missing.join(', ')}.`; return; }
+  // Free text may contain sensitive details (Art. 9 GDPR): consent is required whenever any free-text field is filled (Sandra, 05.10.2026).
+  const freeText = [data.note, data.questionnaire?.occupation, data.questionnaire?.passions, data.questionnaire?.focus].some(Boolean);
+  if (freeText && !data.sensitiveConsent) { status.textContent = 'You wrote something in the free-text fields. Please tick the consent box for sensitive information, or clear those fields.'; return; }
   if (!data.acceptTerms || !data.earlyStart) { status.textContent = 'Please tick both boxes above the button.'; return; }
 
   const { acceptTerms, earlyStart, week, ...draft } = data;

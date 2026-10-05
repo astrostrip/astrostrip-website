@@ -241,9 +241,13 @@ export function validateOrder(o) {
       passions: clean(q.passions, 200),
       relationship: RELATIONSHIP.includes(q.relationship) ? q.relationship : '',
       focus: clean(q.focus, 300),
-      sensitiveConsent: q.sensitiveConsent === true,
     };
   }
+  // Free text may contain sensitive details (Art. 9 GDPR). Consent is required whenever any free-text field is filled;
+  // without free text no consent is needed (Sandra, 05.10.2026). Older clients sent the flag inside the questionnaire.
+  const sensitiveConsent = o.sensitiveConsent === true || (o.questionnaire && o.questionnaire.sensitiveConsent === true);
+  const freeText = [clean(o.note, 500), questionnaire?.occupation, questionnaire?.passions, questionnaire?.focus].some(Boolean);
+  if (freeText && !sensitiveConsent) errors.push('You wrote something in the free-text fields. Please tick the consent box for sensitive information, or clear those fields.');
   if (o.acceptTerms !== true) errors.push('Please confirm that you are 18 or older and accept the terms and the cancellation policy.');
   if (o.earlyStart !== true) errors.push('Please confirm that we may start before the withdrawal period ends.');
   const order = {
@@ -253,6 +257,7 @@ export function validateOrder(o) {
     lifeArea, nodes: strip !== 'mini' && o.nodes === true, ancestry: strip === 'ultra' && o.ancestry === true, // Mini = Big Three only, no nodes layer
     note: clean(o.note, 500),
     questionnaire,
+    sensitiveConsent,
     newsletter: o.newsletter === true,
     // week the customer saw before ordering (YYYY-MM-DD); the server assigns the week and compares
     week: /^\d{4}-\d{2}-\d{2}$/.test(o.week || '') ? o.week : '',
@@ -307,6 +312,7 @@ export function ownerReadingMail(order, id) {
     `Karmische Mondknoten-Deutung: ${order.nodes ? 'ja' : 'nein'}`,
     order.strip === 'ultra' ? `Ahnenschicht: ${order.ancestry ? 'ja' : 'nein'}` : null,
     order.note ? `Anmerkung: ${order.note}` : null,
+    `Einwilligung für sensible Angaben (Art. 9 DSGVO): ${order.sensitiveConsent ? 'ja' : 'nicht erteilt (keine Freitextangaben)'}`,
     ...(q ? [
       '',
       'Fragebogen:',
@@ -315,9 +321,6 @@ export function ownerReadingMail(order, id) {
       `Leidenschaften: ${q.passions || '–'}`,
       `Beziehungsstatus: ${q.relationship || 'keine Angabe'}`,
       `Was sie gerade verstehen will: ${q.focus || '–'}`,
-      q.sensitiveConsent
-        ? 'Einwilligung für sensible Angaben (Art. 9 DSGVO): ja'
-        : 'Einwilligung für sensible Angaben (Art. 9 DSGVO): NEIN – Gesundheit, Sexualität, Glauben aus den Antworten nicht verwenden.',
     ] : []),
   ].filter(l => l !== null).join('\n');
 }

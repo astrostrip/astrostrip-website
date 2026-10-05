@@ -47,7 +47,7 @@ assert.equal(await verifyStripeSignature(body, `t=${t - 1000},v1=${hex}`, secret
 console.log('signature ok');
 
 // validation
-const good = { strip: 'ultra', name: 'Test Person', email: 't@example.com', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: { label: 'Hamburg, Germany', lat: 53.55, lon: 9.99, tz: 'Europe/Berlin' }, lifeArea: 'Work and calling', language: 'en', nodes: true, ancestry: true, acceptTerms: true, earlyStart: true, questionnaire: { residence: { label: 'Berlin, Germany', lat: 52.52, lon: 13.4, tz: 'Europe/Berlin' }, occupation: 'Designer', passions: 'Dance', relationship: 'Married', focus: 'Career' } };
+const good = { strip: 'ultra', name: 'Test Person', email: 't@example.com', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: { label: 'Hamburg, Germany', lat: 53.55, lon: 9.99, tz: 'Europe/Berlin' }, lifeArea: 'Work and calling', language: 'en', nodes: true, ancestry: true, acceptTerms: true, earlyStart: true, sensitiveConsent: true, questionnaire: { residence: { label: 'Berlin, Germany', lat: 52.52, lon: 13.4, tz: 'Europe/Berlin' }, occupation: 'Designer', passions: 'Dance', relationship: 'Married', focus: 'Career' } };
 assert.equal(validateOrder(good).errors.length, 0);
 assert.ok(validateOrder({ ...good, earlyStart: false }).errors.length);
 assert.ok(validateOrder({ ...good, lifeArea: 'Health' }).errors.length);
@@ -58,6 +58,12 @@ assert.ok(validateOrder({ ...good, questionnaire: { ...good.questionnaire, resid
 assert.equal(validateOrder({ ...good, strip: 'maxi', lifeArea: '', questionnaire: { relationship: 'Complicated' } }).errors.length, 0, 'maxi residence optional');
 assert.equal(validateOrder({ ...good, strip: 'maxi', lifeArea: '', questionnaire: { relationship: 'Complicated' } }).order.questionnaire.relationship, '', 'unknown status dropped');
 assert.equal(validateOrder({ ...good, strip: 'mini', lifeArea: '' }).order.questionnaire, null, 'mini has no questionnaire');
+// Art. 9 consent: required whenever a free-text field is filled, not otherwise (Sandra, 05.10.2026)
+assert.ok(validateOrder({ ...good, sensitiveConsent: false }).errors.some(e => /consent box/.test(e)), 'free text needs consent');
+assert.equal(validateOrder({ ...good, sensitiveConsent: false, questionnaire: { ...good.questionnaire, occupation: '', passions: '', focus: '' } }).errors.length, 0, 'no free text, no consent needed');
+assert.ok(validateOrder({ ...good, strip: 'mini', lifeArea: '', sensitiveConsent: false, note: 'something' }).errors.length, 'mini note needs consent');
+assert.equal(validateOrder({ ...good, sensitiveConsent: false, questionnaire: { ...good.questionnaire, sensitiveConsent: true } }).errors.length, 0, 'old flag location still accepted');
+assert.equal(validateOrder(good).order.sensitiveConsent, true);
 console.log('validation ok');
 
 // full flow with mocks
@@ -154,7 +160,7 @@ assert.equal(mails.length, 4, 'owner x2, customer, double opt-in');
 assert.match(mails[3].subject, /confirm your newsletter/); assert.match(mails[3].text, /\/api\/confirm\?t=[0-9a-f]{64}/); assert.ok(!/reading|strip [0-9]|€/i.test(mails[3].text.split('astro.strip ·')[0].replace('astro.strip newsletter','')), 'no advertising in DOI mail');
 assert.deepEqual(lists.map(l => [l.list, l.Action]), [['222', 'addnoforce']], 'buyer list, respects earlier unsubscribe');
 assert.equal(mails[0].to[0], 'owner@example.com'); assert.match(mails[0].text, /Buchhaltung/); assert.match(mails[0].text, /Test Person/); assert.ok(!mails[0].text.includes('1990-05-01'), 'no birth data in accounting mail');
-assert.equal(mails[1].to[0], 'owner@example.com'); assert.match(mails[1].text, /1990-05-01/); assert.match(mails[1].text, /Lebensbereich: Work and calling/); assert.match(mails[1].text, /Wohnort heute: Berlin/); assert.match(mails[1].text, /Beziehungsstatus: Married/); assert.match(mails[1].text, /Art. 9 DSGVO\): NEIN/);
+assert.equal(mails[1].to[0], 'owner@example.com'); assert.match(mails[1].text, /1990-05-01/); assert.match(mails[1].text, /Lebensbereich: Work and calling/); assert.match(mails[1].text, /Wohnort heute: Berlin/); assert.match(mails[1].text, /Beziehungsstatus: Married/); assert.match(mails[1].text, /Art. 9 DSGVO\): ja/);
 assert.ok(!mails[1].text.includes('Test Person') && !mails[1].text.includes('t@example.com'), 'reading mail is pseudonymous');
 assert.equal(mails[2].to[0], 't@example.com'); assert.match(mails[2].text, /Cancellation policy \(English\)/); assert.match(mails[2].text, /Widerrufsbelehrung \(Deutsch\)/); assert.ok(!mails[2].text.includes('Designer'), 'questionnaire not echoed to customer');
 assert.ok(!kv.has('order:cs_0'), 'birth data deleted after mailing');

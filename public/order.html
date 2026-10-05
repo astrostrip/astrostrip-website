@@ -112,7 +112,6 @@
           <label for="focus">What do you most want to understand right now?</label>
           <input id="focus" type="text" maxlength="300" placeholder="e.g. my career, a decision I’m facing, how I relate to others">
         </div>
-        <label class="check"><input id="sensitive-consent" type="checkbox"><span>Optional: if my answers include sensitive information (for example about health, sexuality or beliefs), I explicitly consent to it being used solely to prepare my strip. I can withdraw this consent at any time by email. Without this consent such details are not used.</span></label>
       </fieldset>
 
       <div class="field field-wide">
@@ -129,6 +128,11 @@
       <div class="field field-wide">
         <label for="note">Anything else we should know? (optional)</label>
         <input id="note" type="text" maxlength="500" placeholder="Please no health details or details about other people">
+      </div>
+
+      <div class="field field-wide">
+        <label class="check"><input id="sensitive-consent" type="checkbox"><span>If my answers include sensitive information (for example about health, sexuality or beliefs), I explicitly consent to it being used solely to prepare my strip. I can withdraw this consent at any time by email.</span></label>
+        <p class="hint">Required if you wrote anything in the free-text fields (occupation, what you love doing, what you want to understand, anything else). If you prefer not to consent, leave those fields empty: your strip works without them.</p>
       </div>
 
       <section class="summary field-wide" aria-live="polite">
