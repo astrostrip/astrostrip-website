@@ -311,7 +311,8 @@ async function degreeText(sign, degree, role) {
 }
 
 // ---------- This week's transits to the Sun (one file per week, built by tools/build-transits.py) ----------
-// Same rules as the weekly transit posts: major aspects without orb, whole-sign houses from 0° of the Sun sign,
+// Same rules as the weekly transit posts: major aspects, no orb for Mercury, Venus, Mars, 1° inside the sign for
+// Jupiter to Pluto and Chiron (from the week of 12.10.2026), whole-sign houses from 0° of the Sun sign,
 // weeks run Monday to Sunday in German time. No file for the week, no block.
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -364,7 +365,7 @@ function weekBody(data, sunLon, cusps) {
     body = `<ul class="transit-list">${hits.map(h => {
       const text = data.texts[h.key];
       return `<li>
-        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()} · FROM THE ${ordinal(h.house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span><span class="tr-when">${whenLabel(h)}</span></p>
+        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()}${h.orb ? ' · WITHIN 1°' : ''} · FROM THE ${ordinal(h.house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span><span class="tr-when">${whenLabel(h)}</span></p>
         ${text ? `<p class="tr-text">${esc(text)}</p>` : ''}
         ${realHouseLine(h.planet, h.deg + 0.5, h.house, cusps)}
       </li>`;
@@ -377,7 +378,7 @@ function weekBody(data, sunLon, cusps) {
       return `<li><p class="tr-head"><span class="tr-label">${p.planet.toUpperCase()} · IN THE ${ordinal(house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span></p>
         ${realHouseLine(p.planet, p.stays[0].deg + 0.5, house, cusps)}</li>`;
     }).join('');
-    body = `<p class="tr-quiet">A quieter week for your degree. Nothing hits it exactly; the slow planets set the background.</p>
+    body = `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>
       <ul class="transit-list">${bg}</ul>`;
   }
   return body;
@@ -394,14 +395,18 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   if (!now && !next) return '';
   const deg = Math.floor(norm360(sunLon));
   const sign = SIGNS[signOf(sunLon)];
+  // 1° orb for the slow planets from the week of 12.10.2026 on (Sandra, 05.10.2026); older week files have no slowOrb
+  const orb = [now, next].some(d => d && d.slowOrb);
   const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon, cusps)}`;
   return `<div class="transits">
     <h3 class="sub-title">What moves your Sun on ${sign} ${deg % 30 + 1}</h3>
     ${now ? section(now, 'YOUR WEEK') : ''}
     ${next ? section(next, 'NEXT WEEK') : ''}
-    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds what moves it now: your coming transits, read against your whole chart.</p>
-    <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
-    <p class="fine">Transits to your Sun only, without orbs: just what hits your exact degree. Houses here are counted from 0° of your Sun sign, as in a Sun-sign horoscope; ${cusps ? 'your own houses from your birth time are named under each transit and in the table below' : 'your own houses need a birth time'}. Week from Monday to Sunday, German time.</p>
+    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Coming soon to add to either one: Transit Weekly, your transits week by week in the life areas you choose.</p>
+    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
+    <p class="fine">Transits to your Sun only. ${orb
+      ? 'Mercury, Venus and Mars count on your exact degree; Jupiter, Saturn, Uranus, Neptune, Pluto and Chiron also one degree either side, within your Sun sign (marked within 1°).'
+      : 'Without orbs: just what hits your exact degree.'} Houses here are counted from 0° of your Sun sign, as in a Sun-sign horoscope; ${cusps ? 'your own houses from your birth time are named under each transit and in the table below' : 'your own houses need a birth time'}. Week from Monday to Sunday, German time.</p>
   </div>`;
 }
 
