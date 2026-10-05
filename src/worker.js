@@ -322,7 +322,7 @@ export function ownerReadingMail(order, id) {
   ].filter(l => l !== null).join('\n');
 }
 
-// Contract confirmation (§ 312f BGB). The cancellation policy text is a DRAFT until legally reviewed.
+// Contract confirmation (§ 312f BGB). Cancellation policy = official model text (not yet reviewed by a lawyer).
 export function customerMail(order, id, env) {
   const s = STRIPS[order.strip];
   const site = env.SITE_URL || 'https://astrostrip.com';
@@ -365,13 +365,13 @@ export function customerMail(order, id, env) {
   ].join('\n');
 }
 
-// DRAFT. Generated from public/cancellation.html (German official model, Anlage 1 zu Art. 246a EGBGB,
+// Generated from public/cancellation.html (German official model, Anlage 1 zu Art. 246a EGBGB, Stand 19.06.2026 mit Gestaltungshinweis 3 zur Widerrufsfunktion,
 // and EU model, Directive 2011/83/EU Annex I A). Page and mail must stay identical: edit the page, then regenerate.
 export const CANCELLATION_POLICY = {
   "de": [
     "Widerrufsrecht",
     "Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.",
-    "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Deutschland, hello@astrostrip.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür auch die Widerrufsfunktion auf unserer Website nutzen. Sie können das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist.",
+    "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Deutschland, hello@astrostrip.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Sie können Ihr Widerrufsrecht auch online unter https://astrostrip.com/withdraw.html ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.",
     "Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.",
     "Folgen des Widerrufs",
     "Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.",
@@ -382,7 +382,7 @@ export const CANCELLATION_POLICY = {
   "en": [
     "Right of withdrawal",
     "You have the right to withdraw from this contract within 14 days without giving any reason. The withdrawal period will expire after 14 days from the day of the conclusion of the contract.",
-    "To exercise the right of withdrawal, you must inform us (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Germany, hello@astrostrip.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or an email). You may also use the withdrawal function on our website. You may use the attached model withdrawal form, but it is not obligatory.",
+    "To exercise the right of withdrawal, you must inform us (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Germany, hello@astrostrip.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or an email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at https://astrostrip.com/withdraw.html. If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.",
     "To meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of the right of withdrawal before the withdrawal period has expired.",
     "Effects of withdrawal",
     "If you withdraw from this contract, we shall reimburse to you all payments received from you without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract. We will carry out such reimbursement using the same means of payment as you used for the initial transaction, unless you have expressly agreed otherwise; in any event, you will not incur any fees as a result of such reimbursement.",
