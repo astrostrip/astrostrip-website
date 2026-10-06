@@ -21,7 +21,7 @@ const selected = () => form.querySelector('input[name=strip]:checked')?.value ||
 const fmt = (ymd, opts) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { timeZone: 'UTC', ...opts }); };
 const longDay = ymd => fmt(ymd, { day: 'numeric', month: 'long', year: 'numeric' });
 const shortDay = ymd => fmt(ymd, { day: 'numeric', month: 'short' });
-const slotLine = s => s.left > 0 ? `${s.left} of ${s.limit} slots left this week`
+const slotLine = s => s.left > 0 ? `${s.left} slots left this week`
   : s.next ? `This week fully booked · next free week: ${shortDay(s.next)}`
   : `Fully booked until ${shortDay(s.until)}`;
 
