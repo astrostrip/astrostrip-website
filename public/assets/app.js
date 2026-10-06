@@ -406,9 +406,9 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   // applying orbs from the week of 12.10.2026 on (Sandra, 05.10.2026); older week files have no orbs
   const orb = [now, next].some(d => d && d.orbs);
   const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon, cusps)}`;
-  return `<div class="transits">
-    <h3 class="sub-title">What moves your Sun on ${sign} ${deg % 30 + 1}</h3>
-    ${now ? section(now, 'YOUR WEEK') : ''}
+  return `<div class="transits panel">
+    <h3 class="sub-title">Your week, stripped down</h3>
+    ${now ? section(now, `YOUR SUN ON ${sign.toUpperCase()} ${deg % 30 + 1}`) : ''}
     ${next ? section(next, 'NEXT WEEK') : ''}
     <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Coming soon to add to either one: Transit Weekly, your transits week by week in the life areas you choose.</p>
     <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
@@ -452,26 +452,109 @@ function progressedLunation(swe, jdBirth, nowMs = Date.now()) {
   const n = new Date(nowMs);
   const jdNow = swe.julday(n.getUTCFullYear(), n.getUTCMonth() + 1, n.getUTCDate(), n.getUTCHours() + n.getUTCMinutes() / 60);
   const pj = jdBirth + (jdNow - jdBirth) / TROP_YEAR;
-  const phase = Math.floor(elong(pj) / 90);
+  const e = elong(pj);
+  const phase = Math.floor(e / 90);
   const start = crossing(pj, 90 * phase, -1);
   const end = crossing(pj, (90 * (phase + 1)) % 360, 1);
+  // last progressed New Moon: where this cycle began (its house is read in the block, Sandra 06.10.2026)
+  const newMoon = phase === 0 ? start : crossing(pj, 0, -1);
   // progressed moment -> calendar date -> its year
   const year = t => new Date((jdBirth + (t - jdBirth) * TROP_YEAR - 2440587.5) * 86400000).getUTCFullYear();
-  return { phase, start: start === null || start < jdBirth ? null : year(start), end: end === null ? null : year(end) };
+  return {
+    phase, elong: e, start: start === null || start < jdBirth ? null : year(start), end: end === null ? null : year(end),
+    newMoonYear: newMoon === null || newMoon < jdBirth ? null : year(newMoon),
+    newMoonLon: newMoon === null ? null : norm360(swe.calc_ut(newMoon, 0, flags)[0]),
+  };
 }
 
-function lunationBlock(lu, timeKnown) {
+// Life areas for the house of the last progressed New Moon (school keywords L1, wording table in
+// reference/haeuser-psychologisch.md; approved by Sandra 06.10.2026)
+const HOUSE_AREAS = [
+  'how you come across and how you start things',
+  'money, what you own and what you value',
+  'contact, communication and learning',
+  'home, family and your roots',
+  'creativity, joy, play and romance',
+  'everyday life, work routines and your rhythm',
+  'partnership and one-to-one relationships',
+  'deep bonds, crises and what you share with others',
+  'meaning, beliefs, travel and further learning',
+  'calling, status and your public role',
+  'friends, groups and shared visions',
+  'retreat, quiet and your inner world',
+];
+
+function newMoonLine(lu, cusps) {
+  if (lu.newMoonLon === null) return '';
+  const when = lu.newMoonYear === null ? 'before you were born' : `around ${lu.newMoonYear}`;
+  if (!cusps) return `<p class="tr-text">This cycle began ${when} with your progressed New Moon.</p>`;
+  const h = houseOf(lu.newMoonLon, cusps);
+  return `<p class="tr-text">This cycle began ${when} with your progressed New Moon in your ${ordinal(h)} house: ${HOUSE_AREAS[h - 1]}.</p>`;
+}
+
+// The cycle as a circle: New Moon at the top, clockwise through the four phases; the arc of the current phase in gold,
+// the dot where the progressed Moon stands now (elongation from the progressed Sun).
+function lunationSvg(lu) {
+  const c = 110, r = 78, m = 17;
+  const at = (deg, rad = r) => [c + rad * Math.sin(deg * Math.PI / 180), c - rad * Math.cos(deg * Math.PI / 180)].map(v => +v.toFixed(2));
+  const [ax, ay] = at(90 * lu.phase), [bx, by] = at(90 * (lu.phase + 1));
+  const moon = (i) => {
+    const [x, y] = at(90 * i);
+    const lit = i === 1 ? `<path class="lu-lit" d="M${x},${y - m} A${m},${m} 0 0,1 ${x},${y + m} Z"/>`
+      : i === 2 ? `<circle class="lu-lit" cx="${x}" cy="${y}" r="${m}"/>`
+      : i === 3 ? `<path class="lu-lit" d="M${x},${y - m} A${m},${m} 0 0,0 ${x},${y + m} Z"/>` : '';
+    return `<g class="lu-moon${i === lu.phase ? ' lu-moon-now' : ''}"><circle class="lu-disc" cx="${x}" cy="${y}" r="${m}"/>${lit}<circle class="lu-rim" cx="${x}" cy="${y}" r="${m}"/></g>`;
+  };
+  const [dx, dy] = at(lu.elong);
+  return `<svg class="lu-wheel" viewBox="0 0 220 220" role="img" aria-label="The progressed lunation cycle: you are in the ${LUNATION[lu.phase].label.toLowerCase()}">
+    <circle class="lu-ring" cx="${c}" cy="${c}" r="${r}"/>
+    <path class="lu-arc" d="M${ax},${ay} A${r},${r} 0 0,1 ${bx},${by}"/>
+    ${[0, 1, 2, 3].map(moon).join('')}
+    <circle class="lu-dot" cx="${dx}" cy="${dy}" r="4.5"/>
+    <text class="lu-center" x="${c}" y="${c - 4}" text-anchor="middle">ONE CYCLE</text>
+    <text class="lu-center" x="${c}" y="${c + 12}" text-anchor="middle">≈ 29.5 YEARS</text>
+  </svg>`;
+}
+
+// Explanation behind "What is the progressed Moon?": school L17 pp. 23-24 (lunation cycle ~29.5 years, four phases,
+// sign and house of the progressed New Moon); "two or three cycles in a long life" is arithmetic, not a source claim.
+// Layout and wording approved by Sandra 06.10.2026.
+const LUNATION_SHORT = ['A new beginning, often below the surface.', 'Pushing ahead, meeting resistance.', 'Results, insight, or a crisis.', 'Looking back, letting go.'];
+
+function lunationBlock(lu, timeKnown, cusps = null) {
   if (!lu || lu.end === null) return '';
   const L = LUNATION[lu.phase];
   const since = lu.start === null ? 'SINCE BIRTH' : `SINCE ABOUT ${lu.start}`;
-  return `<div class="lunation">
+  const frac = Math.min(1, Math.max(0, (lu.elong - 90 * lu.phase) / 90));
+  return `<div class="lunation panel">
     <h3 class="sub-title">Your progressed Moon phase</h3>
     <p class="kicker">${L.label} · ${since} · UNTIL ABOUT ${lu.end}</p>
-    ${lu.phase === 0 ? '<p class="lu-lead">A new chapter of your life has begun, and it often takes a while before its direction is clear.</p>' : ''}
-    <p class="tr-text">${esc(L.text)}</p>
-    <p class="tr-more">What is this chapter about for you? The Ultra Strip reads where it began: the sign and the area of your life.</p>
+    <div class="lu-grid">
+      ${lunationSvg(lu)}
+      <div class="lu-body">
+        ${lu.phase === 0 ? '<p class="lu-lead">A new chapter of your life has begun, and it often takes a while before its direction is clear.</p>' : ''}
+        ${newMoonLine(lu, cusps)}
+        <p class="tr-text">${esc(L.text)}</p>
+        <div class="lu-time" aria-hidden="true">
+          <div class="lu-bar"><span class="lu-fill" style="width:${(frac * 100).toFixed(1)}%"></span><span class="lu-now" style="left:${(frac * 100).toFixed(1)}%"><i>NOW</i></span></div>
+          <div class="lu-years"><span>${lu.start === null ? 'BIRTH' : lu.start}</span><span>${lu.end}</span></div>
+        </div>
+      </div>
+    </div>
+    ${lu.phase === 3
+      ? `<p class="tr-more">Your next progressed New Moon comes around ${lu.end} and opens a new cycle of about 30 years. Want to know what it holds for you? The Ultra Strip reads the sign and the area of your life where it falls, and where your current cycle began.</p>`
+      : '<p class="tr-more">What is this chapter about for you, in detail? The Ultra Strip reads it in depth, including the sign, the different stages and the area of your life.</p>'}
     <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
-    <p class="fine">Calculated with secondary progressions: each day after your birth stands for one year of your life. Your progressed Moon meets your progressed Sun about every 29.5 years, and each of the four phases lasts about seven years.${timeKnown ? '' : ' Without a birth time the chart is set for noon, so the start and end of your phase can shift by up to half a year either way.'}</p>
+    <details class="lu-info">
+      <summary>What is the progressed Moon?</summary>
+      <div class="lu-info-body">
+        <p>Progressions are a slow clock in your birth chart: each day after your birth stands for one year of your life. In this clock the Moon moves fastest. About every 29.5 years it catches up with the Sun, and that meeting, the progressed New Moon, opens a new chapter of your life. From there the cycle runs like the Moon in the sky, through four phases of about seven years each.</p>
+        <p>It doesn't name events. It shows the inner rhythm behind them: how what you want (your Sun) and what you need (your Moon) find each other over the years. When something new begins in you, when it pushes to become real, when it bears fruit, and when it's time to let go.</p>
+        <ul class="lu-phases">${LUNATION.map((p, i) => `<li${i === lu.phase ? ' class="lu-phase-now"' : ''}><b>${p.label}</b><span>${LUNATION_SHORT[i]}${i === lu.phase ? ' <em>You are here.</em>' : ''}</span></li>`).join('')}</ul>
+        <p>In a long life you go through two or three of these cycles. Where yours began, in which sign and in which area of your life, says what the current chapter is about.</p>
+      </div>
+    </details>
+    <p class="fine">Calculated with secondary progressions.${timeKnown ? '' : ' Without a birth time the chart is set for noon, so the start and end of your phase can shift by up to half a year either way.'}</p>
   </div>`;
 }
 
@@ -558,8 +641,10 @@ async function renderResult(chart, input) {
       <td>${signIcon(signOf(chart.angles[k]))} ${SIGNS[signOf(chart.angles[k])]}</td>
       <td class="num">${fmtDeg(chart.angles[k])}</td><td class="num">${k === 'asc' ? 1 : 10}</td></tr>`).join('') : '';
 
-  const aspectRows = chart.aspects.map(a => `<li>
-      <span class="asp-pair">${esc(a.a.key)} <span class="glyph">${a.asp.glyph}${VS}</span> ${esc(a.b.key)}</span>
+  // table: only the eight tightest, in 4 rows x 2 columns; the wheel still draws every aspect (Sandra, 06.10.2026)
+  const aspKey = k => k === 'North Node' ? '<span class="asp-long">North </span>Node' : esc(k); // "Node" on phones
+  const aspectRows = chart.aspects.slice(0, 8).map(a => `<li>
+      <span class="asp-pair">${aspKey(a.a.key)} <span class="glyph">${a.asp.glyph}${VS}</span> ${aspKey(a.b.key)}</span>
       <span class="asp-name">${a.asp.name}</span>
       <span class="asp-orb">${fmtOrb(a.orb)}</span></li>`).join('');
 
@@ -579,7 +664,7 @@ async function renderResult(chart, input) {
     ${chart.timeKnown ? '' : '<p class="notice">No birth time, no Rising and no houses. The chart is set for noon. The planets almost always stay in their signs, but their exact degrees can shift, and the Moon can move by up to seven degrees either way.</p>'}
     <div class="big-three">${cards.join('')}</div>
     ${transits}
-    ${lunationBlock(chart.lunation, chart.timeKnown)}
+    ${lunationBlock(chart.lunation, chart.timeKnown, chart.houses)}
     <div class="chart-grid">
       <figure class="wheel-wrap">${wheelSvg(chart)}</figure>
       <div class="tables">
@@ -593,7 +678,7 @@ async function renderResult(chart, input) {
     </div>
     <div class="aspects">
       <h3 class="sub-title">Aspects</h3>
-      <p class="fine">Major aspects with the orbs of our school. Sorted from tightest to widest: the tighter, the louder.</p>
+      <p class="fine">The eight tightest major aspects, with the orbs of our school: the tighter, the louder. The wheel draws all of them.</p>
       <ul class="aspect-list">${aspectRows || '<li>No major aspects within orb.</li>'}</ul>
     </div>
     <div class="teaser">

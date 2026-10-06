@@ -131,7 +131,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .card-note { font-size: 13px; color: var(--gold-italic); font-style: italic; margin: 14px 0 0; }
 
 /* this week's transits to the Sun */
-.transits { max-width: 760px; margin: 0 auto 64px; }
+.transits { margin-bottom: 40px; }
 .transit-list { list-style: none; padding: 0; margin: 18px 0 0; }
 .transit-list li { padding: 14px 0; border-bottom: 1px solid var(--line-faint); }
 .tr-head { display: flex; justify-content: space-between; gap: 16px; margin: 0; }
@@ -141,8 +141,53 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .tr-quiet { color: var(--gold-italic); font-style: italic; margin: 0; }
 .tr-more { color: var(--gold-italic); font-style: italic; margin: 24px 0 12px; }
 
+/* result panels: transits and Moon phase each in their own frame */
+.panel { max-width: 860px; margin: 0 auto 40px; border: 1px solid var(--line); background: var(--panel); padding: clamp(26px, 4vw, 44px); }
+.panel .sub-title { font-size: 15px; margin-bottom: 8px; }
+.panel .card-lock-link { margin-bottom: 4px; }
+.panel .fine { margin-top: 22px; }
+
 /* progressed Moon phase */
-.lunation { max-width: 760px; margin: 0 auto 64px; }
+.lunation { margin-bottom: 64px; }
+.lu-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: center; margin: 22px 0 6px; }
+.lu-wheel { width: 100%; height: auto; display: block; }
+.lu-ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.lu-arc { fill: none; stroke: var(--gold); stroke-width: 2.5; }
+.lu-disc { fill: var(--black); }
+.lu-lit { fill: var(--cream); opacity: .8; }
+.lu-rim { fill: none; stroke: var(--line); stroke-width: 1; }
+.lu-moon { opacity: .6; }
+.lu-moon-now { opacity: 1; }
+.lu-moon-now .lu-rim { stroke: var(--gold); stroke-width: 1.5; }
+.lu-dot { fill: var(--gold); stroke: var(--black); stroke-width: 2; }
+.lu-center { font-family: var(--serif); font-size: 9.5px; letter-spacing: .2em; fill: var(--muted); }
+.lu-body .tr-text { margin: 0 0 14px; }
+.lu-body .tr-text:last-of-type { margin-bottom: 0; }
+.lu-time { margin-top: 26px; }
+.lu-bar { position: relative; height: 2px; background: var(--line-faint); margin-top: 22px; }
+.lu-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold); }
+.lu-now { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px var(--panel); }
+.lu-now i { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 10px; letter-spacing: .24em; color: var(--gold-label); }
+.lu-years { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; letter-spacing: .24em; color: var(--muted); }
+.lu-info { margin-top: 30px; border-top: 1px solid var(--line-faint); }
+.lu-info summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 18px 0 4px; font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-label); }
+.lu-info summary::-webkit-details-marker { display: none; }
+.lu-info summary::after { content: '+'; font-size: 20px; letter-spacing: 0; color: var(--gold); transition: transform .2s; }
+.lu-info[open] summary::after { transform: rotate(45deg); }
+.lu-info summary:hover, .lu-info summary:focus-visible { color: var(--cream); }
+.lu-info-body { padding-top: 10px; }
+.lu-info-body p { color: var(--cream); opacity: .85; font-size: 16px; margin: 0 0 14px; }
+.lu-phases { list-style: none; padding: 0; margin: 6px 0 18px; border-top: 1px solid var(--line-faint); }
+.lu-phases li { padding: 10px 0; border-bottom: 1px solid var(--line-faint); color: var(--muted); font-size: 15px; display: grid; grid-template-columns: 170px 1fr; gap: 16px; }
+.lu-phases b { font-weight: 400; font-size: 11px; letter-spacing: .24em; color: var(--gold-label); padding-top: 3px; }
+.lu-phases .lu-phase-now { color: var(--cream); }
+.lu-phases .lu-phase-now b { color: var(--gold); }
+.lu-phases em { color: var(--gold-italic); }
+@media (max-width: 640px) {
+  .lu-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .lu-wheel { max-width: 220px; margin: 0 auto; }
+  .lu-phases li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
 .lunation .kicker { margin-bottom: 10px; }
 .lu-lead { color: var(--cream); font-style: italic; font-size: 18px; margin: 0 0 4px; }
 
@@ -173,7 +218,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .retro { color: var(--gold-italic); font-style: italic; font-size: 13px; }
 
 .aspects { margin-top: 56px; }
-.aspect-list { list-style: none; padding: 0; margin: 18px 0 0; columns: 2 300px; column-gap: 48px; }
+.aspect-list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, auto); grid-auto-flow: column; column-gap: 48px; }
 .aspect-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line-faint); break-inside: avoid; font-size: 15px; }
 .asp-name { color: var(--muted); font-style: italic; }
 .asp-orb { font-variant-numeric: tabular-nums; color: var(--gold-label); }
@@ -285,6 +330,10 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .positions .glyph { min-width: 26px; }
   .aspect-list li { grid-template-columns: 1fr auto; }
   .asp-name { display: none; }
+  .aspect-list { column-gap: 20px; }
+  .aspect-list li { font-size: 13px; gap: 8px; }
+  .asp-pair { white-space: nowrap; }
+  .asp-long { display: none; }
 }
 /* hero ring up to 760 px (Sandra, 02.10.2026): fits the screen below the kicker, the title sits in its centre,
    the italic lines start below it. Margins in vw follow the ring; checked for no glyph/text overlap at 360-760 px.
