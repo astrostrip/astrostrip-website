@@ -23,10 +23,10 @@
 import { buildInvoice, buildCorrection, berlinDate } from './invoice.js';
 import { berlinOffsetMinutes, berlinYmd, longDateText, berlinStampText, isoUtc } from './time.js';
 
-// weekly = orders per strip and week (Sandra: 20/5/3 on 30.09.2026, Maxi and Ultra doubled on 03.10.2026).
+// weekly = orders per strip and week (Sandra: 20/5/3 on 30.09.2026, Maxi and Ultra doubled on 03.10.2026, 21/7/6 on 06.10.2026).
 export const STRIPS = {
-  mini: { name: 'Mini Strip', tag: 'The essentials', cents: 3900, days: 5, weekly: 20 },
-  maxi: { name: 'Maxi Strip', tag: 'Full chart reading', cents: 7900, days: 7, weekly: 10 },
+  mini: { name: 'Mini Strip', tag: 'The essentials', cents: 3900, days: 5, weekly: 21 },
+  maxi: { name: 'Maxi Strip', tag: 'Full chart reading', cents: 7900, days: 7, weekly: 7 },
   ultra: { name: 'Ultra Strip', tag: 'Complete dossier', cents: 12900, days: 10, weekly: 6 },
 };
 
@@ -114,15 +114,15 @@ export async function usedSlots(env, nowMs = Date.now()) {
   return { weeks, used };
 }
 
-// Per strip: limit, left (current week), next (first week with a free slot: date and unix start, null if all full),
+// Per strip: left (current week), next (first week with a free slot: date and unix start, null if all full),
 // thisWeek (next is the current week), until (last Sunday of the booking window, for "fully booked until").
+// No total per week: the page must not show how many slots there are (Sandra, 06.10.2026).
 export async function freeSlots(env, nowMs = Date.now()) {
   const { weeks, used } = await usedSlots(env, nowMs);
   const lastSunday = weekDate(addWeeks(weeks[weeks.length - 1], 1) - 86400 + 12 * 3600);
   return Object.fromEntries(Object.entries(STRIPS).map(([k, s]) => {
     const free = weeks.find(w => used[w][k] < s.weekly);
     return [k, {
-      limit: s.weekly,
       left: Math.max(0, s.weekly - used[weeks[0]][k]),
       next: free ? weekDate(free) : null,
       nextStart: free || null,

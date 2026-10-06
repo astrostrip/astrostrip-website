@@ -131,7 +131,7 @@ let r = await worker.fetch(req('/api/slots'), env);
 const thisWeek = weekDate(weekStart());
 let sl = await r.json();
 assert.deepEqual(Object.keys(sl), ['mini', 'maxi', 'ultra']);
-for (const [k, n] of [['mini', 20], ['maxi', 10], ['ultra', 6]]) { assert.equal(sl[k].limit, n); assert.equal(sl[k].left, n); assert.equal(sl[k].next, thisWeek); assert.equal(sl[k].thisWeek, true); }
+for (const [k, n] of [['mini', 21], ['maxi', 7], ['ultra', 6]]) { assert.equal(sl[k].limit, undefined, 'no total in the API'); assert.equal(sl[k].left, n); assert.equal(sl[k].next, thisWeek); assert.equal(sl[k].thisWeek, true); }
 assert.equal(sl.ultra.until, weekDate(addWeeks(weekStart(), WEEKS_AHEAD) - 86400 + 43200), 'booking window ends on a Sunday');
 assert.equal(new Date(sl.ultra.until + 'T12:00:00Z').getUTCDay(), 0);
 // week helpers across the DST change on 25 Oct 2026
