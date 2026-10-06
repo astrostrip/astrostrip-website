@@ -36,7 +36,7 @@ export default {
   },
   9: {
     sun: "You are here to focus your attention so finely that you glimpse what’s coming, and then help shape it. Imagination and intuition work as partners in you, and they need your rational mind to connect the dots. The trap is getting lost in how you come across, or watching the future without taking responsibility for it. Accept that your view is personal and biased. That’s not weakness; it’s the only access anyone gets.",
-    life: "Gets a hunch, then fact-checks it. Never asks what the future holds without asking what they'll do about it.",
+    life: "Gets a hunch, then fact-checks it. Never asks what the future holds without asking what they’ll do about it.",
   },
   10: {
     sun: "You are here to reinterpret your own story: to look back at what happened and find the meaning you couldn’t see while you were busy building yourself. Your emotions become signals to read, not places to drown. The shadow is calling a distorted view creative, or clinging to explanations that no longer fit your life. Test what you believe against real experience and other people’s views. When it’s true, you feel it change you.",
@@ -44,7 +44,7 @@ export default {
   },
   11: {
     sun: "You are here to discipline your will around one value you choose on purpose and let everything else serve it. Choose carefully, because it will shape you hard. The shadow: trying to embody an ideal often slides into pretense, and no ideal is ever fully reachable. Worse is quietly swapping it for self-admiration. Deepen your actual qualities, accept that people will blame you for their own flaws, and keep serving the value.",
-    life: "Picked one value and lives by it. Takes the blame for the team's mistakes and doesn't make a speech about it.",
+    life: "Picked one value and lives by it. Takes the blame for the team’s mistakes and doesn’t make a speech about it.",
   },
   12: {
     sun: "At your core sits an unbreakable sense of freedom. You are here to follow your own creative path without dragging along burdens that aren’t yours or worries that lead nowhere. The shadow is freedom as an excuse: selfish, scattered, always keeping options open and never landing. Freedom only grows into wisdom when you invest it in something. Commit, and it doesn’t shrink. It deepens.",
@@ -55,8 +55,8 @@ export default {
     life: "Launched a rebellion in the group chat. It went nowhere, nobody held a grudge, and the next try worked.",
   },
   14: {
-    sun: "You are here to learn that your highest qualities depend on accepting your lowest. Relationships pull you in through desire and need so you can learn to hold both poles inside yourself. The shadow: denying your instincts until they overpower you, or leaning on a partner to supply the calm and wisdom you haven’t built yet. Explore the parts you were taught to hide. Integrated, they become depth.",
-    life: "Doesn't pretend to be above wanting things. Also doesn't need a partner to make them feel whole.",
+    sun: "You are here to learn that your highest qualities depend on accepting your lowest. Desire and need pull you into relationships so you can learn to find in yourself what you keep looking for in the other person. The shadow: denying your instincts until they overpower you, or leaning on a partner to supply the calm and wisdom you haven’t built yet. Explore the parts you were taught to hide. Integrated, they become depth.",
+    life: "Doesn’t pretend to be above wanting things. Also doesn’t need a partner to make them feel whole.",
   },
   15: {
     sun: "Your peak is surprisingly unspectacular: you are here to make ordinary life meaningful. Doing daily tasks well, steadily and with care, is where your character forms. The shadow is treating routine as dull or using it only to stay comfortable, ending up with outward success and no inner gain. Having success isn’t the same as being a success. Keep practicing until skill turns into character. Then being yourself is enough.",
@@ -64,27 +64,27 @@ export default {
   },
   16: {
     sun: "You are here to trust life enough to dance with it: spontaneous, bold, a little crazy, and often rewarded for exactly that. The paradox you live: act as if it matters, knowing that in the bigger picture it barely does. The shadow is contentment that stops moving and calls itself peace. Thinking your actions are everything, or nothing, are both mistakes. Keep participating. Your abundance comes from staying in motion.",
-    life: "Books the spontaneous trip, knows it won't change the world, goes anyway, and comes back luckier than everyone else.",
+    life: "Books the spontaneous trip, knows it won’t change the world, goes anyway, and comes back luckier than everyone else.",
   },
   17: {
     sun: "You are here to know yourself through retreat: being rather than doing, finding your strength away from the noise. Living by your own ideals lets you refuse the pressure to conform. The shadow is twofold: withdrawal that hardens into loneliness, and trading your uniqueness for comfort and safety. Performing virtue isn’t the same as having it. Pull back when you need to, but not away from everyone. Above all, stay true to yourself.",
-    life: "Turns down the party, spends the evening with the one friend who gets it. Doesn't explain either choice.",
+    life: "Turns down the party, spends the evening with the one friend who gets it. Doesn’t explain either choice.",
   },
   18: {
     sun: "You are here to find your own rhythm between action and rest, and to live it. Reflection is where your inspiration begins. The shadow is imbalance in either direction, and a life that circles the same issues because you never stop to think them through. Your identity sits on a knife-edge: deny every impulse and you deny life, follow every impulse and you lose self-command. Slow down enough for your heart to take part.",
     life: "Schedules rest like a meeting. Learned the hard way that skipping it means having the same crisis every spring.",
   },
   19: {
-    sun: "You are here to let go of the grasping mind and gain the overview. Stepping out of frantic competition doesn’t make you less effective; it saves you from mistakes. The shadow: chasing status at any cost, which tends to leave you anxious and shallow, or detaching so far that life turns flat and second-hand. Build a daily practice of stillness and stay curious. To grow, you first have to see further.",
+    sun: "You are here to stop clutching at every result and step back far enough to see the whole picture. Stepping out of frantic competition doesn’t make you less effective; it saves you from mistakes. The shadow: chasing status at any cost, which tends to leave you anxious and shallow, or detaching so far that life turns flat and second-hand. Build a daily practice of stillness and stay curious. To grow, you first have to see further.",
     life: "Takes a walk instead of sending the angry email. Comes back with the better idea.",
   },
   20: {
     sun: "You are here to love in a practical, unsentimental way, especially when life is hard. Hardship is exactly where compassion gets room to exist. The shadow: helping with a hidden agenda, like winning approval, which drains the gift of its meaning, or wallowing in feelings instead of acting. What you hand over is only the visible part; the care you put into it is the real gift. Giving this way builds unusual inner strength.",
-    life: "First at your door with soup when you're sick. Never mentions it again.",
+    life: "First at your door with soup when you’re sick. Never mentions it again.",
   },
   21: {
     sun: "You are here to test yourself against real challenges and find out exactly where you are strong and where you are not. Conflict is the friction that builds you, and the struggle usually starts inside before it shows outside. The shadow: rebelling blindly against every limit and spending yourself on things of little worth. Be willing to risk what you’ve already won. Knowing your strengths and weaknesses is what finally lets you stand firm.",
-    life: "Wants the toughest critic in the room. Leaves knowing exactly where they're strong and where they're not.",
+    life: "Wants the toughest critic in the room. Leaves knowing exactly where they’re strong and where they’re not.",
   },
   22: {
     sun: "You are here to make optimism, cooperation and sharing your way of life. Where others compete, you tend to get further by teaming up. Wanting things is proof you’re alive, and arriving is only ever a rest stop before the next wish. The shadow: dreaming far more than you do. Measure your dream time against your action time. Obstacles aren’t in your way; they are how you grow.",
@@ -112,7 +112,7 @@ export default {
   },
   28: {
     sun: "You are here to speak with force and truth, and to learn detachment, perhaps the hardest lesson of all. Keep your word, and think about others before you make big claims. But you can’t live by applause. The shadow is chasing popularity, needing attention, or getting pulled into other people’s resentment and failures until you lose your own optimism. Their disappointment isn’t your verdict. Your sense of self rests on how you create, not on approval.",
-    life: "Keeps every promise they make, and makes fewer. If you're disappointed anyway, that's yours to carry.",
+    life: "Keeps every promise they make, and makes fewer. If you’re disappointed anyway, that’s yours to carry.",
   },
   29: {
     sun: "You are here to find your part in something larger and give it your full devotion. Both what you do and how you listen help shape the whole, and your hopes act like quiet intentions that steer your life. The shadow: self-deception, flattery and wishful illusion, all rooted in fear. Each has a better twin: honest self-examination, genuine appreciation, real imagination. Feeling devoted isn’t enough. Express it.",

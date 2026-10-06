@@ -8,14 +8,14 @@ export default {
   },
   2: {
     sun: "Your core is an openness that lets good things in, as long as you don’t dissect every gift until nothing is left of it. You are here to enjoy, to share and to keep a sense of wonder alive for the people around you. The shadow is guilt: celebrating your own wins in secret, or holding on to plenty instead of passing it on. Practise gratitude on purpose and learn to expect good things. Enjoying without apology is part of your work.",
-    life: "Orders dessert first, thanks the kitchen, no guilty jokes. Simply expects there's more where that came from.",
+    life: "Orders dessert first, thanks the kitchen, no guilty jokes. Simply expects there’s more where that came from.",
   },
   3: {
     sun: "You are here to bring order to what you discover: patterns, rules, a clear sense of what is worth more and why. You tend to believe rewards should follow real achievement, which is not always a popular view. The trap is seeing yourself as disadvantaged by birth, a story that never makes anyone happy. Your task is to shape what you have into something refined and well kept. Contentment comes from that, not from how much you start with.",
     life: "Grew up with little, never blames it. Made a studio look like a magazine cover and earned every promotion since.",
   },
   4: {
-    sun: "Under your rational, grown-up surface sits a longing for something more original and closer to nature, and you are here to reconnect with it. Rituals, inherited or self-made, renew your drive when you know why you keep them. The trap is going through the motions: collecting experiences and traditions without asking what they mean. Choose calmly and honestly. Meaning comes from the inner side of an experience, not from the event itself.",
+    sun: "Under your rational, grown-up surface sits a longing for something more original and closer to nature, and you are here to reconnect with it. Rituals, inherited or self-made, renew your drive when you know why you keep them. The trap is going through the motions: collecting experiences and traditions without asking what they mean. Choose calmly and honestly. Meaning comes from what an experience does to you, not from how it looks from the outside.",
     life: "Has a ritual for everything and knows where each one comes from. Old customs, their own meaning, nothing on autopilot.",
   },
   5: {
@@ -23,11 +23,11 @@ export default {
     life: "Reads the side they disagree with on purpose. Changes minds without a single comment-section fight.",
   },
   6: {
-    sun: "You are here to go deep, into what is hidden in you as much as into what you study. Your hunger for knowledge needs one point of focus, and the outer effort tends to mirror an inner one. The trap is self-exploitation: burning through your energy and letting your self-worth hang on whether the venture pays off. Growth is a risk by nature. Accept that, stay with the process, and you discover a stamina and depth you didn’t know you had.",
+    sun: "You are here to go deep, into what is hidden in you as much as into what you study. Your hunger for knowledge needs one point of focus, and digging into a subject always means digging into yourself too. The trap is self-exploitation: burning through your energy and letting your self-worth hang on whether the venture pays off. Growth is a risk by nature. Accept that, stay with the process, and you discover a stamina and depth you didn’t know you had.",
     life: "Bet years on one obscure topic, no payoff guaranteed. Knows more about it than anyone, and still forgets to eat.",
   },
   7: {
-    sun: "You are here to learn something that sounds banal and runs deep: you are always you, however much others take from you. That frees you to try out different versions of yourself without losing the thread. The trap is straining for more, or fearing that every exchange costs you a piece of yourself. Contact does cost energy, but it doesn’t damage your core. Trust that, and your many sides stop looking fickle. They come from one real source.",
+    sun: "You are here to learn something that sounds banal and runs deep: you are always you, however much others take from you. That frees you to try out different versions of yourself without losing the thread. The trap is straining for more, or fearing that every exchange costs you a piece of yourself. Contact does cost energy, but it doesn’t damage your core. Trust that, and your many sides stop looking fickle. Every one of them is genuinely you.",
     life: "Loud at parties, nerdy at work. Three friend groups. One person. No act.",
   },
   8: {
@@ -83,12 +83,12 @@ export default {
     life: "Closed 40 browser tabs, unsubscribed from twelve newsletters, and finally finished one thing.",
   },
   21: {
-    sun: "You are here to trust the gap between what sounds right and what feels right. When words and your gut disagree, the rebellion inside you carries information. Letting pent-up feeling out beats keeping it buried, and your values tend to take shape through conflict. The trap is empty ranting, or letting others stir you up. Your task is to represent your cause coherently and dare to name what everyone else prefers to sweep under the rug.",
+    sun: "You are here to take it seriously when something sounds right but doesn’t feel right. When words and your gut disagree, the rebellion inside you carries information. Letting pent-up feeling out beats keeping it buried, and your values tend to take shape through conflict. The trap is empty ranting, or letting others stir you up. Your task is to represent your cause coherently and dare to name what everyone else prefers to sweep under the rug.",
     life: "Finally said what everyone was thinking, calmly and with numbers. The policy changed the next month.",
   },
   22: {
     sun: "You are here to prove that a clear mind and a full heart belong together. You come alive in shared moments, where everyone brings something and feelings have their natural place. The shadow is taking part only on the surface, putting caution before trust and fear before affection. Your task is to share what you are passionate about and let your feelings show without armour. You tend to discover how much of who you are you owe to the people around you.",
-    life: "At the family dinner, skips the small talk and says what's actually going on. Somehow everyone opens up after that.",
+    life: "At the family dinner, skips the small talk and says what’s actually going on. Somehow everyone opens up after that.",
   },
   23: {
     sun: "You are here to develop new ideas slowly and carefully. At first your inspirations tend to be more vision than plan, and they need protection from ridicule and pressure before they can stand on their own. The trap is broadcasting them too early to win admiration, which often ends in wasted effort. Step back and examine where the idea comes from and what it would really take. Real brilliance is a process, not a moment.",
@@ -100,10 +100,10 @@ export default {
   },
   25: {
     sun: "You are here to give form to a mind that naturally wants to spread in every direction. Left unchecked, curiosity turns into wild fantasy and a crowded head; with structure, it becomes something beautiful that leaves your mark. The trap is empty display, talent shown off for effect. Keep asking how your work serves the people and places around you. Pride in doing good work runs deeper than any applause.",
-    life: "Deleted half the slides before the big presentation. Better talk, and the proudest they've ever been of their work.",
+    life: "Deleted half the slides before the big presentation. Better talk, and the proudest they’ve ever been of their work.",
   },
   26: {
-    sun: "You are here to find the essential self beneath all the stimulation, noise and moods. It shows most clearly when you are stripped of what you don’t need, without polish or performance. The trap is half-heartedness: anything done with partial attention tends to go dead on you, and routine can become a hiding place. Keep refining, keep watching how you see things, and let go of what has lost its life. Beauty is something you learn to look for.",
+    sun: "You are here to find the essential self beneath all the stimulation, noise and moods. It shows most clearly when you are stripped of what you don’t need, without polish or performance. The trap is half-heartedness: anything done with partial attention tends to go dead on you, and routine can become a hiding place. Keep sorting, notice how you look at things, and drop whatever no longer means anything to you. Beauty is something you learn to look for.",
     life: "Owns twenty things they love instead of two hundred they tolerate. Does nothing halfway.",
   },
   27: {
@@ -111,7 +111,7 @@ export default {
     life: "Never fit in at school. Found their people at 25 and now spends every free weekend and paycheck on them.",
   },
   28: {
-    sun: "You are here to be carried by trial and error. Failure is part of your success, not its opposite, and difficult times tend to wake abilities that would otherwise have stayed asleep. The trap is ducking responsibility, trying to escape the consequences, or letting the fear of failing run your choices. Treat disappointment as information and start again. As long as there are people around you, you are never truly left with nothing.",
+    sun: "You are here to move forward by trying, failing and trying again. Failure is part of your success, not its opposite, and difficult times tend to wake abilities that would otherwise have stayed asleep. The trap is ducking responsibility, trying to escape the consequences, or letting the fear of failing run your choices. Treat disappointment as information and start again. As long as there are people around you, you are never truly left with nothing.",
     life: "Failed the driving test twice. Third try: passed, best friend cheering.",
   },
   29: {

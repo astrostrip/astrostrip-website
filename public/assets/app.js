@@ -344,6 +344,24 @@ function whenLabel(hit) {
   if (hit.exactFrom && hit.spans[0].from !== hit.exactFrom) return `${range} · EXACT ${WEEKDAYS[dayOf(hit.exactFrom)]}`;
   return range;
 }
+// Triggers (D24, L15 pp. 14-16; wording Sandra 06.10.2026): a fast planet on the same Sun degree makes a slow
+// transit tangible. Mercury and Venus work the day before and the day they are exact, Mars about a week,
+// a fast planet stationing in its orb for weeks. The fast planet is not named, like in the texts.
+const DAYNAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+function triggerLines(hit) {
+  const lines = new Set();
+  for (const t of hit.triggers || []) {
+    if (t.station) lines.add('Lingers for weeks: a fast planet stands still on this degree.');
+    else if (t.planet === 'Mars') lines.add(t.exactFrom
+      ? `Building all week, likely most tangible around ${DAYNAMES[dayOf(t.exactFrom)]}.`
+      : 'Building all week.');
+    else if (t.exactFrom) {
+      const d = dayOf(t.exactFrom);
+      lines.add(`Likely most tangible on ${DAYNAMES[(d + 6) % 7]} and ${DAYNAMES[d]}.`);
+    }
+  }
+  return [...lines].map(l => `<p class="fine tr-trigger">${l}</p>`).join('');
+}
 // Older week files have no status: every hit there is exact.
 const STATUS_LABEL = { applying: ' · APPROACHING', separating: ' · PAST EXACT' };
 
@@ -374,6 +392,7 @@ function weekBody(data, sunLon, cusps) {
       return `<li>
         <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()}${STATUS_LABEL[h.status] || ''} · FROM THE ${ordinal(h.house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span><span class="tr-when">${whenLabel(h)}</span></p>
         ${text ? `<p class="tr-text">${esc(text)}</p>` : ''}
+        ${triggerLines(h)}
         ${h.status === 'separating' ? '<p class="tr-text">Past exact, so what this contact stirred may now be in integration.</p>' : ''}
         ${realHouseLine(h.planet, h.deg + 0.5, h.house, cusps)}
       </li>`;
