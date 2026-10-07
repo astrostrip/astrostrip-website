@@ -302,8 +302,8 @@ function wheelSvg(chart) {
 }
 
 // ---------- Degree texts (one file per sign, loaded on demand) ----------
-// Sabian degree: drop the minutes, add 1 (0°00'–0°59' = degree 1).
-const sabianDegree = lon => Math.floor(norm360(lon) % 30) + 1;
+// Degree as counted in the readings: drop the minutes, add 1 (0°00'–0°59' = degree 1).
+const countedDegree = lon => Math.floor(norm360(lon) % 30) + 1;
 const degreeCache = {};
 async function degreeText(sign, degree, role) {
   const key = sign.toLowerCase();
@@ -582,7 +582,7 @@ function lunationBlock(lu, timeKnown, cusps = null) {
 // Rising and Moon show their degree with a pointer to the strips. Their degree texts are not in the public files.
 async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked = false } = {}) {
   const sign = SIGNS[signOf(lon)];
-  const deg = sabianDegree(lon);
+  const deg = countedDegree(lon);
   const [head, body] = TEXTS[sign][role];
   const r = ROLES[role];
   if (locked) {
@@ -628,9 +628,9 @@ async function renderResult(chart, input) {
   let sunOpts = {};
   if (chart.sunRange) {
     const [s0, s1] = chart.sunRange;
-    if (signOf(s0) !== signOf(s1) || sabianDegree(s0) !== sabianDegree(s1)) {
-      const from = `${SIGNS[signOf(s0)]} ${sabianDegree(s0)}`;
-      const to = `${SIGNS[signOf(s1)]} ${sabianDegree(s1)}`;
+    if (signOf(s0) !== signOf(s1) || countedDegree(s0) !== countedDegree(s1)) {
+      const from = `${SIGNS[signOf(s0)]} ${countedDegree(s0)}`;
+      const to = `${SIGNS[signOf(s1)]} ${countedDegree(s1)}`;
       sunOpts = { extra: `<p class="card-note">Without a birth time your Sun could be on ${from} or ${to}. The reading above is for noon; your birth time decides which one is yours.</p>` };
     }
   }
