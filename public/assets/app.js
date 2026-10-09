@@ -336,11 +336,19 @@ async function loadTransitWeek(monday) {
 }
 
 const dayOf = s => (new Date(s.slice(0, 10) + 'T00:00:00Z').getUTCDay() + 6) % 7;
-function whenLabel(hit) {
+function whenLabel(hit, week) {
   const a = dayOf(hit.spans[0].from);
   const b = dayOf(hit.spans[hit.spans.length - 1].to);
   const range = hit.whole ? 'ALL WEEK' : a === b ? WEEKDAYS[a] : `${WEEKDAYS[a]}–${WEEKDAYS[b]}`;
-  // the approach runs into the exact day; name it when the approach started earlier
+  // A fast planet's exact day is the end of its window, never the date (Sandra, 09.10.2026): " · PEAK <days>" for the
+  // 24 hours before exact (Mercury, Venus) or three days before (Mars), cut to the week, as in carousel-pick.py
+  if (hit.fast && hit.exactFrom && week) {
+    const e = Date.parse(hit.exactFrom + ':00Z');
+    const from = Math.max(e - (hit.planet === 'Mars' ? 3 : 1) * 86400000, Date.parse(week + 'T00:00:00Z'));
+    const days = windowDays({ windowFrom: new Date(from).toISOString().slice(0, 16), windowTo: hit.exactFrom });
+    return `${range} · PEAK ${days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`}`;
+  }
+  // a slow planet: the approach runs into the exact day; name it when the approach started earlier
   if (hit.exactFrom && hit.spans[0].from !== hit.exactFrom) return `${range} · EXACT ${WEEKDAYS[dayOf(hit.exactFrom)]}`;
   return range;
 }
@@ -350,65 +358,108 @@ function whenLabel(hit) {
 const DAYNAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function triggerLines(hit) {
   const lines = new Set();
+  const tangible = new Set(); // day phrases of Mercury, Venus and the Moon, said in one sentence (Sandra, 09.10.2026)
   for (const t of hit.triggers || []) {
     if (t.station) lines.add('Lingers for weeks: a fast planet stands still on this degree.');
     else if (t.planet === 'Mars') lines.add(t.exactFrom
-      ? `Building all week, likely most tangible around ${DAYNAMES[dayOf(t.exactFrom)]}.`
+      ? `Building all week, likely most tangible in the days before ${DAYNAMES[dayOf(t.exactFrom)]}.`
       : 'Building all week.');
     else if (t.exactFrom) {
       const d = dayOf(t.exactFrom);
-      lines.add(`Likely most tangible on ${DAYNAMES[(d + 6) % 7]} and ${DAYNAMES[d]}.`);
+      tangible.add(`${DAYNAMES[(d + 6) % 7]} and ${DAYNAMES[d]}`);
     }
   }
+  // the Moon on this slow planet while it also aspects the Sun (D24, Sandra 09.10.2026): only the strongest contact
+  // (conjunction > opposition/square > trine/sextile, then the earlier one; Sandra 09.10.2026, as the carousel's PEAK),
+  // the days its 24-hour window touches, without days already named above [suggestion of the carousel session]
+  const named = new Set();
+  for (const t of hit.triggers || []) {
+    if (t.station || !t.exactFrom) continue;
+    const d = dayOf(t.exactFrom);
+    named.add(d);
+    if (t.planet !== 'Mars') named.add((d + 6) % 7);
+  }
+  const peak = (hit.moonTriggers || []).reduce((a, t) => (!a || MOON_RANK[t.aspect] < MOON_RANK[a.aspect] ? t : a), null);
+  const moonDays = (peak ? windowDays(peak) : []).filter(d => !named.has(d)).map(d => DAYNAMES[d]);
+  if (moonDays.length) tangible.add(moonDays.join(' and '));
+  if (tangible.size) lines.add(`Likely most tangible on ${[...tangible].join(', and on ')}.`);
   return [...lines].map(l => `<p class="fine tr-trigger">${l}</p>`).join('');
 }
-// Older week files have no status: every hit there is exact.
-const STATUS_LABEL = { applying: ' · APPROACHING', separating: ' · PAST EXACT' };
-
+// Days a Moon contact's 24-hour window before exact touches (Sandra, 09.10.2026), a day counting from one hour, as in
+// carousel-pick.py; window times are German wall clock, cut to the week by build-transits.py.
+function windowDays(c) {
+  if (!c.windowFrom) return [dayOf(c.exact)];
+  const a = Date.parse(c.windowFrom + ':00Z'), b = Date.parse(c.windowTo + ':00Z');
+  const out = [];
+  for (let d = Date.parse(c.windowFrom.slice(0, 10) + 'T00:00:00Z'); d <= b; d += 86400000) {
+    if (Math.min(b, d + 86400000) - Math.max(a, d) >= 3600000) out.push((new Date(d).getUTCDay() + 6) % 7);
+  }
+  return out.length ? out : [dayOf(c.windowTo)];
+}
 function weekLabel(data) {
   const [, m1, d1] = data.week.split('-').map(Number);
   const [, m2, d2] = data.until.split('-').map(Number);
   return m1 === m2 ? `${MONTHS[m1 - 1]} ${d1}–${d2}` : `${MONTHS[m1 - 1]} ${d1}–${MONTHS[m2 - 1]} ${d2}`;
 }
 
-// Houses here are counted from the Sun sign, like the transit posts (no birth time there). With a birth time,
-// the chart's own house of the transiting planet is named underneath, so the two never contradict silently
-// (Sandra, 04.10.2026: Saturn showed "4th house" here while her chart below has it in the 10th).
-function realHouseLine(planet, lon, sunSignHouse, cusps) {
-  if (!cusps) return '';
-  const real = houseOf(lon, cusps);
-  return `<p class="fine tr-real">${real === sunSignHouse
-    ? `In your full chart, ${planet} moves through your ${ordinal(real)} house too.`
-    : `In your full chart, ${planet} moves through your ${ordinal(real)} house. That's the house the strips read.`}</p>`;
+// Shown like the transit posts (Sandra, 09.10.2026): life area of the house counted from the Sun sign · time, then the
+// text; no planet, aspect or house number, no list of where the planets stand, no line on the chart's own house (that
+// line from 04.10.2026 is replaced by the fine print). Area words as in the carousel labels (reference/karussell-bot.md,
+// approved by Sandra 09.10.2026).
+const AREAS = ['SELF', 'MONEY', 'EVERYDAY TALK', 'HOME & FAMILY', 'LOVE & PLAY', 'DAILY ROUTINE', 'PARTNERS',
+  'INTIMACY & SHARING', 'TRAVEL & BELIEFS', 'WORK & STATUS', 'FRIENDS & GROUPS', 'REST & RETREAT'];
+// rows: { house, when, html }; equal area and time next to each other share one label, as in the carousel
+function areaList(rows) {
+  const items = [];
+  for (const r of rows) {
+    const prev = items[items.length - 1];
+    if (prev && prev.house === r.house && prev.when === r.when) prev.html += r.html;
+    else items.push({ ...r });
+  }
+  return `<ul class="transit-list">${items.map(it => `<li>
+      <p class="tr-head"><span class="tr-label">${AREAS[it.house - 1]}</span><span class="tr-when">${it.when}</span></p>
+      ${it.html}
+    </li>`).join('')}</ul>`;
 }
 
-function weekBody(data, sunLon, cusps) {
-  const deg = Math.floor(norm360(sunLon));
-  const hits = data.hits[String(deg)] || [];
-  let body;
-  if (hits.length) {
-    body = `<ul class="transit-list">${hits.map(h => {
-      const text = data.texts[h.key];
-      return `<li>
-        <p class="tr-head"><span class="tr-label">${h.planet.toUpperCase()} · ${h.aspect.toUpperCase()}${STATUS_LABEL[h.status] || ''} · FROM THE ${ordinal(h.house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span><span class="tr-when">${whenLabel(h)}</span></p>
-        ${text ? `<p class="tr-text">${esc(text)}</p>` : ''}
-        ${triggerLines(h)}
-        ${h.status === 'separating' ? '<p class="tr-text">Past exact, so what this contact stirred may now be in integration.</p>' : ''}
-        ${realHouseLine(h.planet, h.deg + 0.5, h.house, cusps)}
-      </li>`;
-    }).join('')}</ul>`;
-  } else {
-    // quiet week: only the houses the slow planets move through, as background
-    const sunSign = signOf(sunLon);
-    const bg = data.planets.filter(p => !p.fast).map(p => {
-      const house = (Math.floor(p.stays[0].deg / 30) - sunSign + 12) % 12 + 1;
-      return `<li><p class="tr-head"><span class="tr-label">${p.planet.toUpperCase()} · IN THE ${ordinal(house).toUpperCase()} HOUSE OF YOUR SUN SIGN</span></p>
-        ${realHouseLine(p.planet, p.stays[0].deg + 0.5, house, cusps)}</li>`;
-    }).join('');
-    body = `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>
-      <ul class="transit-list">${bg}</ul>`;
+// Moon contacts to the slow planets (Sandra, 09.10.2026; /transit-woche rule 10a, model 2): every house of the Sun sign
+// with a Moon contact this week and no hit on this degree. One row per house (Sandra, 09.10.2026: one per life area), the
+// strongest contact there as in the carousel (conjunction > opposition/square > trine/sextile, then the earlier one):
+// area · the days its 24-hour window before exact touches (German time, windowDays), the text that links the Moon's
+// house and degree with the planet's (key 'Moon|<sign> N|Planet|<sign> N|H<Moon house>|H<planet house>'). Rows in time
+// order, the planet is not named. Older week files have no moon list, contacts without a text are left out.
+const MOON_RANK = { conjunction: 0, opposition: 1, square: 1, trine: 2, sextile: 2 };
+const houseFrom = (lon, sunSign) => (Math.floor(lon / 30) - sunSign + 12) % 12 + 1;
+function moonRows(data, sunLon, taken) {
+  const sunSign = signOf(sunLon);
+  const best = new Map(); // planet house -> strongest contact with a text (the list is sorted by time)
+  for (const c of data.moon || []) {
+    const house = houseFrom(c.deg, sunSign);
+    const text = c.moonDeg === undefined ? null : data.texts[`${c.key}|H${houseFrom(c.moonDeg, sunSign)}|H${house}`];
+    if (taken.has(house) || !text) continue;
+    const prev = best.get(house);
+    if (!prev || MOON_RANK[c.aspect] < MOON_RANK[prev.c.aspect]) best.set(house, { c, text });
   }
-  return body;
+  return [...best].sort((a, b) => a[1].c.exact.localeCompare(b[1].c.exact)).map(([house, { c, text }]) => {
+    const days = windowDays(c);
+    return { house, when: days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`,
+      html: `<p class="tr-text">${esc(text)}</p>` };
+  });
+}
+function moonSection(rows) {
+  return rows.length ? `<p class="kicker" style="margin: 28px 0 0">OTHER AREAS, BRIEFLY</p>${areaList(rows)}` : '';
+}
+
+function weekBody(data, sunLon) {
+  const deg = Math.floor(norm360(sunLon));
+  // only transits with a text, like the post: past exact drops out (Sandra, 09.10.2026), its house is free for the Moon
+  const hits = (data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]);
+  const moon = moonRows(data, sunLon, new Set(hits.map(h => h.house)));
+  if (!hits.length) {
+    return `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>${moonSection(moon)}`;
+  }
+  return areaList(hits.map(h => ({ house: h.house, when: whenLabel(h, data.week),
+    html: `<p class="tr-text">${esc(data.texts[h.key])}</p>${triggerLines(h)}` }))) + moonSection(moon);
 }
 
 // From Friday on, next week's file is shown too: the weekend transit posts read the coming week
@@ -422,18 +473,14 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   if (!now && !next) return '';
   const deg = Math.floor(norm360(sunLon));
   const sign = SIGNS[signOf(sunLon)];
-  // applying orbs from the week of 12.10.2026 on (Sandra, 05.10.2026); older week files have no orbs
-  const orb = [now, next].some(d => d && d.orbs);
-  const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon, cusps)}`;
+  const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon)}`;
   return `<div class="transits panel">
     <h3 class="sub-title">Your week, stripped down</h3>
     ${now ? section(now, `YOUR SUN ON ${sign.toUpperCase()} ${deg % 30 + 1}`) : ''}
     ${next ? section(next, 'NEXT WEEK') : ''}
     <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Coming soon to add to either one: Transit Weekly, your transits week by week in the life areas you choose.</p>
     <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
-    <p class="fine">Transits to your Sun only. ${orb
-      ? 'A transit counts while it approaches your degree, within your Sun sign: Mercury, Venus and Mars from 5° before exact, Jupiter, Saturn, Uranus, Neptune, Pluto and Chiron from 1° before. Once exact has passed, it drops out; a slow planet that is only past exact this week gets one line.'
-      : 'Without orbs: just what hits your exact degree.'} Houses here are counted from 0° of your Sun sign, as in a Sun-sign horoscope; ${cusps ? 'your own houses from your birth time are named under each transit and in the table below' : 'your own houses need a birth time'}. Week from Monday to Sunday, German time.</p>
+    <p class="fine">Transits to your Sun only, with the life areas counted from your Sun sign, not from your personal houses. Precise transits need your exact birth time and a full reading of your birth chart first. Week from Monday to Sunday, German time.</p>
   </div>`;
 }
 

@@ -6,7 +6,7 @@ The calculator reads the visitor's Sun degree and shows the hits of the
 current week. Rules follow astro.strip's weekly transit format:
 
 - planets: Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Chiron
-  (no Moon, no transiting Sun)
+  (no Moon and no transiting Sun among the hits; Moon contacts to the slow planets are a separate list, below)
 - major aspects only. Exact = the aspect point falls into the Sun's counted
   degree (0°00'-0°59' = degree 1). Orbs only while applying (Sandra, 05.10.2026):
   Mercury, Venus and Mars from 5 counted degrees before exact, Jupiter to Pluto
@@ -26,6 +26,17 @@ the Sun degree added, so no text repeats across Sun degrees of one sign (Sandra,
 approach reused the key of the degree it was in). Texts come from a
 JSON file outside public/ and are copied into the week file only for the
 hits of that week.
+
+Moon contacts (Sandra, 09.10.2026, a deliberate exception to D24 / rule 10 "no Moon"): every major aspect of the
+transiting Moon to Jupiter, Saturn, Uranus, Neptune, Pluto or Chiron whose exact moment falls in the week. Only the
+24 hours before exact are the window in which it most likely shows (Sandra, 09.10.2026, consensus with Transit
+Weekly; until then the applying hours of L15 pp. 14-15 and the day of exact): windowFrom/windowTo, cut to the week, and
+a contact belongs to every week that holds at least 6 of its 24 hours [Claude's reading, put to Sandra]. A contact is the same for all Sun degrees of
+a sign. Since 09.10.2026 (Sandra: "consider the house the Moon is in for the Sun and link both houses and degrees")
+a text reads the Moon's counted degree and house with the slow planet's degree and house and the aspect, key
+'Moon|<Moon sign> N|Planet|<sign> N|H<Moon house>|H<planet house>' (houses from the Sun sign, so one key per Sun
+sign), from a second JSON file (moon-texts.json); the texts of all 12 Sun signs of a contact go into the week file.
+Until then the key was 'Moon|Planet|Sign N|H<house>' without the Moon.
 
 Usage (from the website folder, with pyswisseph installed):
     python3 tools/build-transits.py --from 2026-10-05 --weeks 65 \
@@ -70,7 +81,55 @@ def local(t_utc):
     return t_utc.astimezone(TZ).strftime('%Y-%m-%dT%H:%M')
 
 
-def week(monday, texts):
+def lon_at(t, pid):
+    jd = swe.julday(t.year, t.month, t.day, t.hour + t.minute / 60 + t.second / 3600)
+    return swe.calc_ut(jd, pid, swe.FLG_SWIEPH)[0][0]
+
+
+def moon_contacts(start, end, moon_texts):
+    """Moon aspects to the slow planets whose 24-hour window reaches into the week (Sandra, 09.10.2026), by time."""
+    out = []
+    stop = end + dt.timedelta(hours=24)  # exact early next Monday: the window still falls on this Sunday
+    for name, pid, fast in PLANETS:
+        if fast:
+            continue
+        for target in (0, 60, 90, 120, 180, 240, 270, 300):  # Moon minus planet at exact
+            # signed distance to exact; the Moon gains about 13° a day, so one zero crossing a month per target
+            gap = lambda t: (lon_at(t, swe.MOON) - lon_at(t, pid) - target + 180) % 360 - 180
+            t, prev = start, gap(start)
+            while t < stop:
+                t1 = min(t + dt.timedelta(hours=1), stop)
+                cur = gap(t1)
+                if prev < 0 <= cur:
+                    lo, hi = t, t1
+                    while hi - lo > dt.timedelta(seconds=30):
+                        mid = lo + (hi - lo) / 2
+                        lo, hi = (mid, hi) if gap(mid) < 0 else (lo, mid)
+                    inside = min(hi, end) - max(hi - dt.timedelta(hours=24), start)
+                    if inside >= dt.timedelta(hours=6):
+                        deg = int(lon_at(hi, pid) % 360)
+                        mdeg = int(lon_at(hi, swe.MOON) % 360)
+                        out.append({'planet': name, 'deg': deg, 'moonDeg': mdeg, 'aspect': ASPECTS[target],
+                                    'exact': local(hi),
+                                    'windowFrom': local(max(hi - dt.timedelta(hours=24), start)),
+                                    'windowTo': local(min(hi, end - dt.timedelta(seconds=1))),
+                                    'key': f"Moon|{text_key('Moon', False, mdeg)[5:]}|{text_key(name, False, deg)}"})
+                t, prev = t1, cur
+    out.sort(key=lambda c: c['exact'])
+    used = {}
+    for c in out:
+        for k in moon_keys(c):
+            if k in moon_texts:
+                used[k] = moon_texts[k]
+    return out, used
+
+
+def moon_keys(c):
+    # one text per Sun sign: Moon house and planet house both counted from the Sun sign
+    return [f"{c['key']}|H{(c['moonDeg'] // 30 - si) % 12 + 1}|H{(c['deg'] // 30 - si) % 12 + 1}" for si in range(12)]
+
+
+def week(monday, texts, moon_texts=None):
     start = dt.datetime.combine(monday, dt.time(0), TZ).astimezone(dt.timezone.utc)
     end = dt.datetime.combine(monday + dt.timedelta(days=7), dt.time(0), TZ).astimezone(dt.timezone.utc)
     hours = int((end - start).total_seconds() // 3600)  # 167 or 169 when the clocks change
@@ -151,7 +210,8 @@ def week(monday, texts):
     # planet touches the same degree. Mercury and Venus count on the day they are exact (L15: the day
     # before and the day of exact), Mars while applying or exact (felt about a week, often earlier),
     # any fast planet stationing in its orb (felt for weeks). The theme comes from the slow transit.
-    # No Moon (the format has none). Only added as data; texts and ranking stay unchanged.
+    # No Moon here (rule 10); Moon contacts to the slow planets are a separate list (rule 10a). Only added as
+    # data; texts and ranking stay unchanged.
     for lst in hits.values():
         slow = [h for h in lst if not h['fast'] and h['status'] in ('exact', 'applying')]
         if not slow:
@@ -173,6 +233,21 @@ def week(monday, texts):
         lst.sort(key=lambda h: (h['status'] == 'separating', ASPECT_RANK[h['aspect']], h['fast'], STATUS_RANK[h['status']], not h['whole'],
                                 h['spans'][0]['from']))
 
+    moon, moon_used = moon_contacts(start, end, moon_texts or {})
+    used.update(moon_used)
+    # Moon on the Sun degree (Sandra, 09.10.2026): a Moon contact to a slow planet that already hits this Sun degree,
+    # with the Moon also in a major aspect to the Sun degree, is a trigger after D24 and marks the day it becomes
+    # tangible. Own field, not 'triggers' (the calculator reads those as Mercury/Venus with the day before).
+    for sun, lst in hits.items():
+        for h in lst:
+            if h['fast'] or h['status'] == 'separating':
+                continue
+            mt = [{'aspect': ASPECTS[(c['moonDeg'] - sun) % 360], 'exact': c['exact'], 'windowFrom': c['windowFrom'],
+                   'windowTo': c['windowTo']} for c in moon
+                  if c['planet'] == h['planet'] and (c['moonDeg'] - sun) % 360 in ASPECTS]
+            if mt:
+                h['moonTriggers'] = mt
+
     return {
         'week': monday.isoformat(),
         'until': (monday + dt.timedelta(days=6)).isoformat(),
@@ -180,6 +255,7 @@ def week(monday, texts):
         'orbs': {'fast': FAST_ORB, 'slow': SLOW_ORB, 'applyingOnly': True},
         'planets': planets,
         'hits': {str(k): v for k, v in sorted(hits.items())},
+        'moon': moon,
         'texts': dict(sorted(used.items())),
     }
 
@@ -190,6 +266,7 @@ def main():
     ap.add_argument('--weeks', type=int, default=1)
     ap.add_argument('--ephe', default='../ephe')
     ap.add_argument('--texts', default='transits/texts.json')
+    ap.add_argument('--moon-texts', default='transits/moon-texts.json')
     ap.add_argument('--out', default='public/data/transits')
     a = ap.parse_args()
 
@@ -199,14 +276,19 @@ def main():
     swe.set_ephe_path(a.ephe)
     tp = Path(a.texts)
     texts = json.loads(tp.read_text()) if tp.exists() else {}
+    mp = Path(a.moon_texts)
+    moon_texts = json.loads(mp.read_text()) if mp.exists() else {}
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     for w in range(a.weeks):
         m = monday + dt.timedelta(weeks=w)
-        data = week(m, texts)
+        data = week(m, texts, moon_texts)
         (out / f'{m.isoformat()}.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')))
         n = sum(len(v) for v in data['hits'].values())
-        print(f'{m}  {n} hits on {len(data["hits"])} degrees, {len(data["texts"])} texts')
+        keys = {k for c in data['moon'] for k in moon_keys(c)}
+        n_moon = sum(k in data['texts'] for k in keys)
+        print(f'{m}  {n} hits on {len(data["hits"])} degrees, {len(data["texts"]) - n_moon} texts; '
+              f'{len(data["moon"])} Moon contacts, {n_moon} of {len(keys)} Moon texts')
 
 
 if __name__ == '__main__':
