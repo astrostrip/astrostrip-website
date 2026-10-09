@@ -12,8 +12,10 @@
 //   POST /api/subscribe        newsletter signup: stores the consent and sends the double opt-in mail
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
 //   POST /api/stat             anonymous counter (Sandra, 07.10.2026): a page visit (by source: Instagram, TikTok,
-//                               direct) or a click on one of the three preview tabs. No cookie, no IP, no per-visitor
-//                               id — only a category goes into Workers Analytics Engine (STATS), which is built for
+//                               direct) or a click on one of the three preview tabs; visits also carry the country
+//                               Cloudflare estimates from the IP (request.cf.country, Sandra 09.10.2026; the IP itself
+//                               is never read or stored). No cookie, no IP, no per-visitor
+//                               id — only categories go into Workers Analytics Engine (STATS), which is built for
 //                               exactly this and free up to 100,000 points/day (KV's free write limit is 1,000/day,
 //                               too little once traffic grows). Triggered by a small first-party fetch() from
 //                               public/index.html, not a third-party script.
@@ -1030,16 +1032,21 @@ async function handleConfirm(request, env) {
 const STATS_DATASET = 'astrostrip_stats'; // must match wrangler.jsonc analytics_engine_datasets
 const STAT_SRC = new Set(['ig', 'tt', 'direct']);
 const STAT_CARD = new Set(['mini', 'maxi', 'ultra']);
+// Countries with fewer visits per week are only stored as one sum (Sandra, 09.10.2026: "unter 5 zusammenfassen"),
+// so a single visit from a rare country cannot be picked out of the permanent weekly entry.
+export const STAT_MIN_COUNTRY = 5;
+// ISO 3166-1 alpha-2 from request.cf.country; anything else (missing, "XX" unknown, "T1" Tor) counts as "XX".
+const statCountry = request => { const c = request.cf && request.cf.country; return typeof c === 'string' && /^[A-Z]{2}$/.test(c) ? c : 'XX'; };
 export const STATS_ROLLUP_CRON = '10 1 * * 1'; // Monday 01:10 UTC, always after Monday 00:00 Berlin
 
-// A visit (by source) or a click on one of the three preview tabs. No IP, no cookie, no per-visitor id —
-// only the category is written to Workers Analytics Engine. Always 204, even on a bad body: this must
+// A visit (by source and estimated country) or a click on one of the three preview tabs. No IP, no cookie,
+// no per-visitor id — only the categories are written to Workers Analytics Engine. Always 204, even on a bad body: this must
 // never surface an error to a visitor or cost more than a trivial amount of CPU.
 async function handleStat(request, env) {
   let b;
   try { b = await request.json(); } catch { return new Response(null, { status: 204 }); }
   if (!env.STATS || !b || typeof b !== 'object') return new Response(null, { status: 204 });
-  if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct'], indexes: ['visit'] });
+  if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct', statCountry(request)], indexes: ['visit'] });
   else if (b.event === 'click' && STAT_CARD.has(b.card)) env.STATS.writeDataPoint({ blobs: ['click', b.card], indexes: ['click'] });
   return new Response(null, { status: 204 });
 }
@@ -1052,14 +1059,23 @@ export async function runStatsRollup(env, nowMs = Date.now()) {
   if (!env.CF_ACCOUNT_ID || !env.CF_ANALYTICS_READ_TOKEN) return { skipped: 'CF_ACCOUNT_ID or CF_ANALYTICS_READ_TOKEN not set' };
   if (await env.ORDERS.get(key)) return { skipped: key };
   // SUM(_sample_interval), not COUNT(): Analytics Engine may sample (developers.cloudflare.com/analytics/analytics-engine/sql-api/)
-  const sql = `SELECT blob1, blob2, SUM(_sample_interval) AS n FROM ${STATS_DATASET} WHERE timestamp >= toDateTime(${lastWeek}) AND timestamp < toDateTime(${lastWeek + 7 * 86400}) GROUP BY blob1, blob2`;
+  const sql = `SELECT blob1, blob2, blob3, SUM(_sample_interval) AS n FROM ${STATS_DATASET} WHERE timestamp >= toDateTime(${lastWeek}) AND timestamp < toDateTime(${lastWeek + 7 * 86400}) GROUP BY blob1, blob2, blob3`;
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`, {
     method: 'POST', headers: { Authorization: `Bearer ${env.CF_ANALYTICS_READ_TOKEN}` }, body: sql,
   });
   if (!res.ok) return { error: await res.text() };
   const summary = { visit: { ig: 0, tt: 0, direct: 0 }, click: { mini: 0, maxi: 0, ultra: 0 } };
+  const byCountry = {}; // source and country are summed separately, never crossed (Sandra, 09.10.2026)
   for (const row of (await res.json()).data || []) {
-    if (summary[row.blob1] && row.blob2 in summary[row.blob1]) summary[row.blob1][row.blob2] = Number(row.n) || 0;
+    const n = Number(row.n) || 0;
+    if (summary[row.blob1] && row.blob2 in summary[row.blob1]) summary[row.blob1][row.blob2] += n;
+    if (row.blob1 === 'visit') { const c = /^[A-Z]{2}$/.test(row.blob3 || '') ? row.blob3 : 'XX'; byCountry[c] = (byCountry[c] || 0) + n; }
+  }
+  summary.country = {};
+  summary.countryOther = { visits: 0, countries: 0 };
+  for (const [c, n] of Object.entries(byCountry)) {
+    if (n >= STAT_MIN_COUNTRY) summary.country[c] = n;
+    else { summary.countryOther.visits += n; summary.countryOther.countries += 1; }
   }
   await env.ORDERS.put(key, JSON.stringify(summary)); // no expirationTtl: aggregate counts, no personal data
   return { week: weekDate(lastWeek), summary };

@@ -538,14 +538,18 @@ console.log('newsletter ok');
     ASSETS: { fetch: async () => new Response('asset') },
     CF_ACCOUNT_ID: 'acc123', CF_ANALYTICS_READ_TOKEN: 'tok', STATS_READ_KEY: 'readkey',
   };
-  const stat = (b, raw) => worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: raw ?? JSON.stringify(b), headers: { 'CF-Connecting-IP': '9.9.9.9' } }), senv);
+  const stat = (b, raw, cf = { country: 'DE' }) => { const q = new Request('https://astrostrip.com/api/stat', { method: 'POST', body: raw ?? JSON.stringify(b), headers: { 'CF-Connecting-IP': '9.9.9.9' } }); Object.defineProperty(q, 'cf', { value: cf }); return worker.fetch(q, senv); };
   for (const b of [{ event: 'visit', src: 'ig' }, { event: 'visit', src: 'tt' }, { event: 'visit', src: 'direct' }, { event: 'visit', src: 'evil' }, { event: 'visit' },
     { event: 'click', card: 'mini' }, { event: 'click', card: 'ultra' }, { event: 'click', card: 'giga' }, { event: 'other' }]) {
     assert.equal((await stat(b)).status, 204);
   }
   assert.equal((await stat(null, 'not json')).status, 204, 'broken JSON is ignored');
   assert.equal((await stat(null, 'null')).status, 204, 'JSON null is ignored');
-  assert.deepEqual(points.map(p => p.blobs), [['visit', 'ig'], ['visit', 'tt'], ['visit', 'direct'], ['visit', 'direct'], ['visit', 'direct'], ['click', 'mini'], ['click', 'ultra']]);
+  assert.deepEqual(points.map(p => p.blobs), [['visit', 'ig', 'DE'], ['visit', 'tt', 'DE'], ['visit', 'direct', 'DE'], ['visit', 'direct', 'DE'], ['visit', 'direct', 'DE'], ['click', 'mini'], ['click', 'ultra']]);
+  // country (Sandra, 09.10.2026): ISO code from request.cf, anything else = XX; clicks carry no country
+  for (const cf of [{ country: 'AT' }, { country: 'T1' }, { country: 'XX' }, {}, null, { country: 'de' }, { country: 'DEU' }]) await stat({ event: 'visit', src: 'ig' }, undefined, cf);
+  assert.deepEqual(points.slice(7).map(p => p.blobs[2]), ['AT', 'XX', 'XX', 'XX', 'XX', 'XX', 'XX']);
+  assert.ok(!points.slice(7).some(p => JSON.stringify(p).includes('9.9.9.9')));
   assert.ok(!JSON.stringify(points).includes('9.9.9.9'), 'no IP in the data points');
   assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: '{"event":"visit","src":"ig"}' }), { ...senv, STATS: undefined })).status, 204, 'missing binding: still 204');
 
@@ -558,13 +562,19 @@ console.log('newsletter ok');
     assert.equal(init.headers.Authorization, 'Bearer tok');
     sqls.push(init.body);
     return new Response(JSON.stringify({ data: [
-      { blob1: 'visit', blob2: 'ig', n: '12' }, { blob1: 'visit', blob2: 'tt', n: 3 }, { blob1: 'visit', blob2: 'direct', n: '40' },
-      { blob1: 'click', blob2: 'maxi', n: '7' }, { blob1: 'click', blob2: 'other', n: '1' }, { blob1: 'x', blob2: 'ig', n: '5' },
+      { blob1: 'visit', blob2: 'ig', blob3: 'DE', n: '10' }, { blob1: 'visit', blob2: 'ig', blob3: 'LU', n: '1' }, { blob1: 'visit', blob2: 'ig', blob3: 'AT', n: '1' },
+      { blob1: 'visit', blob2: 'tt', blob3: 'AT', n: 3 }, { blob1: 'visit', blob2: 'direct', blob3: 'DE', n: '30' }, { blob1: 'visit', blob2: 'direct', blob3: 'AT', n: '1' },
+      { blob1: 'visit', blob2: 'direct', blob3: '', n: '6' }, { blob1: 'visit', blob2: 'direct', blob3: 'US', n: '3' },
+      { blob1: 'click', blob2: 'maxi', blob3: '', n: '7' }, { blob1: 'click', blob2: 'other', blob3: '', n: '1' }, { blob1: 'x', blob2: 'ig', blob3: 'DE', n: '5' },
     ] }));
   };
   const r = await runStatsRollup(senv, now);
   assert.equal(r.week, '2026-10-05');
-  assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-05')), { visit: { ig: 12, tt: 3, direct: 40 }, click: { mini: 0, maxi: 7, ultra: 0 } });
+  // source summed over all countries; country summed over all sources (never crossed); AT 1+3+1 = 5 stays, LU 1 and US 3 below 5;
+  // points without country (before 09.10.2026) count as XX
+  assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-05')), { visit: { ig: 12, tt: 3, direct: 40 }, click: { mini: 0, maxi: 7, ultra: 0 },
+    country: { DE: 40, AT: 5, XX: 6 }, countryOther: { visits: 4, countries: 2 } });
+  assert.ok(sqls[0].includes('GROUP BY blob1, blob2, blob3'));
   const from = Date.parse('2026-10-04T22:00:00Z') / 1000;
   assert.ok(sqls[0].includes(`toDateTime(${from})`) && sqls[0].includes(`toDateTime(${from + 7 * 86400})`), 'Berlin week bounds');
   assert.ok(sqls[0].includes('FROM astrostrip_stats'));

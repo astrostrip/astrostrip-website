@@ -21,7 +21,8 @@
     // (Storage & Databases → KV) and paste its ID here. The ID is not secret.
     { "binding": "ORDERS", "id": "794a9d021f1e46bab5445f0d7a9ac588" }
   ],
-  // Website-Statistik (Sandra, 07.10.2026): no dashboard step needed, created on first write.
+  // Website-Statistik (Sandra, 07.10.2026): Analytics Engine must be enabled once in the dashboard
+  // (Workers & Pages → Analytics Engine), otherwise the deploy fails; the dataset is created on first write.
   "analytics_engine_datasets": [
     { "binding": "STATS", "dataset": "astrostrip_stats" }
   ],
