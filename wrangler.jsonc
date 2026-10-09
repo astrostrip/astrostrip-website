@@ -12,14 +12,18 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
-  // Hourly retention run (runRetention), the invoice queue every 5 minutes (runInvoices) and, 2 minutes
-  // later in its own invocation, the invoice corrections for refunds (runCorrections), src/worker.js.
-  // Free plan: 5 cron triggers per account.
-  "triggers": { "crons": ["17 * * * *", "*/5 * * * *", "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"] },
+  // Hourly retention run (runRetention), the invoice queue every 5 minutes (runInvoices), 2 minutes
+  // later in its own invocation the invoice corrections for refunds (runCorrections), and Monday 01:10 UTC
+  // the statistics rollup (runStatsRollup) — all src/worker.js. Free plan: 5 cron triggers per account.
+  "triggers": { "crons": ["17 * * * *", "*/5 * * * *", "2,7,12,17,22,27,32,37,42,47,52,57 * * * *", "10 1 * * 1"] },
   "kv_namespaces": [
     // Create a KV namespace called "astrostrip-orders" in the Cloudflare dashboard
     // (Storage & Databases → KV) and paste its ID here. The ID is not secret.
     { "binding": "ORDERS", "id": "794a9d021f1e46bab5445f0d7a9ac588" }
+  ],
+  // Website-Statistik (Sandra, 07.10.2026): no dashboard step needed, created on first write.
+  "analytics_engine_datasets": [
+    { "binding": "STATS", "dataset": "astrostrip_stats" }
   ],
   "vars": {
     "SITE_URL": "https://astrostrip.com",
@@ -30,5 +34,8 @@
     "MAILJET_CUSTOMER_LIST_ID": "10560908"
   }
   // Secrets are NOT in this file. Set them in the dashboard (Worker → Settings → Variables and Secrets):
-  // STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
+  // STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL,
+  // CF_ACCOUNT_ID (not secret, but a secret survives every deploy from GitHub; for the statistics rollup),
+  // CF_ANALYTICS_READ_TOKEN (API token, permission "Account Analytics Read", for the statistics rollup),
+  // STATS_READ_KEY (any long random string; protects GET /api/stats from the public internet)
 }

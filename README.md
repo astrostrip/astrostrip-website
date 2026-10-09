@@ -27,6 +27,8 @@ FAQ: the "Before you order" section in `public/index.html` (`#faq`) restates the
 
 Retention: an hourly cron (`runRetention`) removes buyers from the Mailjet list "Kundinnen" three years after their last purchase and deletes consent records three years after the last list relationship ended (unsubscribe, objection or removal). It checks ten records per run because of the free plan's subrequest limit.
 
+Statistics without cookies: a small script at the end of `public/index.html` posts one category to `/api/stat` (a visit by source, from `?src=ig`/`?src=tt` or the referrer, or a click on one of the three sample tabs). No cookie, no IP, no identifier, nothing stored in the browser; the Worker writes only the category to Workers Analytics Engine (`STATS`). A Monday cron (`runStatsRollup`) sums last week into one KV entry, readable with a secret key at `/api/stats`.
+
 ## Run locally
 
 The website itself is in `public/`. Any static web server works, for example:

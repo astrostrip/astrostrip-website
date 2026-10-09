@@ -526,3 +526,74 @@ console.log('newsletter ok');
   assert.deepEqual(await runRetention({ ...renv, MAILJET_API_KEY: '' }, now), { skipped: true });
   console.log('retention ok');
 }
+
+// website statistics (Sandra, 07.10.2026): anonymous counter, weekly rollup into KV, protected read
+{
+  const { runStatsRollup } = await import('../src/worker.js');
+  const points = [];
+  const store = new Map();
+  const senv = {
+    STATS: { writeDataPoint: p => points.push(p) },
+    ORDERS: { get: async k => store.get(k) ?? null, put: async (k, v, o) => { assert.equal(o, undefined, 'rollup kept without expiry'); store.set(k, v); } },
+    ASSETS: { fetch: async () => new Response('asset') },
+    CF_ACCOUNT_ID: 'acc123', CF_ANALYTICS_READ_TOKEN: 'tok', STATS_READ_KEY: 'readkey',
+  };
+  const stat = (b, raw) => worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: raw ?? JSON.stringify(b), headers: { 'CF-Connecting-IP': '9.9.9.9' } }), senv);
+  for (const b of [{ event: 'visit', src: 'ig' }, { event: 'visit', src: 'tt' }, { event: 'visit', src: 'direct' }, { event: 'visit', src: 'evil' }, { event: 'visit' },
+    { event: 'click', card: 'mini' }, { event: 'click', card: 'ultra' }, { event: 'click', card: 'giga' }, { event: 'other' }]) {
+    assert.equal((await stat(b)).status, 204);
+  }
+  assert.equal((await stat(null, 'not json')).status, 204, 'broken JSON is ignored');
+  assert.equal((await stat(null, 'null')).status, 204, 'JSON null is ignored');
+  assert.deepEqual(points.map(p => p.blobs), [['visit', 'ig'], ['visit', 'tt'], ['visit', 'direct'], ['visit', 'direct'], ['visit', 'direct'], ['click', 'mini'], ['click', 'ultra']]);
+  assert.ok(!JSON.stringify(points).includes('9.9.9.9'), 'no IP in the data points');
+  assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: '{"event":"visit","src":"ig"}' }), { ...senv, STATS: undefined })).status, 204, 'missing binding: still 204');
+
+  // rollup: Monday 12.10.2026 sums the week 05.–11.10. (Berlin)
+  const now = Date.parse('2026-10-12T01:10:00Z');
+  const sqls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    assert.equal(String(url), 'https://api.cloudflare.com/client/v4/accounts/acc123/analytics_engine/sql');
+    assert.equal(init.headers.Authorization, 'Bearer tok');
+    sqls.push(init.body);
+    return new Response(JSON.stringify({ data: [
+      { blob1: 'visit', blob2: 'ig', n: '12' }, { blob1: 'visit', blob2: 'tt', n: 3 }, { blob1: 'visit', blob2: 'direct', n: '40' },
+      { blob1: 'click', blob2: 'maxi', n: '7' }, { blob1: 'click', blob2: 'other', n: '1' }, { blob1: 'x', blob2: 'ig', n: '5' },
+    ] }));
+  };
+  const r = await runStatsRollup(senv, now);
+  assert.equal(r.week, '2026-10-05');
+  assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-05')), { visit: { ig: 12, tt: 3, direct: 40 }, click: { mini: 0, maxi: 7, ultra: 0 } });
+  const from = Date.parse('2026-10-04T22:00:00Z') / 1000;
+  assert.ok(sqls[0].includes(`toDateTime(${from})`) && sqls[0].includes(`toDateTime(${from + 7 * 86400})`), 'Berlin week bounds');
+  assert.ok(sqls[0].includes('FROM astrostrip_stats'));
+  assert.deepEqual(await runStatsRollup(senv, now + 3600000), { skipped: 'stats:week:2026-10-05' }, 'second run the same week skips');
+  assert.equal(sqls.length, 1);
+  assert.ok((await runStatsRollup({ ...senv, CF_ACCOUNT_ID: '' }, now + 7 * 86400000)).skipped, 'not configured: skipped');
+  globalThis.fetch = async () => new Response('denied', { status: 403 });
+  assert.deepEqual(await runStatsRollup(senv, now + 7 * 86400000), { error: 'denied' });
+  assert.ok(!store.has('stats:week:2026-10-12'), 'failed query writes nothing');
+  globalThis.fetch = realFetch;
+
+  // read: 404 without or with a wrong key, n weeks newest first, empty weeks as {}
+  const read = q => worker.fetch(new Request('https://astrostrip.com/api/stats' + q), senv);
+  assert.equal((await read('')).status, 404);
+  assert.equal((await read('?key=wrong')).status, 404);
+  assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stats?key='), { ...senv, STATS_READ_KEY: '' })).status, 404, 'no key set: closed');
+  const last = weekDate(addWeeks(weekStart(Date.now()), -1));
+  store.set(`stats:week:${last}`, JSON.stringify({ visit: { ig: 1, tt: 0, direct: 2 }, click: { mini: 0, maxi: 1, ultra: 0 } }));
+  let w = (await (await read('?key=readkey')).json()).weeks;
+  assert.equal(w.length, 1);
+  assert.deepEqual(w[0], { week: last, visit: { ig: 1, tt: 0, direct: 2 }, click: { mini: 0, maxi: 1, ultra: 0 } });
+  w = (await (await read('?key=readkey&weeks=3')).json()).weeks;
+  assert.deepEqual(w.map(x => x.week), [0, 1, 2].map(i => weekDate(addWeeks(weekStart(Date.now()), -1 - i))));
+  assert.deepEqual(w[2], { week: w[2].week, visit: {}, click: {} });
+  assert.equal((await (await read('?key=readkey&weeks=99')).json()).weeks.length, 12, 'at most 12 weeks');
+  assert.equal((await (await read('?key=readkey&weeks=abc')).json()).weeks.length, 1);
+  // the page's counter script: same endpoint, no cookie, no storage
+  const page = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.ok(page.includes("fetch('/api/stat'"));
+  assert.ok(!/document\.cookie|localStorage|sessionStorage/.test(page), 'no cookie or browser storage on the start page');
+  console.log('stats ok');
+}

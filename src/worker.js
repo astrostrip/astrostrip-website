@@ -11,12 +11,24 @@
 //
 //   POST /api/subscribe        newsletter signup: stores the consent and sends the double opt-in mail
 //   GET  /api/confirm          double opt-in link: logs the confirmation, adds the address to the Mailjet list
+//   POST /api/stat             anonymous counter (Sandra, 07.10.2026): a page visit (by source: Instagram, TikTok,
+//                               direct) or a click on one of the three preview tabs. No cookie, no IP, no per-visitor
+//                               id — only a category goes into Workers Analytics Engine (STATS), which is built for
+//                               exactly this and free up to 100,000 points/day (KV's free write limit is 1,000/day,
+//                               too little once traffic grows). Triggered by a small first-party fetch() from
+//                               public/index.html, not a third-party script.
+//   GET  /api/stats            weekly rollups from KV (?key=STATS_READ_KEY&weeks=n, default 1, max 12), for the
+//                               Monday Telegram report. Not for the public; wrong/missing key = 404.
 //   cron (hourly)              retention: buyer list after 3 years without purchase, consent proofs 3 years after the end
 //   cron (every 5 minutes)     invoices: one step of one queued e-invoice per run (build, mail to the customer, copy to Sandra)
 //   cron (every 5 minutes, +2) invoice corrections: one refund per run (Rechnungskorrektur), same way as the invoices
+//   cron (Monday 01:10 UTC)    stats rollup: sums last week's /api/stat events (SQL API) into one small KV entry,
+//                               kept indefinitely (Workers Analytics Engine itself only keeps raw data 3 months)
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
-//   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL
+//   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL,
+//   CF_ACCOUNT_ID and CF_ANALYTICS_READ_TOKEN (API token, permission "Account Analytics Read") for the stats rollup,
+//   STATS_READ_KEY (protects GET /api/stats)
 // Plain variables (wrangler.jsonc "vars"): SITE_URL, MAIL_FROM_NAME, MAIL_FROM_ADDRESS,
 //   MAILJET_NEWSLETTER_LIST_ID (double opt-in list), MAILJET_CUSTOMER_LIST_ID (buyers, § 7 Abs. 3 UWG; empty = off)
 
@@ -1014,6 +1026,60 @@ async function handleConfirm(request, env) {
   return Response.redirect(`${site}/newsletter.html?status=confirmed`, 303);
 }
 
+// ---------- statistics (Sandra, 07.10.2026: own, cookieless counting, sums only) ----------
+const STATS_DATASET = 'astrostrip_stats'; // must match wrangler.jsonc analytics_engine_datasets
+const STAT_SRC = new Set(['ig', 'tt', 'direct']);
+const STAT_CARD = new Set(['mini', 'maxi', 'ultra']);
+export const STATS_ROLLUP_CRON = '10 1 * * 1'; // Monday 01:10 UTC, always after Monday 00:00 Berlin
+
+// A visit (by source) or a click on one of the three preview tabs. No IP, no cookie, no per-visitor id —
+// only the category is written to Workers Analytics Engine. Always 204, even on a bad body: this must
+// never surface an error to a visitor or cost more than a trivial amount of CPU.
+async function handleStat(request, env) {
+  let b;
+  try { b = await request.json(); } catch { return new Response(null, { status: 204 }); }
+  if (!env.STATS || !b || typeof b !== 'object') return new Response(null, { status: 204 });
+  if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct'], indexes: ['visit'] });
+  else if (b.event === 'click' && STAT_CARD.has(b.card)) env.STATS.writeDataPoint({ blobs: ['click', b.card], indexes: ['click'] });
+  return new Response(null, { status: 204 });
+}
+
+// Sums last week's events via the Analytics Engine SQL API into one small, permanent KV entry (Analytics
+// Engine itself keeps raw data only 3 months). Runs Mondays; skips if that week's key already exists.
+export async function runStatsRollup(env, nowMs = Date.now()) {
+  const lastWeek = addWeeks(weekStart(nowMs), -1);
+  const key = `stats:week:${weekDate(lastWeek)}`;
+  if (!env.CF_ACCOUNT_ID || !env.CF_ANALYTICS_READ_TOKEN) return { skipped: 'CF_ACCOUNT_ID or CF_ANALYTICS_READ_TOKEN not set' };
+  if (await env.ORDERS.get(key)) return { skipped: key };
+  // SUM(_sample_interval), not COUNT(): Analytics Engine may sample (developers.cloudflare.com/analytics/analytics-engine/sql-api/)
+  const sql = `SELECT blob1, blob2, SUM(_sample_interval) AS n FROM ${STATS_DATASET} WHERE timestamp >= toDateTime(${lastWeek}) AND timestamp < toDateTime(${lastWeek + 7 * 86400}) GROUP BY blob1, blob2`;
+  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`, {
+    method: 'POST', headers: { Authorization: `Bearer ${env.CF_ANALYTICS_READ_TOKEN}` }, body: sql,
+  });
+  if (!res.ok) return { error: await res.text() };
+  const summary = { visit: { ig: 0, tt: 0, direct: 0 }, click: { mini: 0, maxi: 0, ultra: 0 } };
+  for (const row of (await res.json()).data || []) {
+    if (summary[row.blob1] && row.blob2 in summary[row.blob1]) summary[row.blob1][row.blob2] = Number(row.n) || 0;
+  }
+  await env.ORDERS.put(key, JSON.stringify(summary)); // no expirationTtl: aggregate counts, no personal data
+  return { week: weekDate(lastWeek), summary };
+}
+
+// For the Monday Telegram report, not for visitors: wrong/missing key = 404, same as an unknown route.
+async function handleStatsRead(request, env) {
+  const url = new URL(request.url);
+  if (!env.STATS_READ_KEY || url.searchParams.get('key') !== env.STATS_READ_KEY) return json({ error: 'Not found' }, 404);
+  const n = Math.min(12, Math.max(1, Number(url.searchParams.get('weeks')) || 1));
+  const current = weekStart(Date.now());
+  const weeks = [];
+  for (let i = 1; i <= n; i++) {
+    const w = addWeeks(current, -i);
+    const raw = await env.ORDERS.get(`stats:week:${weekDate(w)}`);
+    weeks.push({ week: weekDate(w), ...(raw ? JSON.parse(raw) : { visit: {}, click: {} }) });
+  }
+  return json({ weeks });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1024,6 +1090,8 @@ export default {
       if (url.pathname === '/api/withdraw' && request.method === 'POST') return await handleWithdraw(request, env);
       if (url.pathname === '/api/subscribe' && request.method === 'POST') return await handleSubscribe(request, env);
       if (url.pathname === '/api/confirm' && request.method === 'GET') return await handleConfirm(request, env);
+      if (url.pathname === '/api/stat' && request.method === 'POST') return await handleStat(request, env);
+      if (url.pathname === '/api/stats' && request.method === 'GET') return await handleStatsRead(request, env);
       if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     } catch (err) {
       console.error(err);
@@ -1033,7 +1101,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
   async scheduled(event, env, ctx) {
-    const job = event.cron === INVOICE_CRON ? runInvoices(env) : event.cron === CORRECTION_CRON ? runCorrections(env) : runRetention(env);
+    const job = event.cron === INVOICE_CRON ? runInvoices(env) : event.cron === CORRECTION_CRON ? runCorrections(env) : event.cron === STATS_ROLLUP_CRON ? runStatsRollup(env) : runRetention(env);
     ctx.waitUntil(job.then(r => console.log(event.cron, JSON.stringify(r))));
   },
 };
