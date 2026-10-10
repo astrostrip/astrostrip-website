@@ -646,11 +646,23 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     ${extra}
   </article>`;
   }
-  const dt = degreeKnown ? await degreeText(sign, deg, role) : null;
+  // Still growing / grown into it form (Sandra, 10.10.2026): same structure as the carousel degree slides.
+  const reif = degreeKnown && role === 'sun' ? await degreeText(sign, deg, 'growing') : null;
+  const dt = degreeKnown && !reif ? await degreeText(sign, deg, role) : null;
   // IN REAL LIFE line: Sun only, shown once a sign has it (Sandra, 02.10.2026).
   const life = degreeKnown && dt && role === 'sun' ? await degreeText(sign, deg, 'life') : null;
   let degreeBlock = '';
-  if (degreeKnown) {
+  if (reif) {
+    const [grown, before, after] = await Promise.all(['grown', 'before', 'after'].map(k => degreeText(sign, deg, k)));
+    degreeBlock = `<div class="card-degree">
+      <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
+      <p class="card-body"><span class="card-stage">Still growing:</span> ${esc(reif)}</p>
+      <p class="card-body"><span class="card-stage">Grown into it:</span> ${esc(grown)}</p>
+      <p class="card-life-label">IN REAL LIFE</p>
+      <p class="card-life">Before: ${esc(before)}</p>
+      <p class="card-life card-life-after">After: ${esc(after)}</p>
+    </div>`;
+  } else if (degreeKnown) {
     degreeBlock = `<div class="card-degree">
       <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
       <p class="card-body">${dt ? esc(dt) : 'For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.'}</p>
