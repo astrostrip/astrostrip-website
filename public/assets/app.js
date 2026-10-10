@@ -450,10 +450,24 @@ function moonSection(rows) {
   return rows.length ? `<p class="kicker" style="margin: 28px 0 0">OTHER AREAS, BRIEFLY</p>${areaList(rows)}` : '';
 }
 
+// Each life area once per week (Sandra, 10.10.2026, as in the carousel): two hits in one house keep one. A slow planet
+// beats a fast one (the fast one is already its trigger line, rule 10); two fast ones keep the longer time in the week;
+// then the stronger aspect, then the earlier exact.
+const spanMs = h => h.spans.reduce((s, x) => s + Date.parse(x.to + ':00Z') - Date.parse(x.from + ':00Z'), 0);
+function onePerHouse(hits) {
+  const better = (a, b) => (!a.fast !== !b.fast ? !a.fast
+    : a.fast && spanMs(a) !== spanMs(b) ? spanMs(a) > spanMs(b)
+    : MOON_RANK[a.aspect] !== MOON_RANK[b.aspect] ? MOON_RANK[a.aspect] < MOON_RANK[b.aspect]
+    : (a.exactFrom || '9') <= (b.exactFrom || '9'));
+  const best = new Map();
+  for (const h of hits) if (!best.has(h.house) || better(h, best.get(h.house))) best.set(h.house, h);
+  return hits.filter(h => best.get(h.house) === h);
+}
+
 function weekBody(data, sunLon) {
   const deg = Math.floor(norm360(sunLon));
   // only transits with a text, like the post: past exact drops out (Sandra, 09.10.2026), its house is free for the Moon
-  const hits = (data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]);
+  const hits = onePerHouse((data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]));
   const moon = moonRows(data, sunLon, new Set(hits.map(h => h.house)));
   if (!hits.length) {
     return `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>${moonSection(moon)}`;
