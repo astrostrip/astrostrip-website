@@ -135,9 +135,9 @@ export default {
   },
   23: {
     growing: "Says yes to every small favor and polite obligation, and the real talent wears away in trivia. Or the distance turns into taking more than they give.",
-    grown: "keeps out of what isn't theirs, sets limits politely, and puts their whole weight into what is. They keep big plans quiet until they've proven themselves, and waste almost no energy.",
+    grown: "sees what each moment could become, and puts their whole weight into what is truly theirs. They keep big plans quiet until they've proven themselves, and waste almost no energy.",
     before: "joins every committee, then quits halfway through with a guilty conscience.",
-    after: "says no early and politely, keeps the plan quiet until it works, and finishes it.",
+    after: "says no early, spots what the one real project could become, and quietly makes it happen.",
   },
   24: {
     growing: "Holds on tight out of a sense of lack, or gives with a smug little show. Either way, nothing really flows.",
@@ -159,7 +159,7 @@ export default {
   },
   27: {
     growing: "Sinks into self-pity after a setback, or charges the next mountain with the same old mistake. Every miss feels like a verdict instead of a draft.",
-    grown: "secures what they've gained before the next climb, and rewrites the plan after every miss. A few firm values set the floor they never fall below, so hard calls come faster.",
+    grown: "keeps faith in goals they can actually reach, and rewrites the plan after every miss. A few firm values set the floor they never fall below, so hard calls come faster.",
     before: "bombs the interview and replays it all week as proof they're not good enough.",
     after: "bombs the interview, replays it once, rewrites the answer, and nails the next one.",
   },
