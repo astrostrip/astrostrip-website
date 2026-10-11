@@ -106,7 +106,9 @@ def moon_contacts(start, end, moon_texts):
                         mid = lo + (hi - lo) / 2
                         lo, hi = (mid, hi) if gap(mid) < 0 else (lo, mid)
                     inside = min(hi, end) - max(hi - dt.timedelta(hours=24), start)
-                    if inside >= dt.timedelta(hours=6):
+                    # a week takes a contact from 6 window hours at its start, from 1 at its end (Sandra, 10.10.2026,
+                    # everywhere the same; Transit Weekly in_woche): so Mon 22:00 counts in both weeks, Mon 23:50 not
+                    if inside >= dt.timedelta(hours=1 if hi > end else 6):
                         deg = int(lon_at(hi, pid) % 360)
                         mdeg = int(lon_at(hi, swe.MOON) % 360)
                         out.append({'planet': name, 'deg': deg, 'moonDeg': mdeg, 'aspect': ASPECTS[target],

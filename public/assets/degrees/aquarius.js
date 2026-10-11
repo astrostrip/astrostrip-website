@@ -20,10 +20,10 @@ export default {
     after: "quits the club the family chose, explains why once, and lives calmly with the frowns.",
   },
   4: {
-    growing: "Uses insight into people to impress them, or quietly pushes them where they don't want to go. The skill is real, but it serves their ego more than the person in front of them.",
-    grown: "restores their own balance through daily discipline, then helps others see the best in themselves. They help without needing a result, which is exactly why it works.",
-    before: "gives a friend unasked advice after the breakup and is hurt when it isn't followed.",
-    after: "keeps their own routine steady, then hears out a friend's breakup and names their strengths.",
+    growing: "Lets treats, rewards and duties fill every hour and loses touch with what's going on inside. What insight is left gets used to impress people or to push them.",
+    grown: "keeps an inner focus that rewards and obligations can't pull apart, and restores their own balance through daily practice. From there they see the best in others and help it grow, without needing a result.",
+    before: "scrolls, shops and says yes to every favour, then has nothing left for the friend who calls after a breakup.",
+    after: "keeps one quiet hour to themselves each morning, then hears out a friend's breakup and names their strengths.",
   },
   5: {
     growing: "Takes all the credit as if they'd started from zero, or clings to old ways without a spark. Without values of their own, there is nothing for them to stay true to.",
