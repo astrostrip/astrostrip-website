@@ -1658,6 +1658,7 @@ export const weeklySubject = (area, monday, de) => {
   return de ? `Deine Woche ${w[1]}, stripped down · ${weekRange(monday, 'de')}` : `Your week ${w[0]}, stripped down · ${weekRange(monday)}`;
 };
 
+// Full window width on desktop too (Sandra, 11.10.2026: „volle Breite testen wir“; before: at most 600 px).
 // Mail design B "Papier", light only (Sandra, 11.10.2026): cream card, black head band with the wordmark,
 // "TRANSIT WEEKLY" / area in two lines, Georgia (no web fonts), tables + inline styles, no images, no tracking.
 const TWM = { outer: '#F4EBDD', card: '#FBF7F0', head: '#0A0A0A', text: '#2A2520', h: '#0B0B0B', accent: '#7A5C25', muted: '#6B6157', line: '#D9C9A8', boxline: '#C9B48A' };
@@ -1737,7 +1738,7 @@ export function weeklyMail(b, area, week, md, site = 'https://astrostrip.com') {
 <body style="margin:0;padding:0;background:${TWM.outer};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escH(pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${TWM.outer};"><tr><td align="center" style="padding:24px 10px;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${TWM.card};border:1px solid ${TWM.line};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${TWM.card};border:1px solid ${TWM.line};">
 <tr><td align="center" style="background:${TWM.head};padding:30px 24px 24px 24px;">
 <p style="margin:0;${pStyle(30, 'line-height:1;color:#F4EBDD;letter-spacing:1px;')}">astro.strip</p>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:14px auto 12px auto;"><tr><td style="width:120px;border-top:1px solid #C9A45C;font-size:0;line-height:0;">&nbsp;</td></tr></table>
@@ -1778,7 +1779,7 @@ export function brandMail({ lang = 'en', kicker, body, pre = '', title = 'astro.
 <body style="margin:0;padding:0;background:${TWM.outer};">
 ${pre ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escH(pre)}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${TWM.outer};"><tr><td align="center" style="padding:24px 10px;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${TWM.card};border:1px solid ${TWM.line};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:${TWM.card};border:1px solid ${TWM.line};">
 <tr><td align="center" style="background:${TWM.head};padding:30px 24px 24px 24px;">
 <p style="margin:0;${pStyle(30, 'line-height:1;color:#F4EBDD;letter-spacing:1px;')}">astro.strip</p>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:14px auto 12px auto;"><tr><td style="width:120px;border-top:1px solid #C9A45C;font-size:0;line-height:0;">&nbsp;</td></tr></table>
