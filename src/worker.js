@@ -542,7 +542,7 @@ export function ownerReadingMail(order, id) {
 }
 
 // Customer confirmation lines for Transit Weekly (English, like the rest of the confirmation).
-function transitCustomerLines(order, site) {
+function transitCustomerLines(order, site, id) {
   const t = order.transit;
   if (!t) return [];
   return [
@@ -551,7 +551,8 @@ function transitCustomerLines(order, site) {
     `Life areas: ${t.areas.join(', ')} (${euro(transitUnit(order))} per area for 13 weeks, ${euro(transitUnit(order) / 3)} a month${t.founding ? ', founding price' : ''}).`,
     `Every Monday from ${longDate(t.start)} you get one email per life area with your transits for that week, written for your chart. The last one comes in the week ending ${longDate(t.end)}.`,
     `Times in the emails are ${t.tzLabel} time, the time zone of where you live now.`,
-    'Transit Weekly ends by itself after 13 weeks; nothing renews automatically. To continue, book again with the order number of your strip.',
+    'Transit Weekly ends by itself after 13 weeks; nothing renews automatically.',
+    `Want another life area or 13 more weeks? Book at ${site}/transit-weekly.html with your order number ${order.base || id} and this email address.`,
     `You can give notice at any time at ${site}/cancel.html; notice takes effect at the end of the 13 weeks, weeks already paid are not refunded. Your right to terminate for good cause is not affected.`,
   ];
 }
@@ -574,7 +575,7 @@ export function customerMail(order, id, env) {
     s && t ? 'Invoices: two, for the strip and for Transit Weekly, follow in separate emails within a few minutes (PDF e-invoices).' : 'Invoice: follows in a separate email within a few minutes (PDF e-invoice).',
     s ? `Delivery: ${deliveryText(order)}.` : null,
     `Language: ${order.language === 'de' ? 'German' : 'English'}`,
-    ...transitCustomerLines(order, site),
+    ...transitCustomerLines(order, site, id),
     '',
     `Your birth data: ${order.birthDate}, ${order.birthTime} local time, ${order.place.label}.`,
     `If anything here is wrong, reply to this email before we start writing.`,
@@ -948,7 +949,7 @@ export async function runInvoices(env, nowMs = Date.now()) {
   const attachments = [{ filename: inv.filename, base64 }];
   if (step === 'customer') {
     if (!job.customerSent) {
-      await sendMail(env, { to: job.order.email, subject: `Your invoice ${inv.number} · Deine Rechnung`, text: invoiceMailText(inv, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+      await sendMail(env, { to: job.order.email, subject: `Your invoice ${inv.number} · Deine Rechnung`, text: invoiceMailText(inv, strip), html: brandFromText(invoiceMailText(inv, strip), { kicker: 'Your invoice · Deine Rechnung', italic: /^(Enjoy exploring|Viel Freude)/, attach: 'PDF e-invoice · E-Rechnung als PDF' }), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
       job.customerSent = true;
     }
     return next('owner', { customer: inv.number });
@@ -1137,7 +1138,7 @@ export async function runCorrections(env, nowMs = Date.now()) {
   const attachments = [{ filename: c.filename, base64 }];
   if (step === 'customer') {
     if (!job.customerSent && c.email) {
-      await sendMail(env, { to: c.email, subject: `Your invoice correction ${c.number} · Deine Rechnungskorrektur`, text: correctionMailText(c, strip), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+      await sendMail(env, { to: c.email, subject: `Your invoice correction ${c.number} · Deine Rechnungskorrektur`, text: correctionMailText(c, strip), html: brandFromText(correctionMailText(c, strip), { kicker: 'Invoice correction · Rechnungskorrektur', attach: 'PDF invoice correction · Rechnungskorrektur als PDF' }), attachments, replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
       job.customerSent = true;
     }
     return next('owner', { customer: c.number });
@@ -1361,7 +1362,7 @@ async function handleWebhook(request, env) {
   const order = JSON.parse(raw);
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `Bestellung ${order.id}: ${productLabel(order, 'de')}`, text: ownerOrderMail(order, order.id, session), replyTo: order.email });
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `Deutungsdaten ${order.id}`, text: ownerReadingMail(order, order.id) });
-  await sendMail(env, { to: order.email, subject: `Your ${productLabel(order)} order ${order.id}`, text: customerMail(order, order.id, env), replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
+  await sendMail(env, { to: order.email, subject: `Your ${productLabel(order)} order ${order.id}`, text: customerMail(order, order.id, env), html: customerMailHtml(order, order.id, env), replyTo: env.MAIL_FROM_ADDRESS || 'hello@astrostrip.com' });
   if (order.transit) await storeTransitBooking(env, order, Date.now());
   if (order.transit?.founding) await countFounding(env, order.id);
   if (STRIPS[order.strip]) await queueInvoice(env, order, session);
@@ -1391,7 +1392,7 @@ async function handleWithdraw(request, env) {
     paused.push(bk.order);
   }
   const text = withdrawalReceipt({ name, contract, email: b.email, received, receivedEn });
-  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Widerruf / Receipt of your withdrawal (${contract})`, text });
+  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Widerruf / Receipt of your withdrawal (${contract})`, text, html: brandFromText(text, { kicker: 'Withdrawal received · Widerruf eingegangen', lang: 'de' }) });
   const twNote = paused.length ? `\n\nTransit Weekly: Versand für ${paused.join(', ')} automatisch pausiert. Betrifft der Widerruf nur den Strip, fortsetzen mit: python3 tools/transit-weekly-hochladen.py --weiter ${paused[0]}` : '';
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde. Erstatten im Stripe-Dashboard; die Rechnungskorrektur geht dann automatisch an die Kundin.${twNote}` , replyTo: b.email });
   return json({ ok: true, received, receivedEn });
@@ -1478,7 +1479,7 @@ async function handleCancel(request, env) {
     await putBooking(env, k, bk);
   }
   const text = cancellationReceipt({ name, contract, email: b.email, kind, reason, received, receivedEn, endDe, endEn });
-  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Kündigung / Receipt of your notice (${contract})`, text });
+  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Kündigung / Receipt of your notice (${contract})`, text, html: brandFromText(text, { kicker: 'Notice received · Kündigung eingegangen', lang: 'de' }) });
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `KÜNDIGUNG eingegangen: ${contract}`, replyTo: b.email, text: [
     `Kündigung über die Website, eingegangen ${received}.`, '',
     `Name: ${name}`, `Vertrag: ${contract}`, `E-Mail: ${b.email}`, `Art: ${kind === 'extraordinary' ? 'außerordentlich' : 'ordentlich'}`, kind === 'extraordinary' ? `Grund: ${reason}` : null, '',
@@ -1752,6 +1753,120 @@ ${body.join('\n')}
 <p style="margin:0 0 6px 0;${pStyle(14, `line-height:1.6;color:${TWM.muted};`)}">${escH(why)} <a href="${escH(site)}/cancel" style="color:${TWM.accent};text-decoration:underline;">${escH(cancel)}</a></p>
 </td></tr></table></td></tr></table></body></html>`;
   return { subject, text, html };
+}
+
+// ---------- customer emails in the weekly-mail design (Sandra, 11.10.2026: „Die Richtung ist super“) ----------
+// Same frame as the weekly email: cream card, black head band with the wordmark and one kicker line, Georgia,
+// tables + inline styles, no images, no tracking, light only. The text part stays as before; mails to Sandra stay text.
+const linkify = s => s.replace(/https?:\/\/[^\s<]*[^\s<.,;:)]/g, u => `<a href="${u}" style="color:${TWM.accent};text-decoration:underline;">${u.replace(/^https?:\/\//, '')}</a>`);
+const bP = (t, size = 17, color = TWM.text, extra = '') => `<p style="margin:0 0 16px 0;${pStyle(size, `line-height:1.6;color:${color};${extra}`)}">${t}</p>`;
+const bH1 = (t, size = 30) => `<h1 class="x-h1" style="margin:0 0 14px 0;${pStyle(size, `line-height:1.2;font-weight:normal;color:${TWM.h};`)}">${t}</h1>`;
+const bH2 = t => `<h2 style="margin:30px 0 12px 0;${pStyle(21, `line-height:1.3;font-weight:normal;color:${TWM.h};`)}">${t}</h2>`;
+const bSmall = t => bP(t, 13, TWM.muted, 'margin:0 0 10px 0;line-height:1.55;');
+const bStrong = t => `<strong style="color:${TWM.h};">${t}</strong>`;
+const bRule = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:10px 0 22px 0;"><tr><td style="border-top:1px solid ${TWM.line};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+const bRows = rows => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:6px 0 22px 0;border-bottom:1px solid ${TWM.line};">${rows.map(([k, v]) => `<tr><td valign="top" style="padding:9px 14px 9px 0;border-top:1px solid ${TWM.line};width:96px;${pStyle(12, `letter-spacing:1.5px;text-transform:uppercase;color:${TWM.accent};`)}">${escH(k)}</td><td style="padding:8px 0;border-top:1px solid ${TWM.line};${pStyle(16, `line-height:1.5;color:${TWM.text};`)}">${v}</td></tr>`).join('')}</table>`;
+const bBox = inner => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 22px 0;background:${TWM.outer};border:1px solid ${TWM.boxline};"><tr><td style="padding:22px 22px 6px 22px;">${inner}</td></tr></table>`;
+const bButton = (t, href) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px 0;"><tr><td style="background:${TWM.head};"><a href="${escH(href)}" style="display:inline-block;padding:14px 22px;${pStyle(13, 'letter-spacing:2px;text-transform:uppercase;color:#F4EBDD;text-decoration:none;')}">${escH(t)}</a></td></tr></table>`;
+
+export function brandMail({ lang = 'en', kicker, body, pre = '', title = 'astro.strip' }) {
+  return `<!DOCTYPE html>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${escH(title)}</title>
+<style>:root{color-scheme:light;supported-color-schemes:light;}body{margin:0;padding:0;-webkit-text-size-adjust:100%;}
+@media (max-width:620px){.x-pad{padding-left:22px !important;padding-right:22px !important;}.x-h1{font-size:26px !important;}}</style></head>
+<body style="margin:0;padding:0;background:${TWM.outer};">
+${pre ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escH(pre)}</div>` : ''}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${TWM.outer};"><tr><td align="center" style="padding:24px 10px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${TWM.card};border:1px solid ${TWM.line};">
+<tr><td align="center" style="background:${TWM.head};padding:30px 24px 24px 24px;">
+<p style="margin:0;${pStyle(30, 'line-height:1;color:#F4EBDD;letter-spacing:1px;')}">astro.strip</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:14px auto 12px auto;"><tr><td style="width:120px;border-top:1px solid #C9A45C;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+<p style="margin:0;${pStyle(12, 'letter-spacing:3px;text-transform:uppercase;color:#C9A170;')}">${escH(kicker)}</p></td></tr>
+<tr><td class="x-pad" style="padding:32px 36px 4px 36px;">
+${body}
+</td></tr>
+<tr><td class="x-pad" style="padding:22px 36px 30px 36px;">${rule(TWM.line)}
+<p style="margin:18px 0 6px 0;${pStyle(13, `line-height:1.6;color:${TWM.muted};`)}">astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · <a href="mailto:hello@astrostrip.com" style="color:${TWM.accent};text-decoration:underline;">hello@astrostrip.com</a></p>
+</td></tr></table></td></tr></table></body></html>`;
+}
+
+// A plain-text customer email in the frame: greeting lines as headings, "Label: value" blocks as a table,
+// "---" or a double blank line as a divider, links clickable. The wording stays exactly the text part.
+export function brandFromText(text, { kicker, lang = 'en', italic = null, attach = '' }) {
+  const paras = []; let cur = [], blanks = 0;
+  const push = () => { if (cur.length) paras.push(cur); cur = []; };
+  for (const raw of text.replace(/\r/g, '').split('\n')) {
+    const l = raw.trim();
+    if (/^astro\.strip · Sandra Willuweit/.test(l)) continue; // the frame's footer carries the address
+    if (!l) { push(); blanks++; continue; }
+    if (l === '---' || (blanks >= 2 && paras.length)) { push(); if (paras.at(-1) !== 'rule') paras.push('rule'); if (l === '---') { blanks = 0; continue; } }
+    blanks = 0; cur.push(l);
+  }
+  push();
+  while (paras.at(-1) === 'rule') paras.pop();
+  const body = paras.map(p => {
+    if (p === 'rule') return bRule;
+    if (p.length === 1 && /^(Hi|Hallo)\b.{0,80},$/.test(p[0])) return bH1(escH(p[0]), 28);
+    if (p.length > 1 && p.every(l => /^[^:]{1,32}: \S/.test(l) && !/^https?/.test(l))) return bRows(p.map(l => { const i = l.indexOf(': '); return [l.slice(0, i), linkify(escH(l.slice(i + 2)))]; }));
+    const html = p.map(l => linkify(escH(l))).join('<br>');
+    if (italic && italic.test(p[0])) return bP(`<em>${html}</em>`, 17, TWM.accent);
+    if (/^(Terms:|Astrology is a tool)/.test(p[0])) return bSmall(html);
+    return bP(html);
+  }).join('\n');
+  const first = paras.find(p => p !== 'rule' && p.length > 1) || paras.find(p => p !== 'rule');
+  return brandMail({ lang, kicker, body: body + (attach ? bBox(label('Attached · Anhang') + bP(escH(attach), 15)) : ''), pre: first ? first.join(' ').slice(0, 120) : '' });
+}
+
+// Contract confirmation in the frame. Same content as customerMail (text part), legal texts complete but small.
+export function customerMailHtml(order, id, env) {
+  const s = STRIPS[order.strip];
+  const t = order.transit;
+  const site = env.SITE_URL || 'https://astrostrip.com';
+  const rows = [
+    ['Order', escH(id)],
+    s ? ['Strip', `${escH(s.name)} · ${escH(s.tag)}. A personal astrology reading for your birth chart, PDF by email.`] : ['Product', `${escH(productLabel(order))}, weekly transit emails for your birth chart.`],
+    s ? ['Delivery', escH(deliveryText(order))] : null,
+    s && t ? ['Added', escH(productLabel({ transit: t }))] : null,
+    order.base ? ['For', `the reading of your order ${escH(order.base)}`] : null,
+    ['Price', `${bStrong(escH(euro(orderCents(order))))} including 19 % VAT, paid`],
+    ['Invoice', s && t ? 'two PDF e-invoices, for the strip and for Transit Weekly, follow in separate emails within a few minutes' : 'a PDF e-invoice follows in a separate email within a few minutes'],
+    ['Language', order.language === 'de' ? 'German' : 'English'],
+  ].filter(Boolean);
+  const rebook = order.base || id;
+  const tw = t ? bBox([
+    label('Transit Weekly'),
+    bP(`${escH(t.areas.join(' · '))}<br>${escH(euro(transitUnit(order)))} per area for 13 weeks, ${escH(euro(transitUnit(order) / 3))} a month${t.founding ? ', founding price' : ''}.`, 16),
+    bP(`Every Monday at 7 am ${escH(t.tzLabel)} time, from ${bStrong(escH(longDate(t.start)))}, one email per life area with your transits for that week, written for your chart. The last one comes in the week ending ${escH(longDate(t.end))}. It ends by itself; nothing renews automatically.`, 16),
+    bP(`${bStrong('Want another life area or 13 more weeks?')} Book on the Transit Weekly page with your order number ${bStrong(escH(rebook))} and this email address.`, 16),
+    bButton('Add or renew Transit Weekly', `${site}/transit-weekly.html`),
+    bSmall(`You can give notice at any time on the <a href="${escH(site)}/cancel.html" style="color:${TWM.accent};text-decoration:underline;">cancellation page</a>; notice takes effect at the end of the 13 weeks, weeks already paid are not refunded. Your right to terminate for good cause is not affected.`),
+  ].join('')) : '';
+  const consent = [
+    s ? `You expressly requested that we start writing your strip before the withdrawal period ends, and you confirmed that you know your right of withdrawal ends once the strip has been fully delivered. (Given on ${berlinStamp(order.createdAt)}.)` : null,
+    t ? `You expressly requested that we start preparing Transit Weekly before the withdrawal period ends. If you withdraw, you pay a proportionate amount for the part already provided. (Given on ${berlinStamp(order.createdAt)}.)` : null,
+    t && t.timeConsent ? `You confirmed: “${TIME_CONSENT.en}” (Given on ${berlinStamp(order.createdAt)}.)` : null,
+  ].filter(Boolean).map(x => bSmall(escH(x))).join('');
+  const legal = (title, lines) => `<p style="margin:22px 0 8px 0;${pStyle(12, `letter-spacing:2px;text-transform:uppercase;color:${TWM.accent};`)}">${escH(title)}</p>` + lines.map(l => bSmall(linkify(escH(l)))).join('');
+  const body = [
+    bH1(`Thank you, ${escH(order.name)}.`),
+    bP('Your order is in. This email confirms your contract.'),
+    bRows(rows),
+    tw,
+    bH2('Your birth data'),
+    bP(`${escH(order.birthDate)}, ${escH(order.birthTime)} local time, ${escH(order.place.label)}.<br>If anything here is wrong, reply to this email before we start writing.`, 16),
+    bH2('Your consent'),
+    consent,
+    bH2('Cancellation policy'),
+    legal('Widerrufsbelehrung (Deutsch)', CANCELLATION_POLICY.de),
+    legal('Muster-Widerrufsformular', WITHDRAWAL_FORM.de),
+    legal('Cancellation policy (English)', CANCELLATION_POLICY.en),
+    legal('Model withdrawal form', WITHDRAWAL_FORM.en),
+    bSmall(linkify(escH(`You can also withdraw online at any time during the withdrawal period: ${site}/withdraw.html`))),
+    bSmall(linkify(escH(`Terms: ${site}/terms.html`))),
+    bSmall('Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.'),
+  ].join('\n');
+  return brandMail({ lang: 'en', kicker: 'Order confirmation', body, pre: `Your order ${id} is in. This email confirms your contract.`, title: `Your order ${id}` });
 }
 
 async function handleTwTexts(request, env) {

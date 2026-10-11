@@ -706,6 +706,15 @@ console.log('newsletter ok');
   r = await signedEvt(JSON.stringify({ type: 'checkout.session.completed', data: { object: s1 } }));
   assert.equal(await r.text(), 'ok');
   const [mOrder, mReading, mCustomer] = mails.slice(before);
+  // customer emails in the weekly-mail design, with a way to book more (Sandra, 11.10.2026)
+  assert.match(mCustomer.text, /Want another life area or 13 more weeks\? Book at https:\/\/astrostrip\.com\/transit-weekly\.html with your order number AS-/);
+  assert.match(mCustomer.html, /<meta name="color-scheme" content="light">/); assert.match(mCustomer.html, />Order confirmation</);
+  assert.match(mCustomer.html, /href="https:\/\/astrostrip\.com\/transit-weekly\.html"[^>]*>Add or renew Transit Weekly</, 'button to book more');
+  assert.ok(!/<img|prefers-color-scheme/.test(mCustomer.html), 'no images, light only');
+  for (const l of ['Widerrufsbelehrung (Deutsch)', 'Model withdrawal form', CANCELLATION_POLICY.de[1], CANCELLATION_POLICY.en[1]]) assert.ok(mCustomer.html.includes(l.replace(/&/g, '&amp;')), 'legal text complete: ' + l.slice(0, 40));
+  { const { brandFromText } = await import('../src/worker.js');
+    const h = brandFromText('Hi Ann,\n\nthanks.\n\n\nHallo Ann,\n\nReceived: today\nName: Ann\n\nastro.strip · Sandra Willuweit · Bundesweg 4', { kicker: 'Test · Kicker', attach: 'PDF' });
+    assert.match(h, /<h1[^>]*>Hi Ann,<\/h1>/); assert.match(h, />Received<\/td>/); assert.match(h, /Attached · Anhang/); assert.equal((h.match(/Bundesweg 4/g) || []).length, 1, 'address only in the footer'); }
   assert.match(mOrder.subject, /Maxi Strip und Transit Weekly \(2 Lebensbereiche\)/);
   assert.match(mOrder.text, /Transit Weekly: 2 × 117,00 € = 234,00 € inkl\. 19 % USt/); assert.match(mOrder.text, /Preis gesamt: 313,00 €/);
   assert.match(mOrder.text, new RegExp(`Rechnungen: zwei.*${stored.id}-T`)); assert.match(mOrder.text, /Lesewoche ab Montag/);
