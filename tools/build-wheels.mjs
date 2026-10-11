@@ -8,10 +8,9 @@ import { wheelMarkup } from '../public/assets/wheel.js';
 
 const FILE = new URL('../public/index.html', import.meta.url);
 
-// hero: only the outer rings, the centre stays free for the headline (Sandra, 02.10.2026: no type may touch the ring)
+// hero: since 11.10.2026 the wheel from the logo image (assets/logo-wheel.png), no longer drawn here (Sandra, variant B)
 // strips: the full wheel with rulers and star, as on the reading PDF cover
 const WHEELS = {
-  hero: wheelMarkup({ size: 400, r: 196, rulers: false, ornament: false, rNames: 0.93, rGlyph: 0.82, rPlan: 0.805 }),
   strips: wheelMarkup({ size: 400, r: 196 }),
 };
 

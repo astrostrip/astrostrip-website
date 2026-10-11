@@ -78,6 +78,8 @@ p { margin: 0 0 1em; }
 .hero-ring { color: rgba(201, 164, 92, .55); }
 .strips-wheel { display: block; width: min(300px, 72vw); height: auto; margin: 0 auto 44px; color: var(--bronze); }
 .hero > *:not(.hero-ring) { position: relative; }
+/* logo wheel as hero background (Sandra, 11.10.2026): black of the image disappears via screen, dimmed for the headline */
+.hero-logo { mix-blend-mode: screen; opacity: .45; overflow: hidden; clip-path: inset(0); }
 .hero-title { font-weight: 400; font-size: clamp(44px, 8vw, 92px); line-height: 1.02; margin: 0 0 24px; text-transform: uppercase; letter-spacing: .02em; }
 .hero-sub { max-width: 560px; margin: 0 auto 20px; color: var(--gold-italic); font-style: italic; font-size: clamp(17px, 2vw, 20px); }
 
@@ -142,6 +144,9 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .tr-when { font-size: 11px; letter-spacing: .24em; color: var(--muted); white-space: nowrap; }
 .tr-text { color: var(--cream); opacity: .9; font-size: 16px; margin: 8px 0 0; }
 .tr-quiet { color: var(--gold-italic); font-style: italic; margin: 0; }
+.tr-title-strip { display: block; margin-top: 6px; }
+.panel .tr-dates { margin-bottom: 0; }
+.tr-next { margin-top: 64px; }
 .tr-more { color: var(--gold-italic); font-style: italic; margin: 24px 0 12px; }
 
 /* result panels: transits and Moon phase each in their own frame */
@@ -352,12 +357,13 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .asp-pair { white-space: nowrap; }
   .asp-long { display: none; }
 }
-/* hero ring up to 760 px (Sandra, 02.10.2026): fits the screen below the kicker, the title sits in its centre,
-   the italic lines start below it. Margins in vw follow the ring; checked for no glyph/text overlap at 360-760 px.
-   Wider screens: the script in index.html centres the ring on the whole text block. */
+/* hero ring up to 760 px (Sandra, 02.10.2026): fits the screen below the kicker, the title sits in its centre.
+   Since 11.10.2026 (logo wheel) the italic lines follow right after the title and cover the lower half of the wheel
+   (Sandra: "Der ganze Teil rutscht runter und ist dann zum Teil vom Rest verdeckt"); 52.5vw = centre of the logo wheel.
+   Wider screens: the script in index.html places the ring below the kicker and the title in its centre. */
 @media (max-width: 760px) {
   .hero-ring { width: 100vw; top: calc(clamp(56px, 10vw, 120px) + 44px); }
-  .hero-title { font-size: clamp(30px, 8.6vw, 40px); margin-top: calc(50vw - 13px); margin-bottom: calc(50vw - 10px); }
+  .hero-title { font-size: clamp(30px, 8.6vw, 40px); margin-top: calc(52.5vw - 13px); margin-bottom: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 

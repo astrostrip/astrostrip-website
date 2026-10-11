@@ -488,10 +488,12 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   const deg = Math.floor(norm360(sunLon));
   const sign = SIGNS[signOf(sunLon)];
   const section = (data, kicker) => `<p class="kicker">${kicker} · ${weekLabel(data)}</p>${weekBody(data, sunLon)}`;
+  // Title in three lines, the dates of the current week on their own (Sandra, 11.10.2026: "besonders beim Datum,
+  // weil es sonst verwirrt"); next week gets a wider gap above it
   return `<div class="transits panel">
-    <h3 class="sub-title">Your week, stripped down</h3>
-    ${now ? section(now, `YOUR SUN ON ${sign.toUpperCase()} ${deg % 30 + 1}`) : ''}
-    ${next ? section(next, 'NEXT WEEK') : ''}
+    <h3 class="sub-title tr-title">Your week for your Sun on ${sign} ${deg % 30 + 1}<span class="tr-title-strip">Stripped down</span></h3>
+    ${now ? `<p class="kicker tr-dates">${weekLabel(now)}</p>${weekBody(now, sunLon)}` : ''}
+    ${next ? `<div class="tr-next">${section(next, 'NEXT WEEK')}</div>` : ''}
     <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Coming soon to add to either one: Transit Weekly, your transits week by week in the life areas you choose.</p>
     <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
     <p class="fine">Transits to your Sun only, with the life areas counted from your Sun sign, not from your personal houses. Precise transits need your exact birth time and a full reading of your birth chart first. Week from Monday to Sunday, German time.</p>
