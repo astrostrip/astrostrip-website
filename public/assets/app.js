@@ -494,8 +494,8 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
     <h3 class="sub-title tr-title">Your week for your Sun on ${sign} ${deg % 30 + 1}<span class="tr-title-strip">Stripped down</span></h3>
     ${now ? `<p class="kicker tr-dates">${weekLabel(now)}</p>${weekBody(now, sunLon)}` : ''}
     ${next ? `<div class="tr-next">${section(next, 'NEXT WEEK')}</div>` : ''}
-    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Coming soon to add to either one: Transit Weekly, your transits week by week in the life areas you choose.</p>
-    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
+    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Add Transit Weekly to either one: your transits week by week in the life areas you choose, <span data-tw-month>29 €</span> a month per area<span class="tw-founding"> (founding price)</span>.</p>
+    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a> <a class="card-lock-link" href="transit-weekly.html">ALREADY HAVE A STRIP? ADD TRANSIT WEEKLY</a>
     <p class="fine">Transits to your Sun only, with the life areas counted from your Sun sign, not from your personal houses. Precise transits need your exact birth time and a full reading of your birth chart first. Week from Monday to Sunday, German time.</p>
   </div>`;
 }
@@ -780,6 +780,7 @@ async function renderResult(chart, input) {
       <p class="teaser-sub">A strip reads how it all works together.</p>
       <a class="btn" href="#strips">SEE THE STRIPS</a>
     </div>`;
+  window.twApply?.($('#result')); // Transit Weekly price: founding or full (tw-price.js)
   $('#result').hidden = false;
   $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

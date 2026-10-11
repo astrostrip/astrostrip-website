@@ -418,3 +418,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .preview-pages, .preview-pages-3 { gap: 10px; }
   .preview-page { padding: 4px; }
 }
+
+/* Transit Weekly add-on and booking page (Sandra, 11.10.2026) */
+.transit-areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 18px; margin: 14px 0 4px; }
+.transit-add .slot { margin: 4px 0 10px; }

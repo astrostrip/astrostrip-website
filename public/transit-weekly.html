@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transit Weekly · astro.strip</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav" aria-label="Main"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+
+  <main class="order">
+    <p class="kicker">TRANSIT WEEKLY</p>
+    <h1 class="section-title">Your transits, week by week.</h1>
+    <p class="hint">For everyone who has a Maxi or Ultra Strip: every Monday at 7 am your time, for 13 weeks, one email per life area with your transits for that week, written for your chart and building on your strip. <span class="tw-founding">Founding price, for a short time only: </span><span data-tw-month>29&nbsp;&euro;</span> a month per life area, <span data-tw-term>87&nbsp;&euro;</span> for the 13 weeks<span class="tw-founding"> (later 39&nbsp;&euro; a month)</span>.<span data-tw-left hidden></span> We start right away; your first email usually comes the next Monday or the one after. Transit Weekly ends by itself; to continue, book again here, best at least two weeks before the end.</p>
+    <p id="cancelled" class="notice" hidden>Payment was cancelled. Nothing was charged.</p>
+
+    <form id="tw-form" class="chart-form order-form" novalidate autocomplete="on">
+      <div class="field">
+        <label for="base-order">Order number of your strip</label>
+        <input id="base-order" type="text" maxlength="30" placeholder="AS-20261116-3K9QZ" required spellcheck="false" autocapitalize="characters">
+      </div>
+      <div class="field">
+        <label for="email">Email you used for your strip</label>
+        <input id="email" type="email" autocomplete="email" required maxlength="200">
+      </div>
+      <div class="field field-wide">
+        <label for="name">Your name</label>
+        <input id="name" type="text" autocomplete="name" required maxlength="120">
+      </div>
+      <p class="hint field-wide">We check the order number and email with our payment provider. Your birth data from the strip is deleted three months after delivery, so we need it once more.</p>
+
+      <div class="field">
+        <label for="birth-date">Date of birth</label>
+        <input id="birth-date" type="date" min="1900-01-01" max="2100-12-31" required>
+      </div>
+      <div class="field">
+        <label for="birth-time">Time of birth (local time)</label>
+        <input id="birth-time" type="time" required>
+      </div>
+      <div class="field field-wide">
+        <label for="time-source">Where does your birth time come from?</label>
+        <select id="time-source" required>
+          <option value="">Please choose</option>
+          <option value="certificate">Birth certificate or hospital record</option>
+          <option value="family">From family memory</option>
+          <option value="approximate">Approximate</option>
+        </select>
+      </div>
+      <div class="field field-wide combo">
+        <label for="place">Place of birth</label>
+        <div class="combo-box">
+          <input id="place" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="place-list" spellcheck="false" autocomplete="off">
+          <ul id="place-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <div class="field field-wide combo">
+        <label for="residence">Where do you live now?</label>
+        <div class="combo-box">
+          <input id="residence" type="text" placeholder="Current city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="residence-list" spellcheck="false" autocomplete="off">
+          <ul id="residence-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+        <p class="hint">The times in your emails follow the time zone of this city for the whole 13 weeks. We keep only the time zone, not the city.</p>
+      </div>
+
+      <fieldset class="field field-wide options transit-add">
+        <legend>Your life areas</legend>
+        <div class="transit-areas">
+          <label class="check"><input type="checkbox" name="tw-area" value="Love and relationships"><span>Love and relationships</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Work and calling"><span>Work and calling</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Money and self-worth"><span>Money and self-worth</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Home and family"><span>Home and family</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Creativity and self-expression"><span>Creativity and self-expression</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Friends and belonging"><span>Friends and belonging</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Personal growth"><span>Personal growth</span></label>
+        </div>
+        <p class="slot" id="transit-slot"></p>
+        <label class="check" id="tw-time-row" hidden><input id="tw-time-consent" type="checkbox"><span>I understand that my birth time is not exact, so my chart is imprecise and the readings of my life areas cannot be 100&nbsp;% exact.</span></label>
+      </fieldset>
+
+      <div class="field field-wide">
+        <label for="language">Language of your emails</label>
+        <select id="language"><option value="en">English</option><option value="de">German</option></select>
+      </div>
+
+      <section class="summary field-wide" aria-live="polite">
+        <p class="sub-title">Your order</p>
+        <p id="summary-text">Choose at least one life area above.</p>
+        <p class="fine">Payment by card, PayPal, Apple Pay or Google Pay on the next page (Stripe). Your birth data is used only to prepare your Transit Weekly and is not passed to the payment provider. Stripe also asks for your billing address; your invoice follows by email as a PDF e-invoice (terms, section 4).</p>
+      </section>
+
+      <div class="field field-wide consents">
+        <label class="check"><input id="accept-terms" type="checkbox" required><span>I am at least 18 years old. I have read and accept the <a href="terms.html" target="_blank">terms</a> and the <a href="cancellation.html" target="_blank">cancellation policy</a>, and I have taken note of the <a href="datenschutz.html" target="_blank">privacy notice</a>.</span></label>
+        <label class="check"><input id="tw-early-start" type="checkbox" required><span>I expressly request that astro.strip starts preparing my Transit Weekly before the 14-day withdrawal period ends. If I withdraw, I pay a proportionate amount for the part already provided.</span></label>
+      </div>
+
+      <div class="field-wide submit-row">
+        <button id="tw-submit" class="btn btn-solid" type="submit">CONTINUE TO PAYMENT</button>
+        <p id="tw-status" class="form-status" role="status" aria-live="polite"></p>
+        <p class="fine center">By clicking the payment button on the next page you place a binding order. The contract is concluded when your payment is completed.</p>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wordmark small">astro.strip</p>
+    <nav class="footer-nav" aria-label="Legal">
+      <a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a><a class="withdraw-link" href="cancel.html">Verträge hier kündigen · Cancel contracts here</a>
+    </nav>
+  </footer>
+  <script src="assets/tw-price.js" defer></script>
+  <script type="module" src="assets/transit-weekly.js"></script>
+</body>
+</html>

@@ -6,6 +6,11 @@ const $ = s => document.querySelector(s);
 const PRICES = { mini: 39, maxi: 79, ultra: 129 };
 const NAMES = { mini: 'Mini Strip', maxi: 'Maxi Strip', ultra: 'Ultra Strip' };
 const DAYS = { mini: 5, maxi: 7, ultra: 10 };
+// Transit Weekly per life area for 13 weeks: founding price 87 € (29 € a month) while places are left, then 117 €;
+// tw-price.js asks the worker (Sandra, 11.10.2026). The checkout always shows the binding price.
+let TW_PRICE = window.twPriceData ? window.twPriceData.cents / 100 : 87;
+addEventListener('twprice', e => { TW_PRICE = e.detail.cents / 100; update(); });
+const UNSURE_TIME = ['family', 'approximate'];
 const DRAFT_KEY = 'astrostrip-order-draft'; // kept in this tab only, so a cancelled payment keeps the details
 
 const form = $('#order-form');
@@ -16,6 +21,8 @@ const getResidence = attachPlaceSearch($('#residence'), $('#residence-list'), pl
 let slots = null;
 
 const selected = () => form.querySelector('input[name=strip]:checked')?.value || '';
+const twAreas = () => [...form.querySelectorAll('input[name=tw-area]:checked')].map(i => i.value);
+const eur = n => `${n.toLocaleString('en-GB')} €`;
 
 // Dates from /api/slots are Berlin calendar dates (YYYY-MM-DD).
 const fmt = (ymd, opts) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { timeZone: 'UTC', ...opts }); };
@@ -30,7 +37,17 @@ function update() {
   const ultra = strip === 'ultra';
   $('#life-area-field').hidden = !ultra;
   $('#questionnaire').hidden = !(ultra || strip === 'maxi');
-  $('#residence-req').hidden = !ultra;
+  // Transit Weekly only with Maxi or Ultra; then the current city is required and, with an inexact birth time,
+  // the confirmation box (Sandra, 11.10.2026).
+  const twOk = ultra || strip === 'maxi';
+  $('#transit').hidden = !twOk;
+  if (!twOk) for (const i of form.querySelectorAll('input[name=tw-area]')) i.checked = false;
+  const areas = twAreas();
+  $('#tw-time-row').hidden = !(areas.length && UNSURE_TIME.includes($('#time-source').value));
+  $('#tw-early-row').hidden = !areas.length;
+  $('#residence-req').hidden = !(ultra || areas.length);
+  const tw = slots?.transit;
+  $('#transit-slot').textContent = tw && !tw.next ? `Transit Weekly is fully booked until ${shortDay(tw.until)}. You can add it later with your order number.` : '';
   $('#ancestry-row').hidden = !ultra;
   if (!ultra) $('#ancestry').checked = false;
   // The Mini Strip reads only the Big Three: no karmic nodes layer (Sandra, 03.10.2026).
@@ -39,9 +56,10 @@ function update() {
   const s = strip && slots ? slots[strip] : null;
   const soldOut = !!(s && !s.next);
   const later = !!(s && s.next && !s.thisWeek);
+  const twText = areas.length ? ` Plus Transit Weekly for ${areas.length} life area${areas.length === 1 ? '' : 's'} (${areas.join(', ')}): ${eur(areas.length * TW_PRICE)} for 13 weeks. Total ${eur(PRICES[strip] + areas.length * TW_PRICE)} including 19 % VAT.` : '';
   $('#summary-text').textContent = !strip ? 'Choose a strip above.'
-    : later ? `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`
-    : `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`;
+    : (later ? `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`
+    : `${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`) + twText;
   $('#order-submit').disabled = soldOut;
   status.textContent = soldOut ? `This strip is fully booked until ${longDay(s.until)}. New weeks open every Monday.` : '';
 }
@@ -86,6 +104,9 @@ function restoreDraft() {
   $('#relationship').value = q.relationship || '';
   $('#focus').value = q.focus || '';
   $('#sensitive-consent').checked = !!(d.sensitiveConsent || q.sensitiveConsent);
+  const tw = d.transit?.areas || [];
+  for (const i of form.querySelectorAll('input[name=tw-area]')) i.checked = tw.includes(i.value);
+  $('#tw-time-consent').checked = !!d.transit?.timeConsent;
 }
 
 const params = new URLSearchParams(location.search);
@@ -104,6 +125,7 @@ form.addEventListener('submit', async e => {
   const place = await getPlace();
   const withQ = strip === 'maxi' || strip === 'ultra';
   const residence = withQ && $('#residence').value.trim() ? await getResidence() : null;
+  const areas = withQ ? twAreas() : [];
   const data = {
     strip,
     name: $('#name').value.trim(),
@@ -126,6 +148,7 @@ form.addEventListener('submit', async e => {
       focus: $('#focus').value.trim(),
     } : null,
     newsletter: $('#newsletter').checked,
+    transit: areas.length ? { areas, timeConsent: $('#tw-time-consent').checked, earlyStart: $('#tw-early-start').checked } : null,
     week: slots?.[strip]?.next || '', // the server checks that this is still the next free week
     acceptTerms: $('#accept-terms').checked,
     earlyStart: $('#early-start').checked,
@@ -139,12 +162,13 @@ form.addEventListener('submit', async e => {
   if (!data.timeSource) missing.push('where your birth time comes from');
   if (!data.place) missing.push('your birth place (choose it from the list)');
   if (strip === 'ultra' && !data.lifeArea) missing.push('the life area');
-  if (strip === 'ultra' && !data.questionnaire.residence) missing.push('where you live now (choose it from the list)');
+  if ((strip === 'ultra' || areas.length) && !data.questionnaire.residence) missing.push('where you live now (choose it from the list)');
+  if (areas.length && UNSURE_TIME.includes(data.timeSource) && !data.transit.timeConsent) missing.push('the Transit Weekly box about your birth time');
   if (missing.length) { status.textContent = `Please add ${missing.join(', ')}.`; return; }
   // Free text may contain sensitive details (Art. 9 GDPR): consent is required whenever any free-text field is filled (Sandra, 05.10.2026).
   const freeText = [data.note, data.questionnaire?.occupation, data.questionnaire?.passions, data.questionnaire?.focus].some(Boolean);
   if (freeText && !data.sensitiveConsent) { status.textContent = 'You wrote something in the free-text fields. Please tick the consent box for sensitive information, or clear those fields.'; return; }
-  if (!data.acceptTerms || !data.earlyStart) { status.textContent = 'Please tick both boxes above the button.'; return; }
+  if (!data.acceptTerms || !data.earlyStart || (areas.length && !data.transit.earlyStart)) { status.textContent = `Please tick ${areas.length ? 'all three' : 'both'} boxes above the button.`; return; }
 
   const { acceptTerms, earlyStart, week, ...draft } = data;
   saveDraft(draft);

@@ -80,9 +80,9 @@
 
       <fieldset class="field field-wide questionnaire" id="questionnaire" hidden>
         <legend>A few questions about your life right now</legend>
-        <p class="hint">They help us read your chart against your real life. Everything except your current city is optional. Your strip works without sensitive details: please don’t share health information, diagnoses, or anything about other people.</p>
+        <p class="hint">They help us read your chart against your real life. Everything except your current city (Ultra Strip, Transit Weekly) is optional. Your strip works without sensitive details: please don’t share health information, diagnoses, or anything about other people.</p>
         <div class="field combo">
-          <label for="residence">Where do you live now? <span id="residence-req">(needed for the Ultra Strip)</span></label>
+          <label for="residence">Where do you live now? <span id="residence-req">(needed for the Ultra Strip and for Transit Weekly)</span></label>
           <div class="combo-box">
             <input id="residence" type="text" placeholder="Current city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="residence-list" spellcheck="false" autocomplete="off">
             <ul id="residence-list" class="place-list" role="listbox" hidden></ul>
@@ -125,6 +125,22 @@
         <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Ultra only: add the ancestral layer (patterns that may run in your family)</span></label>
       </fieldset>
 
+      <fieldset class="field field-wide options transit-add" id="transit" hidden>
+        <legend>Add Transit Weekly (optional)</legend>
+        <p class="hint">Every Monday at 7 am your time, for 13 weeks, one email per life area with your transits for that week, written for your chart and building on your strip. <span class="tw-founding">Founding price, for a short time only: </span><span data-tw-month>29&nbsp;&euro;</span> a month per life area, <span data-tw-term>87&nbsp;&euro;</span> for the 13 weeks<span class="tw-founding"> (later 39&nbsp;&euro; a month)</span>.<span data-tw-left hidden></span> We start in the week your strip is due; your first email comes the Monday after. Transit Weekly ends by itself; nothing renews automatically.</p>
+        <div class="transit-areas">
+          <label class="check"><input type="checkbox" name="tw-area" value="Love and relationships"><span>Love and relationships</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Work and calling"><span>Work and calling</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Money and self-worth"><span>Money and self-worth</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Home and family"><span>Home and family</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Creativity and self-expression"><span>Creativity and self-expression</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Friends and belonging"><span>Friends and belonging</span></label>
+          <label class="check"><input type="checkbox" name="tw-area" value="Personal growth"><span>Personal growth</span></label>
+        </div>
+        <p class="slot" id="transit-slot"></p>
+        <label class="check" id="tw-time-row" hidden><input id="tw-time-consent" type="checkbox"><span>I understand that my birth time is not exact, so my chart is imprecise and the readings of my life areas cannot be 100&nbsp;% exact.</span></label>
+      </fieldset>
+
       <div class="field field-wide">
         <label for="note">Anything else we should know? (optional)</label>
         <input id="note" type="text" maxlength="500" placeholder="Please no health details or details about other people">
@@ -149,6 +165,7 @@
       <div class="field field-wide consents">
         <label class="check"><input id="accept-terms" type="checkbox" required><span>I am at least 18 years old. I have read and accept the <a href="terms.html" target="_blank">terms</a> and the <a href="cancellation.html" target="_blank">cancellation policy</a>, and I have taken note of the <a href="datenschutz.html" target="_blank">privacy notice</a>.</span></label>
         <label class="check"><input id="early-start" type="checkbox" required><span>I expressly request that astro.strip starts writing my strip before the 14-day withdrawal period ends. I know that my right of withdrawal ends once the strip has been fully written and delivered to me as a PDF. If I withdraw earlier, I pay a proportionate amount for the work already done.</span></label>
+        <label class="check" id="tw-early-row" hidden><input id="tw-early-start" type="checkbox"><span>I expressly request that astro.strip starts preparing my Transit Weekly before the 14-day withdrawal period ends. If I withdraw, I pay a proportionate amount for the part already provided.</span></label>
       </div>
 
       <div class="field-wide submit-row">
@@ -162,9 +179,10 @@
   <footer class="site-footer">
     <p class="wordmark small">astro.strip</p>
     <nav class="footer-nav" aria-label="Legal">
-      <a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a>
+      <a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a><a class="withdraw-link" href="cancel.html">Verträge hier kündigen · Cancel contracts here</a>
     </nav>
   </footer>
+  <script src="assets/tw-price.js" defer></script>
   <script type="module" src="assets/order.js"></script>
 </body>
 </html>

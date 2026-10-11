@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verträge hier kündigen · Cancel contracts here · astro.strip</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+  <main class="legal">
+    <p class="kicker">KÜNDIGUNG · NOTICE OF TERMINATION</p>
+    <h1>Verträge hier kündigen<br><span lang="en">Cancel contracts here</span></h1>
+    <p>Hier können Sie Ihr Transit Weekly kündigen. Transit Weekly endet ohnehin nach 13 Wochen von selbst; eine ordentliche Kündigung wirkt zum Ende dieser Laufzeit. Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt. Sie erhalten sofort eine Eingangsbestätigung per E-Mail. Einen Strip widerrufen Sie über <a href="withdraw.html">Vertrag widerrufen</a>.</p>
+    <p lang="en">Here you can give notice for your Transit Weekly. Transit Weekly ends by itself after 13 weeks; ordinary notice takes effect at the end of that term. Your right to terminate for good cause is not affected. You will receive a confirmation of receipt by email straight away. To withdraw from a strip, use <a href="withdraw.html">Withdraw from contract</a>.</p>
+
+    <form id="c-form" class="chart-form" novalidate>
+      <fieldset class="field field-wide">
+        <legend>Art der Kündigung · Kind of notice</legend>
+        <label class="check"><input type="radio" name="c-kind" value="ordinary" checked><span>Ordentliche Kündigung zum Ende der Laufzeit · Ordinary notice, effective at the end of the term</span></label>
+        <label class="check"><input type="radio" name="c-kind" value="extraordinary"><span>Außerordentliche Kündigung aus wichtigem Grund, mit sofortiger Wirkung · Termination for good cause, with immediate effect</span></label>
+      </fieldset>
+      <div class="field field-wide" id="c-reason-row" hidden><label for="c-reason">Kündigungsgrund · Reason for termination</label><input id="c-reason" type="text" maxlength="500"></div>
+      <div class="field field-wide"><label for="c-name">Name · Your name</label><input id="c-name" type="text" autocomplete="name" maxlength="120" required></div>
+      <div class="field field-wide"><label for="c-contract">Vertrag: Bestellnummer · Contract: order number</label><input id="c-contract" type="text" maxlength="120" placeholder="e.g. AS-20261116-3K9QZ" required></div>
+      <div class="field field-wide"><label for="c-email">E-Mail für die Bestätigung (wie bei der Bestellung) · Email for the confirmation (as in your order)</label><input id="c-email" type="email" autocomplete="email" maxlength="200" required></div>
+      <p class="fine">Zeitpunkt: ordentliche Kündigung zum Ende der gebuchten Laufzeit, außerordentliche Kündigung sofort. Die Bestätigung nennt das genaue Datum.<br><span lang="en">Effective date: ordinary notice at the end of the booked term, termination for good cause at once. The confirmation states the exact date.</span></p>
+      <div class="field-wide submit-row"><button class="btn btn-solid" type="submit" id="c-send">JETZT KÜNDIGEN · CANCEL NOW</button></div>
+    </form>
+
+    <section id="c-done" hidden>
+      <h2>Ihre Kündigung · Your notice</h2>
+      <p id="c-summary"></p>
+      <p>Hiermit kündige ich den oben genannten Vertrag.<br><span lang="en">I hereby terminate the contract named above.</span></p>
+      <p id="c-when"></p>
+      <div class="submit-row"><button class="btn" type="button" id="c-print">SPEICHERN ODER DRUCKEN · SAVE OR PRINT</button></div>
+    </section>
+    <p id="c-status" class="form-status" role="status" aria-live="polite"></p>
+    <p class="fine">Sie können auch per E-Mail an hello@astrostrip.com kündigen.<br><span lang="en">You can also give notice by email to hello@astrostrip.com.</span></p>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a></nav>
+  </footer>
+  <script>
+    (function () {
+      var $ = function (s) { return document.querySelector(s); };
+      var two = function (el, de, en) {
+        el.textContent = '';
+        var a = document.createElement('span'); a.textContent = de;
+        var b = document.createElement('span'); b.textContent = en; b.lang = 'en';
+        el.appendChild(a); el.appendChild(document.createElement('br')); el.appendChild(b);
+      };
+      var kind = function () { return document.querySelector('input[name=c-kind]:checked').value; };
+      $('#c-form').addEventListener('change', function () { $('#c-reason-row').hidden = kind() !== 'extraordinary'; });
+      $('#c-print').addEventListener('click', function () { window.print(); });
+      $('#c-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var data = { kind: kind(), reason: $('#c-reason').value.trim(), name: $('#c-name').value.trim(), contract: $('#c-contract').value.trim(), email: $('#c-email').value.trim() };
+        if (data.name.length < 2 || data.contract.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+          two($('#c-status'), 'Bitte Name, Bestellnummer und E-Mail ausfüllen.', 'Please fill in your name, order number and email.'); return;
+        }
+        if (data.kind === 'extraordinary' && data.reason.length < 3) { two($('#c-status'), 'Bitte nennen Sie den Kündigungsgrund.', 'Please state the reason for termination.'); return; }
+        var btn = $('#c-send'); btn.disabled = true; $('#c-status').textContent = '';
+        fetch('/api/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (x) {
+            if (!x.ok || !x.j.received) throw new Error(x.j.error || 'error');
+            var de = data.kind === 'extraordinary' ? 'außerordentliche Kündigung, Grund: ' + data.reason : 'ordentliche Kündigung';
+            var en = data.kind === 'extraordinary' ? 'termination for good cause, reason: ' + data.reason : 'ordinary notice';
+            two($('#c-summary'), 'Abgegeben über „Jetzt kündigen“ am ' + x.j.received + ' · ' + de + ' · Name: ' + data.name + ' · Vertrag: ' + data.contract + ' · Bestätigung an: ' + data.email,
+              'Submitted via “Cancel now” on ' + (x.j.receivedEn || x.j.received) + ' · ' + en + ' · Name: ' + data.name + ' · Contract: ' + data.contract + ' · Confirmation to: ' + data.email);
+            two($('#c-when'), 'Der Vertrag endet ' + x.j.endDe + '.', 'The contract ends ' + x.j.endEn + '.');
+            $('#c-form').hidden = true; $('#c-done').hidden = false;
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            var detail = err.message && err.message !== 'error' && err.message.indexOf('fetch') < 0 ? err.message + ' ' : '';
+            two($('#c-status'), 'Das hat nicht geklappt. Senden Sie Ihre Kündigung bitte an hello@astrostrip.com.',
+              detail + 'If this keeps failing, please email your notice to hello@astrostrip.com.');
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 // Invoice for every paid order (Sandra, 02.10.2026): ZUGFeRD / Factur-X, profile EN 16931,
 // as a PDF/A-3 with the embedded factur-x.xml (UStAE 14.1 Abs. 14; the XML is the leading part).
 // All strips cost at most 250 €, so a Kleinbetragsrechnung (§ 33 UStDV) would suffice; we still give
-// the full details of § 14 Abs. 4 UStG. Invoice number = order number (unique, AS-YYYYMMDD-XXXXX).
+// the full details of § 14 Abs. 4 UStG, which also covers Transit Weekly (117 € per life area, so often above
+// 250 €). Invoice number = order number (unique, AS-YYYYMMDD-XXXXX); when Transit Weekly is bought together
+// with a strip, it gets its own invoice with the order number plus "-T" (the template has one item row).
 //
 // The free Workers plan allows 10 ms CPU per request, too little to lay out a PDF. So the page, the
 // fonts and the logo come ready-made from src/invoice-template.js (built on the Mac by
@@ -88,9 +90,10 @@ export function invoiceData(order, session, strip, nowMs = Date.now(), paidMs = 
   return {
     number: order.id,
     issueDate: date, paidDate: berlinDate(paidMs),
-    period: servicePeriod(order, strip, berlinDate(paidMs)),
+    period: strip.period || servicePeriod(order, strip, berlinDate(paidMs)),
     buyer: buyerData(cd, order.name, order.email),
-    item: { name: `${strip.name} – ${strip.tag}`, short: strip.name },
+    // A product may bring its own wording and a quantity (Transit Weekly: number of life areas).
+    item: { name: strip.itemName || `${strip.name} – ${strip.tag}`, short: strip.name, desc: strip.desc, xmlDesc: strip.xmlDesc, noteDe: strip.noteDe, qty: strip.qty || 1 },
     amounts: splitGross(strip.cents),
     missingCountry: !country,
   };
@@ -109,11 +112,13 @@ export function invoiceXml(d) {
   const k = d.correction;
   const note = k
     ? `Rechnungskorrektur zur Rechnung ${k.invoice} vom ${dmy(k.invoiceDate)}: ${k.full ? 'Erstattung des vollen Betrags' : 'Teilerstattung; der nicht erstattete Betrag bleibt Entgelt für die bereits erbrachte Leistung'}. Erstattet am ${dmy(k.refundDate)} über Stripe.`
-    : `Leistungszeitraum ${dmy(d.period.start)} bis ${dmy(d.period.end)}: persönliches astrologisches Reading als PDF per E-Mail. Bezahlt am ${dmy(d.paidDate)} über Stripe.`;
+    : `Leistungszeitraum ${dmy(d.period.start)} bis ${dmy(d.period.end)}: ${d.item.noteDe || 'persönliches astrologisches Reading als PDF per E-Mail'}. Bezahlt am ${dmy(d.paidDate)} über Stripe.`;
   const terms = k
     ? `Erstattet am ${dmy(k.refundDate)} über Stripe auf das ursprüngliche Zahlungsmittel / refunded on ${enDate(k.refundDate)} via Stripe to the original payment method`
     : `Bezahlt am ${dmy(d.paidDate)} über Stripe / paid on ${enDate(d.paidDate)} via Stripe`;
   const period = d.period ? `<ram:BillingSpecifiedPeriod><ram:StartDateTime><udt:DateTimeString format="102">${d.period.start.replace(/-/g, '')}</udt:DateTimeString></ram:StartDateTime><ram:EndDateTime><udt:DateTimeString format="102">${d.period.end.replace(/-/g, '')}</udt:DateTimeString></ram:EndDateTime></ram:BillingSpecifiedPeriod>\n` : '';
+  // Quantity > 1 only when the line total divides evenly (BR-LIN-04: line net = quantity × unit price).
+  const qty = d.item.qty > 1 && net % d.item.qty === 0 ? d.item.qty : 1;
   const ref = k ? `<ram:InvoiceReferencedDocument><ram:IssuerAssignedID>${esc(k.invoice)}</ram:IssuerAssignedID><ram:FormattedIssueDateTime><qdt:DateTimeString format="102">${k.invoiceDate.replace(/-/g, '')}</qdt:DateTimeString></ram:FormattedIssueDateTime></ram:InvoiceReferencedDocument>\n` : '';
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
@@ -128,8 +133,8 @@ export function invoiceXml(d) {
 <ram:IncludedSupplyChainTradeLineItem>
 <ram:AssociatedDocumentLineDocument><ram:LineID>1</ram:LineID></ram:AssociatedDocumentLineDocument>
 <ram:SpecifiedTradeProduct><ram:Name>${esc(d.item.name)}</ram:Name><ram:Description>${esc(d.item.xmlDesc || 'Persönliches astrologisches Reading als PDF / personal astrology reading (PDF)')}</ram:Description></ram:SpecifiedTradeProduct>
-<ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${xmlAmount(net)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
-<ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+<ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${xmlAmount(net / qty)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+<ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${qty}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
 <ram:SpecifiedLineTradeSettlement>
 <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${VAT_RATE}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
 <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${xmlAmount(net)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
@@ -221,7 +226,7 @@ function pageContent(d) {
   out.push(text(40, L.row.y, '1', 'R', 9.5));
   out.push(text(68, L.row.y, fit(d.item.name, 'B', 10, L.row.qty_x - 68 - 40), 'B', 10));
   out.push(text(68, L.row.desc_y, fit(d.item.desc || 'Persönliches astrologisches Reading als PDF · Personal astrology reading (PDF)', 'R', 8.5, L.row.net_x - 68), 'R', 8.5, COLORS.grey));
-  out.push(text(L.row.qty_x, L.row.y, '1', 'R', 9.5, COLORS.ink, 'right'));
+  out.push(text(L.row.qty_x, L.row.y, String(d.item.qty > 1 && net % d.item.qty === 0 ? d.item.qty : 1), 'R', 9.5, COLORS.ink, 'right'));
   out.push(text(L.row.vat_x, L.row.y, `${VAT_RATE} %`, 'R', 9.5, COLORS.ink, 'right'));
   out.push(text(L.row.net_x, L.row.y, money(net), 'R', 9.5, COLORS.ink, 'right'));
   [money(net), money(vat), money(gross), money(gross), money(0)].forEach((v, i) => {

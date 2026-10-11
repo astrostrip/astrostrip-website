@@ -68,11 +68,13 @@ console.log('validation ok');
 
 // full flow with mocks
 const kv = new Map();
+const kvMeta = new Map(); // KV metadata (Transit Weekly summaries and send times)
 const env = {
   STRIPE_SECRET_KEY: 'sk_test', STRIPE_WEBHOOK_SECRET: secret, MAILJET_API_KEY: 'k', MAILJET_SECRET_KEY: 's', MAILJET_NEWSLETTER_LIST_ID: '111', MAILJET_CUSTOMER_LIST_ID: '222', OWNER_EMAIL: 'owner@example.com', SITE_URL: 'https://astrostrip.com',
   ORDERS: {
-    get: async k => kv.get(k) ?? null, put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); },
-    list: async ({ prefix, limit }) => { const keys = [...kv.keys()].filter(k => k.startsWith(prefix)).sort().slice(0, limit).map(name => ({ name })); return { keys, list_complete: true }; },
+    get: async k => kv.get(k) ?? null, put: async (k, v, o) => { kv.set(k, v); if (o?.metadata) kvMeta.set(k, o.metadata); else kvMeta.delete(k); }, delete: async k => { kv.delete(k); kvMeta.delete(k); },
+    getWithMetadata: async k => ({ value: kv.get(k) ?? null, metadata: kvMeta.get(k) ?? null }),
+    list: async ({ prefix, limit }) => { const keys = [...kv.keys()].filter(k => k.startsWith(prefix)).sort().slice(0, limit).map(name => ({ name, metadata: kvMeta.get(name) })); return { keys, list_complete: true }; },
   },
   ASSETS: { fetch: async () => new Response('asset') },
 };
@@ -88,6 +90,12 @@ globalThis.fetch = async (url, init = {}) => {
     return new Response(JSON.stringify({ data: sessions.filter(s => s.created >= gte), has_more: false }));
   }
   let m;
+  if (url.startsWith('https://api.stripe.com/v1/payment_intents/search?')) {
+    const q = new URL(url).searchParams;
+    assert.equal(q.get('expand[]'), 'data.latest_charge');
+    const id = q.get('query').match(/^metadata\['order_id'\]:'(AS-[\w-]+)'$/)[1];
+    return new Response(JSON.stringify({ data: Object.values(pis).filter(p => p.metadata?.order_id === id), has_more: false }));
+  }
   if ((m = url.match(/^https:\/\/api\.stripe\.com\/v1\/payment_intents\/(\w+)$/))) {
     const pi = pis[m[1]];
     if (!pi) return new Response('{"error":{"message":"No such payment_intent"}}', { status: 404 });
@@ -103,8 +111,9 @@ globalThis.fetch = async (url, init = {}) => {
   }
   if (url === 'https://api.stripe.com/v1/checkout/sessions' && init.method === 'POST') {
     const p = new URLSearchParams(init.body);
-    const s = { id: 'cs_' + sessions.length, created: Math.floor(Date.now() / 1000), expires_at: Number(p.get('expires_at')), status: 'open', payment_status: 'unpaid', metadata: { strip: p.get('metadata[strip]'), order_id: p.get('metadata[order_id]'), week: p.get('metadata[week]') }, description: p.get('line_items[0][price_data][product_data][description]'), url: 'https://checkout.stripe.com/x' };
-    assert.equal(p.get('line_items[0][price_data][unit_amount]'), String(STRIPS[s.metadata.strip].cents));
+    const md = Object.fromEntries([...p].filter(([k]) => k.startsWith('metadata[')).map(([k, v]) => [k.slice(9, -1), v]));
+    const s = { id: 'cs_' + sessions.length, created: Math.floor(Date.now() / 1000), expires_at: Number(p.get('expires_at')), status: 'open', payment_status: 'unpaid', metadata: md, description: p.get('line_items[0][price_data][product_data][description]'), url: 'https://checkout.stripe.com/x', body: init.body };
+    if (s.metadata.strip !== 'transit') assert.equal(p.get('line_items[0][price_data][unit_amount]'), String(STRIPS[s.metadata.strip].cents));
     assert.ok(!init.body.includes('1990-05-01'), 'birth data must not go to Stripe');
     assert.equal(p.get('billing_address_collection'), 'required', 'billing address for the invoice');
     sessions.push(s);
@@ -116,8 +125,8 @@ globalThis.fetch = async (url, init = {}) => {
     assert.equal(m.TrackOpens, 'disabled'); assert.equal(m.TrackClicks, 'disabled');
     assert.equal(m.From.Name, 'astro.strip');
     if (failMail(m)) return new Response('{"ErrorMessage":"test"}', { status: 500 });
-    mails.push({ to: m.To.map(t => t.Email), subject: m.Subject, text: m.TextPart, attachments: m.Attachments });
-    return new Response(JSON.stringify({ Messages: [{ Status: 'success' }] }));
+    mails.push({ to: m.To.map(t => t.Email), subject: m.Subject, text: m.TextPart, html: m.HTMLPart, attachments: m.Attachments });
+    return new Response(JSON.stringify({ Messages: [{ Status: 'success', To: [{ MessageID: 1000 + mails.length }] }] }));
   }
   if (/^https:\/\/api\.mailjet\.com\/v3\/REST\/contactslist\/\w+\/managecontact$/.test(url)) {
     lists.push({ list: url.split('/')[6], ...JSON.parse(init.body) });
@@ -125,12 +134,14 @@ globalThis.fetch = async (url, init = {}) => {
   }
   throw new Error('unexpected fetch ' + url);
 };
+const stripeMailMock = globalThis.fetch; // the retention and stats blocks swap fetch; Transit Weekly needs this one back
 const req = (path, method = 'GET', b, headers = {}) => new Request('https://astrostrip.com' + path, { method, body: b === undefined ? undefined : (typeof b === 'string' ? b : JSON.stringify(b)), headers: { 'CF-Connecting-IP': headers.ip || '1.1.1.1', ...headers } });
 
 let r = await worker.fetch(req('/api/slots'), env);
 const thisWeek = weekDate(weekStart());
 let sl = await r.json();
-assert.deepEqual(Object.keys(sl), ['mini', 'maxi', 'ultra']);
+assert.deepEqual(Object.keys(sl), ['mini', 'maxi', 'ultra', 'transit']);
+assert.deepEqual(Object.keys(sl.transit), ['next', 'until'], 'Transit Weekly: no minutes or areas left in the API'); assert.equal(sl.transit.next, thisWeek);
 for (const [k, n] of [['mini', 21], ['maxi', 7], ['ultra', 6]]) { assert.equal(sl[k].limit, undefined, 'no total in the API'); assert.equal(sl[k].left, n); assert.equal(sl[k].next, thisWeek); assert.equal(sl[k].thisWeek, true); }
 assert.equal(sl.ultra.until, weekDate(addWeeks(weekStart(), WEEKS_AHEAD) - 86400 + 43200), 'booking window ends on a Sunday');
 assert.equal(new Date(sl.ultra.until + 'T12:00:00Z').getUTCDay(), 0);
@@ -606,4 +617,344 @@ console.log('newsletter ok');
   assert.ok(page.includes("fetch('/api/stat'"));
   assert.ok(!/document\.cookie|localStorage|sessionStorage/.test(page), 'no cookie or browser storage on the start page');
   console.log('stats ok');
+}
+
+// Transit Weekly (Sandra, 11.10.2026): add-on to Maxi/Ultra, booked later with the strip's order number, minutes per
+// reading week, own invoice, booking with only the time zone, cancellation button (§ 312k BGB)
+{
+  globalThis.fetch = stripeMailMock;
+  const { TRANSIT, TRANSIT_MAX_AREAS, TIME_CONSENT, validateRebook, mondayOnOrAfter, transitDates, planTransit, afterWithdrawal, withdrawalEnds, INVOICE_CRON, CORRECTION_CRON } = await import('../src/worker.js');
+  const { servicePeriod, splitGross } = await import('../src/invoice.js');
+  const { berlinYmd } = await import('../src/time.js');
+  const runCron = async cron => { const p = []; await worker.scheduled({ cron }, env, { waitUntil: x => p.push(x) }); await Promise.all(p); };
+  const signedEvt = async evtBody => {
+    const ts = Math.floor(Date.now() / 1000);
+    const sg = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${ts}.${evtBody}`)))].map(b => b.toString(16).padStart(2, '0')).join('');
+    return worker.fetch(req('/api/stripe-webhook', 'POST', evtBody, { 'Stripe-Signature': `t=${ts},v1=${sg}` }), env);
+  };
+  const residence = { label: 'New York, United States', lat: 40.71, lon: -74.01, tz: 'America/New_York' };
+  const maxi = { ...good, strip: 'maxi', lifeArea: '', ancestry: false, sensitiveConsent: false, questionnaire: { residence }, transit: { areas: ['Love and relationships', 'Work and calling'], earlyStart: true } };
+
+  // prices: 117 € per area (39 € a month), invoice amounts clean for every possible number of areas
+  assert.equal(TRANSIT.cents, 11700); assert.equal(TRANSIT.monthCents * 3, TRANSIT.cents); assert.equal(TRANSIT_MAX_AREAS, 5);
+  for (let n = 1; n <= TRANSIT_MAX_AREAS; n++) { const a = splitGross(n * TRANSIT.cents); assert.equal(a.vat, Math.round(a.net * 0.19), `BR-CO-17 for ${n} areas`); assert.equal(a.net % n, 0, `unit price × ${n} = line total`); }
+
+  // validation
+  assert.equal(validateOrder(maxi).errors.length, 0, JSON.stringify(validateOrder(maxi).errors));
+  assert.deepEqual(validateOrder(maxi).order.transit, { areas: ['Love and relationships', 'Work and calling'], timeConsent: false, tz: 'America/New_York', tzLabel: 'New York' });
+  assert.ok(validateOrder({ ...maxi, strip: 'mini' }).errors.some(e => /Maxi or Ultra/.test(e)), 'not with the Mini Strip');
+  assert.ok(validateOrder({ ...maxi, questionnaire: {} }).errors.some(e => /where you live now/.test(e)), 'residence required with Transit Weekly');
+  assert.equal(validateOrder({ ...maxi, questionnaire: {}, transit: null }).errors.length, 0, 'maxi without Transit Weekly: residence optional');
+  assert.ok(validateOrder({ ...maxi, timeSource: 'family' }).errors.some(e => /birth time is not exact/.test(e)), 'family memory needs the confirmation');
+  assert.ok(validateOrder({ ...maxi, timeSource: 'approximate' }).errors.some(e => /birth time is not exact/.test(e)), 'approximate needs the confirmation');
+  assert.equal(validateOrder({ ...maxi, timeSource: 'approximate', transit: { ...maxi.transit, timeConsent: true } }).order.transit.timeConsent, true);
+  assert.equal(validateOrder({ ...maxi, transit: { ...maxi.transit, timeConsent: true } }).order.transit.timeConsent, false, 'exact time: no confirmation stored');
+  assert.ok(validateOrder({ ...maxi, transit: { ...maxi.transit, earlyStart: false } }).errors.some(e => /preparing Transit Weekly/.test(e)), 'early-start consent required');
+  // two-part reading (Sandra, 11.10.2026): part 1 = emails before day 22, read at once; part 2 from day 15
+  { const paid = Date.parse('2026-10-19T10:00:00Z'); assert.equal(withdrawalEnds(paid), '2026-11-02'); assert.equal(afterWithdrawal(paid), '2026-11-03');
+    const twWeeks = Array.from({ length: 11 }, (_, i) => addWeeks(weekStart(paid), i)); const empty = { twWeeks, tw: Object.fromEntries(twWeeks.map(w => [w, 0])) };
+    const p = planTransit(empty, weekStart(Date.parse('2026-10-28T12:00:00Z')), 1, paid);
+    assert.deepEqual([p.readWeek, p.start, p.part1Weeks, p.readWeek2, p.part2From, p.end], ['2026-10-26', '2026-11-02', 2, '2026-11-09', '2026-11-03', '2027-01-31'], 'Maxi paid 19.10.: part 1 from 26.10., first email 02.11., weeks 3–13 in the week from Mon 09.11.');
+    const full = { twWeeks, tw: { ...empty.tw, [weekStart(Date.parse('2026-11-09T12:00:00Z'))]: TRANSIT.budget - 20 } };
+    assert.notEqual(planTransit(full, weekStart(Date.parse('2026-10-28T12:00:00Z')), 1, paid).readWeek, '2026-10-26', 'part 2 week without room: plan moves on');
+    const late = planTransit(empty, addWeeks(weekStart(paid), 4), 2, paid);
+    assert.equal(late.readWeek2, null); assert.equal(late.part1Weeks, 13, 'reading week after the withdrawal period: all at once'); }
+  assert.ok(validateOrder({ ...maxi, transit: { areas: ['Health'], earlyStart: true } }).errors.some(e => /life areas for Transit Weekly/.test(e)));
+  assert.ok(validateOrder({ ...maxi, transit: { areas: [...Array(6)].map((_, i) => ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family', 'Creativity and self-expression', 'Friends and belonging'][i]), earlyStart: true } }).errors.some(e => /at most 5/.test(e)));
+  assert.match(TIME_CONSENT.en, /^I understand that my birth time is not exact/); assert.match(TIME_CONSENT.de, /^Mir ist klar/);
+  const html = readFileSync(new URL('../public/order.html', import.meta.url), 'utf8') + readFileSync(new URL('../public/transit-weekly.html', import.meta.url), 'utf8');
+  assert.equal(html.split(TIME_CONSENT.en.replace('100 %', '100&nbsp;%')).length, 3, 'confirmation wording on both pages = the stored proof text');
+
+  kv.set('twfounding:count', '12'); // founding places used up: full price in the flow below; founding price tested at the end
+  // checkout Maxi + 2 areas: reading week = Monday on or after the strip's delivery deadline, first email the Monday after
+  let r = await worker.fetch(req('/api/checkout', 'POST', maxi, { ip: '10.0.0.1' }), env);
+  let out = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(out));
+  const s1 = sessions[sessions.length - 1];
+  const stored = JSON.parse(kv.get('order:' + s1.id));
+  const deadline = servicePeriod(stored, STRIPS.maxi, berlinYmd(Date.now())).end;
+  const read = weekStart(Date.parse(deadline + 'T12:00:00Z'));
+  assert.equal(stored.transit.withdrawalEnds, withdrawalEnds(Date.now()));
+  assert.deepEqual({ readWeek: stored.transit.readWeek, start: stored.transit.start, end: stored.transit.end }, transitDates(read));
+  assert.ok(stored.transit.readWeek2 ? Number(s1.metadata.tw_week2) === mondayOnOrAfter(stored.transit.readWeek2) : !s1.metadata.tw_week2, 'second reading week in the metadata');
+  assert.equal(new Date(stored.transit.start + 'T12:00:00Z').getUTCDay(), 1); assert.equal(new Date(stored.transit.end + 'T12:00:00Z').getUTCDay(), 0, 'term ends on a Sunday');
+  assert.equal((Date.parse(stored.transit.end) - Date.parse(stored.transit.start)) / 86400000, 13 * 7 - 1, '13 weeks');
+  assert.equal(s1.metadata.tw_week, String(read)); assert.equal(s1.metadata.tw_n, '2'); assert.equal(s1.metadata.strip, 'maxi');
+  const p1 = new URLSearchParams(s1.body);
+  assert.equal(p1.get('line_items[1][quantity]'), '2'); assert.equal(p1.get('line_items[1][price_data][unit_amount]'), '11700');
+  assert.match(p1.get('custom_text[submit][message]'), /the Maxi Strip and Transit Weekly \(2 life areas\) \(313,00 € incl\. 19 % VAT\)/);
+  assert.equal(p1.get('payment_intent_data[metadata][tw_n]'), '2');
+  assert.ok(!s1.body.includes('1990-05-01') && !s1.body.includes('New York') && !s1.body.includes('America'), 'no birth data or residence at Stripe');
+  // minutes: 300 per reading week; 60 per area, split 20 (part 1) / 40 (part 2) -> until a week is full, then later
+  const four = { ...maxi, transit: { areas: ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family'], earlyStart: true } };
+  const plans = [];
+  for (let i = 0; i < 4; i++) {
+    r = await worker.fetch(req('/api/checkout', 'POST', four, { ip: `10.0.0.${10 + i}` }), env); assert.equal(r.status, 200);
+    const md = sessions[sessions.length - 1].metadata; plans.push(`${md.tw_week}/${md.tw_week2 || ''}`);
+  }
+  const used = {};
+  for (const s of sessions.filter(x => x.metadata.tw_n)) { const n = Number(s.metadata.tw_n); if (s.metadata.tw_week2) { used[s.metadata.tw_week] = (used[s.metadata.tw_week] || 0) + n * 20; used[s.metadata.tw_week2] = (used[s.metadata.tw_week2] || 0) + n * 40; } else used[s.metadata.tw_week] = (used[s.metadata.tw_week] || 0) + n * 60; }
+  assert.ok(Object.values(used).every(m => m <= TRANSIT.budget), 'never more than 300 minutes in a week: ' + JSON.stringify(used));
+  assert.notEqual(plans[0], plans[3], 'full weeks push later bookings to later weeks');
+  sessions.splice(sessions.length - 4, 4); // keep the counts simple below
+
+  // payment -> mails, booking (time zone only), two invoices
+  s1.status = 'complete'; s1.payment_status = 'paid'; s1.payment_intent = 'pi_tw';
+  s1.customer_details = { name: 'Test Person', email: 't@example.com', address: { line1: 'Teststraße 5', postal_code: '20149', city: 'Hamburg', country: 'DE' } };
+  pis.pi_tw = { id: 'pi_tw', status: 'succeeded', amount: 31300, created: s1.created, latest_charge: { refunded: false }, metadata: { order_id: stored.id, strip: 'maxi', tw_n: '2', tw_week: String(read) } };
+  let before = mails.length;
+  r = await signedEvt(JSON.stringify({ type: 'checkout.session.completed', data: { object: s1 } }));
+  assert.equal(await r.text(), 'ok');
+  const [mOrder, mReading, mCustomer] = mails.slice(before);
+  assert.match(mOrder.subject, /Maxi Strip und Transit Weekly \(2 Lebensbereiche\)/);
+  assert.match(mOrder.text, /Transit Weekly: 2 × 117,00 € = 234,00 € inkl\. 19 % USt/); assert.match(mOrder.text, /Preis gesamt: 313,00 €/);
+  assert.match(mOrder.text, new RegExp(`Rechnungen: zwei.*${stored.id}-T`)); assert.match(mOrder.text, /Lesewoche ab Montag/);
+  assert.match(mReading.text, /Zeitzone \(Wohnort, gilt die ganze Laufzeit\): America\/New_York · in den Mails „New York“ · Rechner: --wohn-tz America\/New_York/);
+  assert.match(mReading.text, /Lebensbereiche: Love and relationships, Work and calling/); assert.match(mReading.text, /Lesen in zwei Teilen: Teil 1 \(Wochen 1–\d\)|Lesewoche ab .*alle 13 Wochen/); assert.match(mReading.text, /Geburtszeit: genau/);
+  assert.ok(!mReading.text.includes('t@example.com') && !mReading.text.includes('Test Person'), 'reading mail stays pseudonymous');
+  assert.match(mCustomer.subject, /Your Maxi Strip and Transit Weekly \(2 life areas\) order/);
+  assert.match(mCustomer.text, /Times in the emails are New York time/); assert.match(mCustomer.text, /cancel\.html; notice takes effect at the end of the 13 weeks/);
+  assert.match(mCustomer.text, /Price: 313,00 € including 19 % VAT/); assert.match(mCustomer.text, /start preparing Transit Weekly before the withdrawal period ends/);
+  const bkKey = `tw:${stored.id}:${stored.id}`;
+  const bk = JSON.parse(kv.get(bkKey));
+  assert.deepEqual(Object.keys(bk).sort(), ['areas', 'base', 'bookedAt', 'email', 'end', 'exactTime', 'expiration', 'language', 'order', 'part1Weeks', 'readWeek', 'readWeek2', 'start', 'tz', 'tzLabel'].sort());
+  assert.ok(!kv.get(bkKey).includes('1990') && !kv.get(bkKey).includes('United States') && !kv.get(bkKey).includes('Test Person'), 'booking: no birth data, no city, no name');
+  assert.equal(bk.expiration, Math.floor(Date.parse(bk.end + 'T12:00:00Z') / 1000) + 15 * 86400, 'kept until 14 days after the term');
+  assert.ok(kv.has(`invoice:${stored.id}`) && kv.has(`invoice:${stored.id}-T`), 'strip invoice and Transit Weekly invoice');
+  before = mails.length;
+  for (let i = 0; i < 6; i++) await runCron(INVOICE_CRON);
+  const twInv = mails.slice(before).find(m => m.to[0] === 't@example.com' && m.subject.includes(`${stored.id}-T`));
+  assert.ok(twInv, 'Transit Weekly invoice mailed'); assert.match(twInv.text, /invoice for your Transit Weekly/);
+  const twXml = Buffer.from(twInv.attachments[0].Base64Content, 'base64').toString('utf8');
+  assert.ok(twXml.includes('<ram:BilledQuantity unitCode="C62">2</ram:BilledQuantity>') && twXml.includes('<ram:ChargeAmount>98.32</ram:ChargeAmount>') && twXml.includes('<ram:LineTotalAmount>196.64</ram:LineTotalAmount>') && twXml.includes('<ram:GrandTotalAmount>234.00</ram:GrandTotalAmount>'), 'quantity 2 × 98,32 € net');
+  assert.ok(twXml.includes(`<udt:DateTimeString format="102">${stored.transit.start.replace(/-/g, '')}</udt:DateTimeString>`) && twXml.includes('wöchentliche persönliche Transite'), 'service period = the 13 weeks');
+  assert.match(pis.pi_tw.metadata.tw_invoice_date, /^\d{4}-\d{2}-\d{2}$/); assert.match(pis.pi_tw.metadata.invoice_date, /^\d{4}-\d{2}-\d{2}$/, 'both invoice dates kept apart');
+
+  // booking later: order number + email must match a paid, unrefunded Maxi/Ultra at Stripe
+  const later = { baseOrder: stored.id, email: 'T@example.com', name: 'Test Person', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: good.place, residence, language: 'de', transit: { areas: ['Personal growth'], earlyStart: true }, acceptTerms: true };
+  assert.equal(validateRebook(later).errors.length, 0, JSON.stringify(validateRebook(later).errors));
+  assert.ok(validateRebook({ ...later, residence: null }).errors.some(e => /where you live now/.test(e)));
+  assert.ok(validateRebook({ ...later, baseOrder: 'AS-123' }).errors.some(e => /order number/.test(e)));
+  r = await worker.fetch(req('/api/transit-weekly', 'POST', { ...later, email: 'other@example.com' }, { ip: '10.0.1.1' }), env);
+  assert.equal(r.status, 400); assert.match((await r.json()).error, /could not find a paid Maxi or Ultra Strip/, 'wrong email: same answer as an unknown number');
+  r = await worker.fetch(req('/api/transit-weekly', 'POST', later, { ip: '10.0.1.2' }), env);
+  out = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(out));
+  const s2 = sessions[sessions.length - 1];
+  assert.equal(s2.metadata.strip, 'transit'); assert.equal(s2.metadata.base, stored.id); assert.equal(s2.metadata.tw_n, '1');
+  assert.equal(new URLSearchParams(s2.body).get('line_items[0][price_data][unit_amount]'), '11700');
+  assert.match(new URLSearchParams(s2.body).get('cancel_url'), /transit-weekly\.html\?cancelled=1$/);
+  const st2 = JSON.parse(kv.get('order:' + s2.id));
+  assert.equal(st2.transit.readWeek, weekDate(weekStart(Date.now() + 3 * 86400000)), 'booked later: this week if three days are left, else next week');
+  // renewal of a running area: seamless, the Monday after the old term
+  r = await worker.fetch(req('/api/transit-weekly', 'POST', { ...later, transit: { areas: ['Love and relationships'], earlyStart: true } }, { ip: '10.0.1.3' }), env);
+  out = await r.json();
+  if (r.status === 200) assert.equal(JSON.parse(kv.get('order:' + sessions[sessions.length - 1].id)).transit.start, weekDate(mondayOnOrAfter(bk.end)), 'renewal starts right after the old term');
+  else { assert.equal(r.status, 409); assert.match(out.error, /You can renew it from/); }
+  // refunded or too old: no booking
+  pis.pi_old = { id: 'pi_old', status: 'succeeded', created: Math.floor(Date.parse('2021-06-01') / 1000), latest_charge: { refunded: false }, metadata: { order_id: 'AS-20210601-OLD01', strip: 'ultra' } };
+  r = await worker.fetch(req('/api/transit-weekly', 'POST', { ...later, baseOrder: 'AS-20210601-OLD01' }, { ip: '10.0.1.4' }), env);
+  assert.equal(r.status, 400); assert.match((await r.json()).error, /too old/);
+  pis.pi_tw.latest_charge.refunded = true;
+  r = await worker.fetch(req('/api/transit-weekly', 'POST', later, { ip: '10.0.1.5' }), env);
+  assert.equal(r.status, 400, 'fully refunded strip');
+  pis.pi_tw.latest_charge.refunded = false;
+  // paid later booking: own invoice with the order number, reading mail without the questionnaire
+  s2.status = 'complete'; s2.payment_status = 'paid'; s2.payment_intent = 'pi_tw2'; s2.customer_details = s1.customer_details;
+  pis.pi_tw2 = { id: 'pi_tw2', status: 'succeeded', amount: 11700, created: s2.created, metadata: { order_id: st2.id, strip: 'transit', tw_n: '1', base: stored.id } };
+  before = mails.length;
+  await signedEvt(JSON.stringify({ type: 'checkout.session.completed', data: { object: s2 } }));
+  assert.match(mails[before].text, new RegExp(`Nachgebucht zu Bestellung ${stored.id}`)); assert.match(mails[before + 1].text, /Wohnort heute: New York/); assert.ok(!/Beruf:/.test(mails[before + 1].text));
+  assert.match(mails[before + 2].text, new RegExp(`Booked for the reading of your order ${stored.id}`)); assert.ok(!/Delivery:/.test(mails[before + 2].text));
+  assert.ok(kv.has(`tw:${stored.id}:${st2.id}`) && kv.has(`invoice:${st2.id}`) && !kv.has(`invoice:${st2.id}-T`));
+
+  // cancellation button: confirmation with content, date and time of receipt and the end of the contract
+  before = mails.length;
+  r = await worker.fetch(req('/api/cancel', 'POST', { name: 'Test Person', contract: stored.id, email: 't@example.com', kind: 'ordinary' }, { ip: '10.0.2.1' }), env);
+  out = await r.json();
+  assert.equal(r.status, 200); assert.match(out.received, /Europe\/Berlin/); assert.match(out.endDe, /zum Ende der Laufzeit am/);
+  assert.equal(mails.length, before + 2); assert.match(mails[before].subject, /Eingangsbestätigung Kündigung/); assert.match(mails[before].text, /Art der Kündigung: ordentliche Kündigung/); assert.match(mails[before].text, /Der Vertrag endet: zum Ende der Laufzeit am/); assert.match(mails[before].text, /Eingegangen: \d+\. \w+ 20\d\d/);
+  assert.match(mails[before + 1].subject, /^KÜNDIGUNG eingegangen: /); assert.match(mails[before + 1].text, /Buchung gefunden/);
+  assert.equal(JSON.parse(kv.get(bkKey)).notice.kind, 'ordinary', 'notice noted at the booking');
+  assert.equal(JSON.parse(kv.get(`tw:${stored.id}:${st2.id}`)).notice.kind, 'ordinary', 'strip order number: noted at all its bookings');
+  r = await worker.fetch(req('/api/cancel', 'POST', { name: 'Test Person', contract: stored.id, email: 't@example.com', kind: 'extraordinary' }, { ip: '10.0.2.2' }), env);
+  assert.equal(r.status, 400, 'good cause needs a reason');
+  r = await worker.fetch(req('/api/cancel', 'POST', { name: 'Someone', contract: 'AS-20990101-NOPE1', email: 'x@example.com', kind: 'extraordinary', reason: 'Moving abroad' }, { ip: '10.0.2.3' }), env);
+  out = await r.json(); assert.equal(r.status, 200); assert.match(out.endDe, /mit sofortiger Wirkung/);
+  const cancelHtml = readFileSync(new URL('../public/cancel.html', import.meta.url), 'utf8');
+  assert.ok(cancelHtml.includes('Verträge hier kündigen') && cancelHtml.includes('JETZT KÜNDIGEN'), '§ 312k wording of both buttons');
+  for (const page of ['index', 'order', 'terms', 'datenschutz', 'impressum', 'cancellation', 'withdraw', 'thanks', 'newsletter', 'transit-weekly']) {
+    assert.ok(readFileSync(new URL(`../public/${page}.html`, import.meta.url), 'utf8').includes('href="cancel.html">Verträge hier kündigen'), `cancellation button on ${page}`);
+  }
+
+  // refund of strip + Transit Weekly in one payment: Sandra corrects by hand, slot and minutes are freed
+  const leftBefore = await (await worker.fetch(req('/api/slots'), env)).json();
+  refunds.re_tw = { id: 're_tw', amount: 31300, payment_intent: 'pi_tw', status: 'succeeded', created: Math.floor(Date.now() / 1000) };
+  await signedEvt(JSON.stringify({ type: 'refund.created', data: { object: refunds.re_tw } }));
+  before = mails.length;
+  await runCron(CORRECTION_CRON);
+  assert.equal(mails.length, before + 1); assert.match(mails[before].subject, /Rechnungskorrektur bitte von Hand/); assert.match(mails[before].text, /Wochenplatz und Transit-Minuten sind wieder frei/);
+  assert.equal(JSON.parse(kv.get(bkKey)).stopped?.reason, 'refund', 'fully refunded strip + Transit Weekly: no more weekly emails'); assert.match(mails[before].text, /Voll erstattet: Transit Weekly wird nicht mehr verschickt/);
+  assert.equal(kvMeta.get(bkKey).x, 'refund', 'stop also in the list summary');
+  const freed = JSON.parse(kv.get('slots:freed'));
+  assert.equal(freed.filter(f => f.s === 'transit' && f.n === 2).reduce((a, f) => a + f.m, 0), 2 * TRANSIT.minutes, 'all Transit Weekly minutes freed');
+  assert.equal((await (await worker.fetch(req('/api/slots'), env)).json()).maxi.left, leftBefore.maxi.left + (leftBefore.maxi.thisWeek ? 1 : 0), 'strip slot freed');
+  // full refund of a later booking: automatic correction, booking deleted at once
+  refunds.re_tw2 = { id: 're_tw2', amount: 11700, payment_intent: 'pi_tw2', status: 'succeeded', created: Math.floor(Date.now() / 1000) };
+  await signedEvt(JSON.stringify({ type: 'refund.created', data: { object: refunds.re_tw2 } }));
+  before = mails.length;
+  for (let i = 0; i < 3; i++) await runCron(CORRECTION_CRON);
+  assert.match(mails[before].subject, new RegExp(`Your invoice correction ${st2.id}-K1`)); assert.match(mails[before].text, /for your Transit Weekly/);
+  assert.match(mails[before + 1].text, /Transit-Minuten der Lesewoche sind wieder frei/);
+  assert.ok(!kv.has(`tw:${stored.id}:${st2.id}`), 'refunded booking deleted');
+  // Monday reading list for Sandra: due parts and first emails of the week, pseudonymous
+  { const { readingList, runReadingList } = await import('../src/worker.js');
+    const b = { order: 'AS-20261019-AAAAA', base: 'AS-20261019-AAAAA', email: 'x@example.com', areas: ['Love and relationships'], readWeek: '2026-10-26', readWeek2: '2026-11-09', part1Weeks: 2, start: '2026-11-02', end: '2027-01-31' };
+    assert.match(readingList([b], '2026-10-26')[0], /Teil 1, Wochen 1–2 · fertig vor der ersten Mail am 2026-11-02/);
+    assert.match(readingList([b], '2026-11-02')[0], /erste Wochenmail am 2026-11-02/);
+    assert.match(readingList([b], '2026-11-09')[0], /Teil 2, Wochen 3–13 · fertig vor der Mail am 2026-11-16 · Vorlage von der Montags-Routine/);
+    assert.equal(readingList([b], '2026-11-16').length, 0);
+    assert.ok(!readingList([b], '2026-10-26').join().includes('x@example.com'), 'no email address in the list');
+    const before = mails.length;
+    const res = await runReadingList(env, Date.parse(bk.readWeek + 'T08:00:00Z'));
+    assert.ok(res.rows >= 1); assert.match(mails[before].subject, /^Lesezettel Transit Weekly/); assert.equal(mails[before].to[0], 'owner@example.com');
+    assert.equal((await runReadingList(env, Date.parse('2030-01-07T08:00:00Z'))).rows, 0, 'nothing due: no mail'); assert.equal(mails.length, before + 1); }
+  // Founding price (Sandra, 11.10.2026): first 12 bookings 29 € a month / 87 € per area, then 39 €; the page shows only the places left
+  { const { twPrice, TW_FOUNDING, invoiceProduct } = await import('../src/worker.js');
+    assert.deepEqual(TW_FOUNDING, { cents: 8700, monthCents: 2900, places: 12 }); assert.equal(TW_FOUNDING.monthCents * 3, TW_FOUNDING.cents);
+    for (let n = 1; n <= TRANSIT_MAX_AREAS; n++) { const a = splitGross(n * TW_FOUNDING.cents); assert.equal(a.vat, Math.round(a.net * 0.19), `founding BR-CO-17 for ${n}`); assert.equal(a.net % n, 0, `founding unit × ${n}`); }
+    kv.delete('twfounding:count');
+    assert.deepEqual(await twPrice(env), { cents: 8700, monthCents: 2900, founding: true, left: 12 }, 'start: 12 places');
+    kv.set('twfounding:count', '11');
+    let pr = await (await worker.fetch(req('/api/transit-price'), env)).json();
+    assert.deepEqual(pr, { cents: 8700, monthCents: 2900, founding: true, left: 1 });
+    const rf = await worker.fetch(req('/api/checkout', 'POST', maxi, { ip: '10.0.0.77' }), env); assert.equal(rf.status, 200);
+    const sf = sessions[sessions.length - 1]; const pf = new URLSearchParams(sf.body);
+    assert.equal(pf.get('line_items[1][price_data][unit_amount]'), '8700'); assert.equal(sf.metadata.tw_unit, '8700');
+    assert.match(pf.get('line_items[1][price_data][product_data][name]'), /founding price/);
+    assert.match(pf.get('custom_text[submit][message]'), /\(253,00 € incl\. 19 % VAT\)/);
+    const of = JSON.parse(kv.get('order:' + sf.id)); assert.equal(of.transit.unitCents, 8700); assert.equal(of.transit.founding, true);
+    Object.assign(sf, { status: 'complete', payment_status: 'paid', payment_intent: 'pi_tf', customer_details: { ...s1.customer_details } });
+    const bf = mails.length;
+    assert.equal(await (await signedEvt(JSON.stringify({ type: 'checkout.session.completed', data: { object: sf } }))).text(), 'ok');
+    assert.ok(mails.slice(bf).some(m => /Transit Weekly: 2 × 87,00 € \(Founding-Preis\) = 174,00 €/.test(m.text)), 'owner mail: founding price');
+    assert.ok(mails.slice(bf).some(m => /87,00 € per area for 13 weeks, 29,00 € a month, founding price/.test(m.text)), 'customer mail: founding price');
+    assert.equal(kv.get('twfounding:count'), '12', 'place counted');
+    const job = JSON.parse(kv.get(`invoice:${of.id}-T`)); assert.equal(job.order.unit, 8700); assert.equal(invoiceProduct(job.order).cents, 17400);
+    pr = await (await worker.fetch(req('/api/transit-price'), env)).json();
+    assert.deepEqual(pr, { cents: 11700, monthCents: 3900, founding: false, left: 0 }, 'sold out: 39 €');
+    for (const k of [...kv.keys()]) if (k.includes(of.id)) kv.delete(k); // leave the queues below as they were
+    for (const k of [...kvMeta.keys()]) if (k.includes(of.id)) kvMeta.delete(k);
+    sessions.pop(); }
+  console.log('transit weekly ok');
+
+  // Stufe 6 (Sandra, 11.10.2026): approved texts uploaded with a key, sent Monday 07:00 in the customer's time zone
+  // (send time from the Mac script), in portions, logged without text and address; never an empty mail
+  { const { runTwMails, runTwFriday, twFridayNoon, twMeta, weeklyMail, weekRange, TW_SEND_BATCH } = await import('../src/worker.js');
+    env.TW_UPLOAD_KEY = 'up_key_test';
+    const B = { order: 'AS-20261019-BBBBB', base: 'AS-20261019-BBBBB', email: 'tw@example.com', language: 'en', areas: ['Love and relationships', 'Work and calling'], tz: 'America/New_York', tzLabel: 'New York', exactTime: true, readWeek: '2026-10-26', readWeek2: '2026-11-09', part1Weeks: 2, start: '2026-11-02', end: '2027-01-31', expiration: 1900000000 };
+    const bKey = `tw:${B.base}:${B.order}`;
+    await env.ORDERS.put(bKey, JSON.stringify(B), { expiration: B.expiration, metadata: twMeta(B) });
+    const md = '# Your week in love\n*November 2 to 8, 2026*\n\nThis week is about **depth**, not new questions. ' + 'A steady, quiet stretch. '.repeat(12) + '\n\n## The testing force\n\n- **Wednesday: Give your gut room.**';
+    const ny7 = ymd => Date.parse(ymd + 'T12:00:00Z'); // 07:00 New York (EST) = 12:00 UTC
+    const up = (b, k = 'up_key_test') => worker.fetch(req('/api/tw-texts', 'POST', b, { Authorization: `Bearer ${k}` }), env);
+    assert.equal((await up({ order: B.order, action: 'status' }, 'wrong')).status, 404, 'wrong key = 404');
+    assert.equal((await worker.fetch(req('/api/tw-texts', 'POST', { order: B.order }), env)).status, 404, 'no key = 404');
+    let r = await up({ order: B.order, texts: [
+      { area: 'love', week: 1, sendAt: ny7('2026-11-02'), text: md }, { area: 'work', week: 1, sendAt: ny7('2026-11-02'), text: md },
+      { area: 'growth', week: 1, sendAt: ny7('2026-11-02'), text: md }, { area: 'love', week: 2, sendAt: ny7('2026-11-02'), text: md },
+      { area: 'love', week: 3, sendAt: ny7('2026-11-16'), text: md + ' Write to me@example.com' },
+    ] });
+    let o = await r.json();
+    assert.equal(r.status, 200); assert.deepEqual(o.stored, ['love Woche 1', 'work Woche 1']);
+    assert.equal(o.skipped.length, 3); assert.match(o.skipped.join(), /nicht gebucht/); assert.match(o.skipped.join(), /Versandzeit passt nicht/); assert.match(o.skipped.join(), /E-Mail-Adresse/);
+    assert.ok(o.missing.includes('love 2') && !o.missing.includes('love 1'), 'missing weeks reported');
+    assert.equal((await runTwMails(env, ny7('2026-11-02') - 3600000)).due, 0, 'nothing before 07:00 local');
+    let before = mails.length;
+    let res = await runTwMails(env, ny7('2026-11-02') + 300000);
+    assert.equal(res.sent, 2); assert.equal(mails.length, before + 2);
+    const m = mails[before];
+    assert.deepEqual(m.to, ['tw@example.com']); assert.equal(m.subject, 'Your week in love, stripped down · Nov 2–8');
+    // Design B "Papier", light only (Sandra, 11.10.2026)
+    assert.match(m.html, /<meta name="color-scheme" content="light">/); assert.ok(!/prefers-color-scheme|<img|https?:\/\/(?!astrostrip\.com)/.test(m.html), 'no dark styles, no images, no foreign links');
+    assert.match(m.html, />Transit Weekly<\/p>\s*<p[^>]*>Love and relationships<\/p>/, 'head: two lines');
+    assert.match(m.html, /<h1[^>]*>Your week in love<\/h1>/); assert.match(m.html, /<strong[^>]*>depth<\/strong>/); assert.match(m.html, /font-style:italic[^>]*>November 2 to 8, 2026</);
+    assert.match(m.html, /Week 1 of 13</); assert.match(m.html, /Times in this email are New York time\./); assert.match(m.html, /href="https:\/\/astrostrip\.com\/cancel"/);
+    { const h = weeklyMail(B, 'Love and relationships', 1, md + '\n\n*Most noticeable: Friday.*\n\n## What matters most this week\n\n- **Friday: Rest.** One line.\n- **Sunday: Show up.**').html;
+      assert.match(h, /font-style:italic;color:#7A5C25;">Most noticeable: Friday\.</, 'italic line alone');
+      assert.match(h, /border:1px solid #C9B48A;"><tr><td[^>]*><p[^>]*>What matters most this week<\/p>[\s\S]*&#10022;[\s\S]*Friday: Rest\.<\/strong> One line\.[\s\S]*Sunday: Show up/, 'last section boxed'); } assert.ok(!/[*#]{1,2}\w/.test(m.html.replace(/#[0-9A-Fa-f]{6}|&#\d+;/g, '')), 'no Markdown marks in HTML');
+    assert.ok(m.html.length < 102000 / 3, 'far below the Gmail clip');
+    assert.match(m.text, /^YOUR WEEK IN LOVE\nNovember 2 to 8, 2026\n/); assert.ok(!/[*#]/.test(m.text), 'no Markdown marks');
+    assert.match(m.text, /Week 1 of 13\.\nTimes in this email are New York time\./); assert.match(m.text, /astrostrip\.com\/cancel/);
+    const log = JSON.parse(kv.get(`twlog:2026-11-02:${B.order}:love`));
+    assert.equal(log.result, 'sent'); assert.ok(log.id);
+    { const { twLogExpiry } = await import('../src/worker.js'); assert.equal(new Date(twLogExpiry('2027-01-31') * 1000).toISOString().slice(0, 10), '2031-01-01', 'log: 3 years from the end of the term year'); } assert.ok(!JSON.stringify(log).includes('example.com') && !JSON.stringify(log).includes('depth'), 'log without address and text');
+    assert.equal((await runTwMails(env, ny7('2026-11-02') + 600000)).due, 0, 'never twice');
+    o = await (await up({ order: B.order, texts: [{ area: 'love', week: 1, sendAt: ny7('2026-11-02'), text: md }] })).json();
+    assert.match(o.skipped[0], /schon verschickt/);
+    // German booking: German subject and time zone line
+    assert.equal(weeklyMail({ ...B, language: 'de', tzLabel: 'Berlin' }, 'Work and calling', 4, md).subject, 'Deine Woche im Beruf, stripped down · 23.–29. November');
+    assert.match(weeklyMail({ ...B, language: 'de', tzLabel: 'Berlin' }, 'Work and calling', 4, md).html, /Du bekommst diese Mail, weil du Transit Weekly gebucht hast\. <a[^>]*>Verträge hier kündigen<\/a>/);
+    { const { weeklySubject } = await import('../src/worker.js'); assert.equal(weeklySubject('Home and family', '2026-10-19', false), 'Your week at home, stripped down · Oct 19–25'); }
+    assert.match(weeklyMail({ ...B, language: 'de', tzLabel: 'Berlin' }, 'Work and calling', 4, md).text, /Woche 4 von 13\.\nDie Zeiten in dieser Mail gelten für Berlin\./);
+    assert.equal(weekRange('2026-10-26'), 'Oct 26 – Nov 1'); assert.equal(weekRange('2026-10-26', 'de'), '26. Oktober – 1. November');
+    // stopped by Sandra: no mail, logged; resumed later
+    assert.equal((await (await up({ order: B.order, action: 'stop' })).json()).stopped, 'manual');
+    await up({ order: B.order, texts: [{ area: 'love', week: 2, sendAt: ny7('2026-11-09'), text: md }] });
+    before = mails.length;
+    res = await runTwMails(env, ny7('2026-11-09') + 60000);
+    assert.equal(res.stopped, 1); assert.equal(mails.length, before, 'stopped: no mail');
+    assert.equal(JSON.parse(kv.get(`twlog:2026-11-09:${B.order}:love`)).result, 'stopped');
+    assert.equal((await (await up({ order: B.order, action: 'resume' })).json()).stopped, null);
+    // Friday 12:00 Berlin: warning about week 3 (love missing, work there)
+    await up({ order: B.order, texts: [{ area: 'work', week: 3, sendAt: ny7('2026-11-16'), text: md }] });
+    assert.equal(twFridayNoon(Date.parse('2026-11-13T11:30:00Z')), true); assert.equal(twFridayNoon(Date.parse('2026-11-13T12:30:00Z')), false);
+    before = mails.length;
+    res = await runTwFriday(env, Date.parse('2026-11-13T11:30:00Z'));
+    assert.equal(res.missing, 1); assert.equal(mails[before].to[0], 'owner@example.com');
+    assert.match(mails[before].text, /AS-20261019-BBBBB · Love and relationships · Woche 3/); assert.ok(!mails[before].text.includes('tw@example.com'));
+    // a text more than a week late is not sent any more
+    before = mails.length;
+    res = await runTwMails(env, ny7('2026-11-16') + 8 * 86400000);
+    assert.equal(res.expired, 1); assert.equal(mails.length, before);
+    // Monday list: last week's balance, the missing love text logged as not sent
+    before = mails.length;
+    await (await import('../src/worker.js')).runReadingList(env, Date.parse('2026-11-23T02:00:00Z'));
+    const lz = mails.slice(before).find(x => /^Lesezettel/.test(x.subject));
+    assert.match(lz.text, /Letzte Woche nicht verschickt, Text fehlte[^]*AS-20261019-BBBBB · Love and relationships · Woche 3/);
+    assert.match(lz.text, /Wochenmails letzte Woche: 0 verschickt, 1 verfallen \(Text zu spät\), 1 nicht verschickt \(Text fehlte\)\./);
+    assert.equal(JSON.parse(kv.get(`twlog:2026-11-16:${B.order}:love`)).result, 'missing');
+    // portions: 10 due mails, 8 in the first run, 2 in the next
+    const C = { ...B, order: 'AS-20261019-CCCCC', base: 'AS-20261019-CCCCC', areas: ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family', 'Personal growth'], start: '2026-12-07', end: '2027-03-07' };
+    const D = { ...C, order: 'AS-20261019-DDDDD', base: 'AS-20261019-DDDDD' };
+    for (const X of [C, D]) {
+      await env.ORDERS.put(`tw:${X.base}:${X.order}`, JSON.stringify(X), { metadata: twMeta(X) });
+      await up({ order: X.order, texts: ['love', 'work', 'money', 'home', 'growth'].map(a => ({ area: a, week: 1, sendAt: ny7('2026-12-07'), text: md })) });
+    }
+    res = await runTwMails(env, ny7('2026-12-07') + 60000);
+    assert.equal(res.sent, TW_SEND_BATCH); assert.equal(res.left, 10 - TW_SEND_BATCH);
+    assert.equal((await runTwMails(env, ny7('2026-12-07') + 400000)).sent, 10 - TW_SEND_BATCH);
+    // Mailjet down: two retries, then one warning to Sandra and no further tries
+    await up({ order: C.order, texts: [{ area: 'love', week: 2, sendAt: ny7('2026-12-14'), text: md }] });
+    const okFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => (String(url) === 'https://api.mailjet.com/v3.1/send' && JSON.parse(init.body).Messages[0].To[0].Email === 'tw@example.com') ? new Response('{"ErrorMessage":"down"}', { status: 500 }) : okFetch(url, init);
+    assert.equal((await runTwMails(env, ny7('2026-12-14'))).retry, 1);
+    assert.equal((await runTwMails(env, ny7('2026-12-14') + 300000)).retry, 1);
+    before = mails.length;
+    assert.equal((await runTwMails(env, ny7('2026-12-14') + 600000)).failed, 1);
+    assert.match(mails[before].subject, /Mail nicht zugestellt/);
+    assert.equal((await runTwMails(env, ny7('2026-12-14') + 900000)).due, 0, 'given up');
+    globalThis.fetch = okFetch;
+    // withdrawal: the bookings behind the number pause at once, Sandra is told how to resume
+    before = mails.length;
+    r = await worker.fetch(req('/api/withdraw', 'POST', { name: 'Test Person', contract: `Order ${D.order}`, email: 'TW@example.com' }, { ip: '7.7.7.7' }), env);
+    assert.equal(r.status, 200);
+    assert.equal(JSON.parse(kv.get(`tw:${D.base}:${D.order}`)).stopped.reason, 'withdrawal');
+    assert.match(mails.slice(before).find(x => /^WIDERRUF/.test(x.subject)).text, /automatisch pausiert[^]*--weiter AS-20261019-DDDDD/);
+    assert.equal(kvMeta.get(`tw:${D.base}:${D.order}`).x, 'withdrawal');
+  }
+  // the 5-minute crons send weekly mails only when their own queue is idle
+  { const src = readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
+    assert.match(src, /r && r\.sent === 0 \? runTwMails/); }
+  console.log('transit weekly mails ok');
 }
