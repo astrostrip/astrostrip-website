@@ -29,7 +29,7 @@
     <section class="hero" id="chart">
       <!-- hero: the zodiac wheel from the astro.strip logo, dimmed behind the headline (Sandra, 11.10.2026, variant B);
            the logo keeps its own layout (Aries on top, clockwise), an exception to the Aries-left rule -->
-      <svg class="hero-ring hero-logo" viewBox="0 0 400 400" aria-hidden="true"><image href="assets/logo-wheel.png" x="-115.9" y="-36.8" width="631.7" height="631.7"/></svg>
+      <svg class="hero-ring hero-logo" viewBox="0 0 400 400" aria-hidden="true"><!-- lower half behind the text fades to about a seventh, easier to read (Sandra, 11.10.2026) --><defs><linearGradient id="hl-fade" x1="0" y1="0" x2="0" y2="1"><stop offset=".44" stop-color="#fff"/><stop offset=".6" stop-color="#262626"/></linearGradient><mask id="hl-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400"><rect width="400" height="400" fill="url(#hl-fade)"/></mask></defs><image mask="url(#hl-mask)" href="assets/logo-wheel.png" x="-115.9" y="-36.8" width="631.7" height="631.7"/></svg>
       <p class="kicker">ASTRO.STRIP &middot; BIRTH CHART</p>
       <h1 class="hero-title">Your chart,<br>stripped down.</h1>
       <p class="hero-sub">Astrology without the fluff.<br>Curious what we have to say about your Sun? Enter your birth data and get your chart and what your exact Sun degree says about you.</p>
