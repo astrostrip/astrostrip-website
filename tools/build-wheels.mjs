@@ -8,7 +8,7 @@ import { wheelMarkup } from '../public/assets/wheel.js';
 
 const FILE = new URL('../public/index.html', import.meta.url);
 
-// hero: since 11.10.2026 the wheel from the logo image (assets/logo-wheel.png), no longer drawn here (Sandra, variant B)
+// hero: since 11.10.2026 the wheel of the logo, drawn by tools/build-logo-wheel.py, no longer here (Sandra)
 // strips: the full wheel with rulers and star, as on the reading PDF cover
 const WHEELS = {
   strips: wheelMarkup({ size: 400, r: 196 }),
