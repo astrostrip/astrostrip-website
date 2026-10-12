@@ -47,11 +47,15 @@
       var $ = function (s) { return document.querySelector(s); };
       var data = null;
       // German line, then the full English line below it.
+      // After sending, the Worker says in which language(s) to confirm: the booked one, or both (Sandra, 12.10.2026).
+      var L = ['de', 'en'];
       var two = function (el, de, en) {
         el.textContent = '';
         var a = document.createElement('span'); a.textContent = de;
         var b = document.createElement('span'); b.textContent = en; b.lang = 'en';
-        el.appendChild(a); el.appendChild(document.createElement('br')); el.appendChild(b);
+        if (L.indexOf('de') < 0) { el.appendChild(b); return; }
+        el.appendChild(a); if (L.indexOf('en') < 0) return;
+        el.appendChild(document.createElement('br')); el.appendChild(b);
       };
       $('#w-form').addEventListener('submit', function (e) {
         e.preventDefault();
@@ -72,6 +76,7 @@
           .then(function (x) {
             if (!x.ok || !x.j.received) throw new Error(x.j.error || 'error');
             $('#w-confirm').hidden = true;
+            if (x.j.langs && x.j.langs.length) L = x.j.langs;
             two($('#w-status'), 'Ihr Widerruf ist eingegangen am ' + x.j.received + '. Die Bestätigung geht an ' + data.email + '.',
               'Your withdrawal was received on ' + (x.j.receivedEn || x.j.received) + '. The confirmation is being sent to ' + data.email + '.');
           })

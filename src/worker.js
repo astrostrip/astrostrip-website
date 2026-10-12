@@ -660,8 +660,8 @@ export const WITHDRAWAL_FORM = {
 // Receipt for a withdrawal (§ 356a BGB): full German block, then full English block.
 // The note on partial payment follows the cancellation policy (proportionate amount for work already done;
 // no withdrawal once the strip has been fully delivered).
-export function withdrawalReceipt({ name, contract, email, received, receivedEn }) {
-  return [
+export function withdrawalReceipt({ name, contract, email, received, receivedEn, langs = ['de', 'en'] }) {
+  const de = [
     `Hallo ${name},`,
     '',
     'wir haben Ihren Widerruf erhalten. Diese E-Mail bestätigt den Eingang.',
@@ -673,9 +673,8 @@ export function withdrawalReceipt({ name, contract, email, received, receivedEn 
     'Ihre Erklärung: Hiermit widerrufe ich den oben genannten Vertrag.',
     '',
     'Erstattung: Hatten wir mit Ihrem Strip bzw. Ihrem Transit Weekly noch nicht begonnen, erstatten wir Ihnen den vollen Betrag. Hatten wir bereits begonnen, auch wenn der Strip schon fertig, aber noch nicht an Sie geliefert war, zahlen Sie einen angemessenen Betrag für den Anteil, den wir bis zum Eingang Ihres Widerrufs bereits erbracht hatten; den Rest erstatten wir. Die Erstattung erfolgt spätestens vierzehn Tage nach Eingang Ihres Widerrufs über dasselbe Zahlungsmittel. War Ihr Strip bei Eingang des Widerrufs bereits vollständig geliefert, war Ihr Widerrufsrecht erloschen; dann melden wir uns bei Ihnen.',
-    '',
-    '---',
-    '',
+  ];
+  const en = [
     `Hi ${name},`,
     '',
     'we have received your withdrawal. This email confirms its receipt.',
@@ -687,10 +686,39 @@ export function withdrawalReceipt({ name, contract, email, received, receivedEn 
     'Your declaration: I hereby withdraw from the contract named above.',
     '',
     'Refund: If we had not yet started your strip or your Transit Weekly, we refund the full amount. If we had already started, even if the strip was finished but not yet delivered to you, you pay a proportionate amount for the part we had already done by the time your withdrawal reached us; we refund the rest. The refund is made within fourteen days of receiving your withdrawal, using the same means of payment. If your strip had already been fully delivered when your withdrawal reached us, your right of withdrawal had expired; in that case we will get in touch with you.',
-    '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
-  ].join('\n');
+  ];
+  return receiptJoin(langs, de, en);
 }
+
+// Both language blocks (German first) or only one, then the address line.
+function receiptJoin(langs, de, en) {
+  const blocks = [langs.includes('de') ? de : null, langs.includes('en') ? en : null].filter(Boolean).map(b => b.filter(l => l !== null).join('\n'));
+  return [blocks.join('\n\n---\n\n'), '', 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com'].join('\n');
+}
+
+// Language of the receipts for withdrawal and notice (Sandra, 12.10.2026): only the language the order was booked in;
+// both languages if it was booked in English with a billing address in a German-speaking country, and whenever no
+// paid order matches number and email (then we do not know). The form is never refused for that: a withdrawal or
+// notice counts even with a typo. Stripe errors fall back to both languages.
+const GERMAN_SPEAKING = new Set(['DE', 'AT', 'CH', 'LI', 'LU']);
+const BOTH = ['de', 'en'];
+export async function receiptLangs(env, contract, email) {
+  const id = (String(contract).toUpperCase().match(/AS-\d{8}-[A-Z0-9]{5}/) || [''])[0];
+  if (!id || !env.STRIPE_SECRET_KEY) return BOTH;
+  try {
+    const found = await stripe(env, 'GET', 'payment_intents/search', { query: `metadata['order_id']:'${id}'`, 'expand[]': 'data.latest_charge' });
+    const pi = (found.data || []).find(x => x.status === 'succeeded');
+    if (!pi) return BOTH;
+    const s = (await stripe(env, 'GET', 'checkout/sessions', { payment_intent: pi.id, limit: 1 })).data?.[0] || {};
+    const paidBy = String(s.customer_details?.email || s.customer_email || pi.receipt_email || '').toLowerCase();
+    if (!paidBy || paidBy !== String(email).trim().toLowerCase()) return BOTH;
+    if (s.locale === 'de') return ['de'];
+    if (s.locale !== 'en') return BOTH;
+    return GERMAN_SPEAKING.has(String(s.customer_details?.address?.country || '').toUpperCase()) ? BOTH : ['en'];
+  } catch { return BOTH; }
+}
+const langNote = langs => `Bestätigung an die Kundin auf ${langs.length > 1 ? 'Deutsch und Englisch' : langs[0] === 'de' ? 'Deutsch' : 'Englisch'}.`;
+const receiptSubject = (langs, de, en) => (langs.length > 1 ? `${de} / ${en}` : langs[0] === 'de' ? de : en);
 
 // ---------- abuse protection ----------
 // Simple fixed-window counter per IP in KV. Stops someone from blocking all slots
@@ -1391,20 +1419,21 @@ async function handleWithdraw(request, env) {
     await putBooking(env, k, bk);
     paused.push(bk.order);
   }
-  const text = withdrawalReceipt({ name, contract, email: b.email, received, receivedEn });
-  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Widerruf / Receipt of your withdrawal (${contract})`, text, html: brandFromText(text, { kicker: 'Withdrawal received · Widerruf eingegangen', lang: 'de' }) });
+  const langs = await receiptLangs(env, contract, b.email);
+  const text = withdrawalReceipt({ name, contract, email: b.email, received, receivedEn, langs });
+  await sendMail(env, { to: b.email, subject: `${receiptSubject(langs, 'Eingangsbestätigung Widerruf', 'Receipt of your withdrawal')} (${contract})`, text, html: brandFromText(text, { kicker: receiptSubject(langs, 'Widerruf eingegangen', 'Withdrawal received').replace(' / ', ' · '), lang: langs[0] }) });
   const twNote = paused.length ? `\n\nTransit Weekly: Versand für ${paused.join(', ')} automatisch pausiert. Betrifft der Widerruf nur den Strip, fortsetzen mit: python3 tools/transit-weekly-hochladen.py --weiter ${paused[0]}` : '';
-  await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde. Erstatten im Stripe-Dashboard; die Rechnungskorrektur geht dann automatisch an die Kundin.${twNote}` , replyTo: b.email });
-  return json({ ok: true, received, receivedEn });
+  await sendMail(env, { to: env.OWNER_EMAIL, subject: `WIDERRUF eingegangen: ${contract}`, text: `Widerruf über die Website, eingegangen ${received}.\n\nName: ${name}\nVertrag: ${contract}\nE-Mail: ${b.email}\n\nEingangsbestätigung ist automatisch rausgegangen. Erstattung spätestens 14 Tage nach Eingang, anteilig, falls schon mit dem Schreiben begonnen wurde. Erstatten im Stripe-Dashboard; die Rechnungskorrektur geht dann automatisch an die Kundin. ${langNote(langs)}${twNote}` , replyTo: b.email });
+  return json({ ok: true, received, receivedEn, langs });
 }
 
 // Cancellation button (§ 312k BGB, wording of the law read on gesetze-im-internet.de, 11.10.2026): the page asks for
 // the kind of notice (and the reason for notice for good cause), name, email and contract; "jetzt kündigen" sends it.
 // Transit Weekly ends by itself after 13 weeks; ordinary notice takes effect at the end of the term (Sandra,
 // 11.10.2026). The Worker confirms at once with content, date and time of receipt and the end of the contract.
-export function cancellationReceipt({ name, contract, email, kind, reason, received, receivedEn, endDe, endEn }) {
+export function cancellationReceipt({ name, contract, email, kind, reason, received, receivedEn, endDe, endEn, langs = ['de', 'en'] }) {
   const extra = kind === 'extraordinary';
-  return [
+  const de = [
     `Hallo ${name},`,
     '',
     'wir haben Ihre Kündigung erhalten. Diese E-Mail bestätigt den Eingang.',
@@ -1417,9 +1446,8 @@ export function cancellationReceipt({ name, contract, email, kind, reason, recei
     extra ? `Kündigungsgrund: ${reason}` : null,
     `Ihre Erklärung: Hiermit kündige ich den oben genannten Vertrag.`,
     `Der Vertrag endet: ${endDe}`,
-    '',
-    '---',
-    '',
+  ];
+  const en = [
     `Hi ${name},`,
     '',
     'we have received your notice of termination. This email confirms its receipt.',
@@ -1432,9 +1460,8 @@ export function cancellationReceipt({ name, contract, email, kind, reason, recei
     extra ? `Reason: ${reason}` : null,
     'Your declaration: I hereby terminate the contract named above.',
     `The contract ends: ${endEn}`,
-    '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
-  ].filter(l => l !== null).join('\n');
+  ];
+  return receiptJoin(langs, de, en);
 }
 
 // The bookings behind an order number in a form field, if the email matches: a Transit Weekly order (also
@@ -1478,16 +1505,17 @@ async function handleCancel(request, env) {
     bk.notice = { kind, reason, at: isoUtc(now) };
     await putBooking(env, k, bk);
   }
-  const text = cancellationReceipt({ name, contract, email: b.email, kind, reason, received, receivedEn, endDe, endEn });
-  await sendMail(env, { to: b.email, subject: `Eingangsbestätigung Kündigung / Receipt of your notice (${contract})`, text, html: brandFromText(text, { kicker: 'Notice received · Kündigung eingegangen', lang: 'de' }) });
+  const langs = await receiptLangs(env, contract, b.email);
+  const text = cancellationReceipt({ name, contract, email: b.email, kind, reason, received, receivedEn, endDe, endEn, langs });
+  await sendMail(env, { to: b.email, subject: `${receiptSubject(langs, 'Eingangsbestätigung Kündigung', 'Receipt of your notice')} (${contract})`, text, html: brandFromText(text, { kicker: receiptSubject(langs, 'Kündigung eingegangen', 'Notice received').replace(' / ', ' · '), lang: langs[0] }) });
   await sendMail(env, { to: env.OWNER_EMAIL, subject: `KÜNDIGUNG eingegangen: ${contract}`, replyTo: b.email, text: [
     `Kündigung über die Website, eingegangen ${received}.`, '',
     `Name: ${name}`, `Vertrag: ${contract}`, `E-Mail: ${b.email}`, `Art: ${kind === 'extraordinary' ? 'außerordentlich' : 'ordentlich'}`, kind === 'extraordinary' ? `Grund: ${reason}` : null, '',
     booking ? `Buchung gefunden (${booking.key}), Bereiche ${booking.areas.join(', ')}, Laufzeit bis ${booking.end}; Kündigung dort vermerkt.` : 'Keine laufende Transit-Weekly-Buchung mit dieser Nummer und E-Mail gefunden: bitte prüfen (Tippfehler, andere E-Mail, Strip statt Transit Weekly?).',
     kind === 'extraordinary' ? 'Außerordentliche Kündigung: wichtigen Grund prüfen. Liegt er vor, endet der Vertrag sofort; dann Versand stoppen und über eine Erstattung der offenen Wochen entscheiden. Sonst der Kundin antworten, dass der Vertrag bis zum Laufzeitende weiterläuft.' : 'Ordentliche Kündigung: Transit Weekly läuft bis zum Ende der 13 Wochen weiter, keine Erstattung (AGB).',
-    'Die Eingangsbestätigung ist automatisch an die Kundin gegangen.',
+    `Die Eingangsbestätigung ist automatisch an die Kundin gegangen. ${langNote(langs)}`,
   ].filter(l => l !== null).join('\n') });
-  return json({ ok: true, received, receivedEn, endDe, endEn });
+  return json({ ok: true, received, receivedEn, endDe, endEn, langs });
 }
 
 async function handleSubscribe(request, env) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker, { CANCELLATION_POLICY, WITHDRAWAL_FORM, weekStart, addWeeks, weekDate, longDate, WEEKS_AHEAD, verifyStripeSignature, validateOrder, STRIPS, customerMail, ownerOrderMail } from '../src/worker.js';
+import worker, { receiptLangs, cancellationReceipt, withdrawalReceipt, CANCELLATION_POLICY, WITHDRAWAL_FORM, weekStart, addWeeks, weekDate, longDate, WEEKS_AHEAD, verifyStripeSignature, validateOrder, STRIPS, customerMail, ownerOrderMail } from '../src/worker.js';
 
 const iso = s => new Date(s * 1000).toISOString();
 // week start (Berlin)
@@ -966,4 +966,35 @@ console.log('newsletter ok');
   { const src = readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
     assert.match(src, /r && r\.sent === 0 \? runTwMails/); }
   console.log('transit weekly mails ok');
+}
+
+// receipts for withdrawal and notice in the booked language (Sandra, 12.10.2026): German booking → German only;
+// English booking → English only, both if the billing address is in a German-speaking country; no match → both
+{
+  const lenv = { STRIPE_SECRET_KEY: 'sk_test' };
+  const lang = (id, locale, country, email = 'l@example.com') => {
+    pis[`pi_l${id}`] = { id: `pi_l${id}`, status: 'succeeded', metadata: { order_id: `AS-20261012-LANG${id}` } };
+    sessions.push({ id: `cs_l${id}`, payment_intent: `pi_l${id}`, locale, customer_details: { email, address: { country } } });
+  };
+  lang(1, 'de', 'US'); lang(2, 'en', 'US'); lang(3, 'en', 'AT'); lang(4, 'en', 'GB');
+  assert.deepEqual(await receiptLangs(lenv, 'AS-20261012-LANG1', 'L@example.com '), ['de']);
+  assert.deepEqual(await receiptLangs(lenv, 'AS-20261012-LANG2', 'l@example.com'), ['en']);
+  assert.deepEqual(await receiptLangs(lenv, 'Order AS-20261012-LANG3-T', 'l@example.com'), ['de', 'en']);
+  assert.deepEqual(await receiptLangs(lenv, 'AS-20261012-LANG4', 'other@example.com'), ['de', 'en'], 'email does not match');
+  assert.deepEqual(await receiptLangs(lenv, 'AS-20991231-NOPE9', 'l@example.com'), ['de', 'en'], 'unknown number');
+  assert.deepEqual(await receiptLangs(lenv, 'my order from last week', 'l@example.com'), ['de', 'en'], 'no number');
+  const base = { name: 'Lotta', contract: 'AS-1', email: 'l@example.com', received: 'r', receivedEn: 'r', endDe: 'zum Ende', endEn: 'at the end', kind: 'ordinary' };
+  const de = cancellationReceipt({ ...base, langs: ['de'] }), en = cancellationReceipt({ ...base, langs: ['en'] });
+  assert.ok(de.includes('Hallo Lotta') && !de.includes('Hi Lotta') && !de.includes('---') && de.includes('Bundesweg 4'));
+  assert.ok(en.includes('Hi Lotta') && !en.includes('Hallo Lotta') && en.includes('Bundesweg 4'));
+  assert.ok(cancellationReceipt(base).indexOf('Hi Lotta') > cancellationReceipt(base).indexOf('Hallo Lotta'), 'default both, German first');
+  assert.ok(!withdrawalReceipt({ ...base, langs: ['en'] }).includes('Erstattung:'));
+  // the endpoint: German booking gets a German subject and receipt, Sandra is told the language
+  mails.length = 0;
+  const r = await worker.fetch(new Request('https://astrostrip.com/api/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '10.9.9.9' }, body: JSON.stringify({ name: 'Lotta', contract: 'AS-20261012-LANG1', email: 'l@example.com', kind: 'ordinary' }) }), env);
+  const out = await r.json();
+  assert.deepEqual(out.langs, ['de']);
+  assert.equal(mails[0].subject, 'Eingangsbestätigung Kündigung (AS-20261012-LANG1)'); assert.ok(!mails[0].text.includes('Hi Lotta'));
+  assert.match(mails[1].text, /Bestätigung an die Kundin auf Deutsch\./);
+  console.log('receipt languages ok');
 }

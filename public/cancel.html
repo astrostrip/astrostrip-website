@@ -35,9 +35,9 @@
     </form>
 
     <section id="c-done" hidden>
-      <h2>Ihre Kündigung · Your notice</h2>
+      <h2 id="c-head">Ihre Kündigung · Your notice</h2>
       <p id="c-summary"></p>
-      <p>Hiermit kündige ich den oben genannten Vertrag.<br><span lang="en">I hereby terminate the contract named above.</span></p>
+      <p id="c-decl">Hiermit kündige ich den oben genannten Vertrag.<br><span lang="en">I hereby terminate the contract named above.</span></p>
       <p id="c-when"></p>
       <div class="submit-row"><button class="btn" type="button" id="c-print">SPEICHERN ODER DRUCKEN · SAVE OR PRINT</button></div>
     </section>
@@ -50,11 +50,15 @@
   <script>
     (function () {
       var $ = function (s) { return document.querySelector(s); };
+      // After sending, the Worker says in which language(s) to confirm: the booked one, or both (Sandra, 12.10.2026).
+      var L = ['de', 'en'];
       var two = function (el, de, en) {
         el.textContent = '';
         var a = document.createElement('span'); a.textContent = de;
         var b = document.createElement('span'); b.textContent = en; b.lang = 'en';
-        el.appendChild(a); el.appendChild(document.createElement('br')); el.appendChild(b);
+        if (L.indexOf('de') < 0) { el.appendChild(b); return; }
+        el.appendChild(a); if (L.indexOf('en') < 0) return;
+        el.appendChild(document.createElement('br')); el.appendChild(b);
       };
       var kind = function () { return document.querySelector('input[name=c-kind]:checked').value; };
       $('#c-form').addEventListener('change', function () { $('#c-reason-row').hidden = kind() !== 'extraordinary'; });
@@ -71,6 +75,9 @@
           .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (x) {
             if (!x.ok || !x.j.received) throw new Error(x.j.error || 'error');
+            if (x.j.langs && x.j.langs.length) L = x.j.langs;
+            var head = $('#c-head'); head.textContent = L.length > 1 ? 'Ihre Kündigung · Your notice' : L[0] === 'de' ? 'Ihre Kündigung' : 'Your notice';
+            two($('#c-decl'), 'Hiermit kündige ich den oben genannten Vertrag.', 'I hereby terminate the contract named above.');
             var de = data.kind === 'extraordinary' ? 'außerordentliche Kündigung, Grund: ' + data.reason : 'ordentliche Kündigung';
             var en = data.kind === 'extraordinary' ? 'termination for good cause, reason: ' + data.reason : 'ordinary notice';
             two($('#c-summary'), 'Abgegeben über „Jetzt kündigen“ am ' + x.j.received + ' · ' + de + ' · Name: ' + data.name + ' · Vertrag: ' + data.contract + ' · Bestätigung an: ' + data.email,
