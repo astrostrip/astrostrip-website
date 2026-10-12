@@ -38,6 +38,15 @@ a text reads the Moon's counted degree and house with the slow planet's degree a
 sign), from a second JSON file (moon-texts.json); the texts of all 12 Sun signs of a contact go into the week file.
 Until then the key was 'Moon|Planet|Sign N|H<house>' without the Moon.
 
+New and Full Moons (Sandra, 12.10.2026, plans/lunationen-transit-woche.md; L15 p. 15): a lunation whose 24-hour window
+before exact falls in the week (6 hours at its start, 1 at its end, as the Moon contacts; Sandra 12.10.2026) hits every Sun degree in a major aspect to its degree (all five, a stated departure from L15, which
+names conjunction, opposition and square), with one counted degree on each side inside the same sign. Only in its own
+week; the weeks after show the actual transits. Planets taking part: major aspects to the lunation degree with the
+transit orbs (fast 5, slow 1, applying, same sign). A New Moon names the Full Moon with the Moon in the same sign
+(about half a year later), where its theme shows its fruit (Sandra: "Der Vollmond in dem Zeichen, in dem der Neumond
+stattfand, ist die Blütephase"). Eclipses are flagged (L15: half a year). Texts per Sun degree from lunation-texts.json,
+key '<NewMoon|FullMoon>|<date>|Sun <sign> N' (a lunation degree only comes back after 19 years, so no reuse).
+
 Usage (from the website folder, with pyswisseph installed):
     python3 tools/build-transits.py --from 2026-10-05 --weeks 65 \
         --ephe ../ephe --texts transits/texts.json --out public/data/transits
@@ -126,12 +135,113 @@ def moon_contacts(start, end, moon_texts):
     return out, used
 
 
+LUNATION_ORB = 1  # counted Sun degrees on each side of the lunation degree (Sandra, 12.10.2026)
+
+
+def crossings(t, stop, target, step=dt.timedelta(hours=6)):
+    """Exact moments in [t, stop) when the Moon is target degrees ahead of the Sun (0 New, 180 Full Moon)."""
+    gap = lambda x: (lon_at(x, swe.MOON) - lon_at(x, swe.SUN) - target + 180) % 360 - 180
+    out, prev = [], gap(t)
+    while t < stop:
+        t1 = t + step
+        cur = gap(t1)
+        if prev < 0 <= cur:
+            lo, hi = t, t1
+            while hi - lo > dt.timedelta(seconds=30):
+                mid = lo + (hi - lo) / 2
+                lo, hi = (mid, hi) if gap(mid) < 0 else (lo, mid)
+            if hi < stop:
+                out.append(hi)
+        t, prev = t1, cur
+    return out
+
+
+def eclipse(t, full):
+    """Eclipse type if a solar (New Moon) or lunar (Full Moon) eclipse peaks within a day of t, else None."""
+    jd = swe.julday(t.year, t.month, t.day, t.hour + t.minute / 60)
+    if full:
+        flag, tret = swe.lun_eclipse_when(jd - 2, swe.FLG_SWIEPH, 0)
+        kinds = [(swe.ECL_TOTAL, 'total'), (swe.ECL_PARTIAL, 'partial'), (swe.ECL_PENUMBRAL, 'penumbral')]
+    else:
+        flag, tret = swe.sol_eclipse_when_glob(jd - 2, swe.FLG_SWIEPH, 0)
+        kinds = [(swe.ECL_TOTAL, 'total'), (swe.ECL_ANNULAR, 'annular'), (swe.ECL_ANNULAR_TOTAL, 'hybrid'),
+                 (swe.ECL_PARTIAL, 'partial')]
+    if abs(tret[0] - jd) > 1:
+        return None
+    return next((n for f, n in kinds if flag & f), 'eclipse')
+
+
+def lunations(start, end, lun_texts):
+    """New and Full Moons exact in the week, with the Sun degrees they hit (Sandra, 12.10.2026)."""
+    out, used = [], {}
+    for target, kind in ((0, 'NewMoon'), (180, 'FullMoon')):
+        for t in crossings(start, end + dt.timedelta(hours=24), target):
+            # the 24 hours before exact, as for every Moon contact (Sandra, 12.10.2026: "Wie immer gilt auch hier die
+            # 24 Stunden davor Regel"): a week takes a lunation from 6 window hours at its start, from 1 at its end
+            inside = min(t, end) - max(t - dt.timedelta(hours=24), start)
+            if inside < dt.timedelta(hours=1 if t > end else 6):
+                continue
+            full = target == 180
+            mdeg = int(lon_at(t, swe.MOON) % 360)
+            sdeg = (mdeg + 180) % 360 if full else mdeg  # counted degree of the Sun pole
+            # planets taking part: major aspect to the lunation degree with the transit orbs, applying, same sign
+            planets = []
+            for name, pid, fast in PLANETS:
+                jd = swe.julday(t.year, t.month, t.day, t.hour + t.minute / 60 + t.second / 3600)
+                lon, _, _, speed = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_SPEED)[0][:4]
+                pdeg = int(lon % 360)
+                for off, asp in ASPECTS.items():
+                    point = (pdeg + off) % 360
+                    k = mdeg - point
+                    if point // 30 != mdeg // 30 or abs(k) > (FAST_ORB if fast else SLOW_ORB):
+                        continue
+                    if k == 0 or (k > 0) == (speed > 0):
+                        # aspect to the Moon; for a Full Moon the Sun pole gets the opposite aspect family
+                        to_sun = ASPECTS[(off + 180) % 360] if full else asp
+                        planets.append({'planet': name, 'deg': pdeg, 'aspectMoon': asp, 'aspectSun': to_sun,
+                                        'orb': abs(k), 'motion': 'R' if speed < 0 else 'D'})
+            hits = {}
+            for off, asp in ASPECTS.items():
+                base = (mdeg + off) % 360
+                for k in range(-LUNATION_ORB, LUNATION_ORB + 1):
+                    sun = base + k
+                    if sun // 30 != base // 30:  # the orb ends at the sign border, as for the transits
+                        continue
+                    si = sun // 30
+                    key = f'{kind}|{local(t)[:10]}|Sun {SIGNS[si]} {sun % 30 + 1}'
+                    hits[sun] = {'aspectMoon': asp, 'aspectSun': ASPECTS[(off + 180) % 360] if full else asp,
+                                 'orb': abs(k), 'moonHouse': (mdeg // 30 - si) % 12 + 1,
+                                 'sunHouse': (sdeg // 30 - si) % 12 + 1, 'key': key}
+                    if key in lun_texts:
+                        used[key] = lun_texts[key]
+            item = {'kind': kind, 'exact': local(t), 'windowFrom': local(max(t - dt.timedelta(hours=24), start)),
+                    'windowTo': local(min(t, end - dt.timedelta(seconds=1))), 'moonDeg': mdeg, 'sunDeg': sdeg, 'eclipse': eclipse(t, full),
+                    'planets': planets, 'hits': {str(k): v for k, v in sorted(hits.items())}}
+            sign = mdeg // 30
+            if full:
+                # the New Moon in the Moon's sign about half a year before, whose theme this Full Moon brings to fruit
+                # [Claude's reading of Sandra's rule, the other way round; to confirm]
+                seed = [x for x in crossings(t - dt.timedelta(days=200), t, 0)
+                        if int(lon_at(x, swe.MOON) % 360) // 30 == sign]
+                if seed:
+                    item['seedNewMoon'] = {'exact': local(seed[-1]), 'deg': int(lon_at(seed[-1], swe.MOON) % 360)}
+            else:
+                # the Full Moon with the Moon in the New Moon's sign: the fruit of this theme (Sandra, 12.10.2026)
+                fruit = [x for x in crossings(t, t + dt.timedelta(days=200), 180)
+                         if int(lon_at(x, swe.MOON) % 360) // 30 == sign]
+                if fruit:
+                    item['fruitFullMoon'] = {'exact': local(fruit[0]), 'deg': int(lon_at(fruit[0], swe.MOON) % 360)}
+            out.append(item)
+    out.sort(key=lambda x: x['exact'])
+    return out, used
+
+
 def moon_keys(c):
     # one text per Sun sign: Moon house and planet house both counted from the Sun sign
     return [f"{c['key']}|H{(c['moonDeg'] // 30 - si) % 12 + 1}|H{(c['deg'] // 30 - si) % 12 + 1}" for si in range(12)]
 
 
-def week(monday, texts, moon_texts=None):
+def week(monday, texts, moon_texts=None, lun_texts=None):
     start = dt.datetime.combine(monday, dt.time(0), TZ).astimezone(dt.timezone.utc)
     end = dt.datetime.combine(monday + dt.timedelta(days=7), dt.time(0), TZ).astimezone(dt.timezone.utc)
     hours = int((end - start).total_seconds() // 3600)  # 167 or 169 when the clocks change
@@ -250,6 +360,9 @@ def week(monday, texts, moon_texts=None):
             if mt:
                 h['moonTriggers'] = mt
 
+    lun, lun_used = lunations(start, end, lun_texts or {})
+    used.update(lun_used)
+
     return {
         'week': monday.isoformat(),
         'until': (monday + dt.timedelta(days=6)).isoformat(),
@@ -258,6 +371,7 @@ def week(monday, texts, moon_texts=None):
         'planets': planets,
         'hits': {str(k): v for k, v in sorted(hits.items())},
         'moon': moon,
+        'lunations': lun,
         'texts': dict(sorted(used.items())),
     }
 
@@ -269,6 +383,7 @@ def main():
     ap.add_argument('--ephe', default='../ephe')
     ap.add_argument('--texts', default='transits/texts.json')
     ap.add_argument('--moon-texts', default='transits/moon-texts.json')
+    ap.add_argument('--lunation-texts', default='transits/lunation-texts.json')
     ap.add_argument('--out', default='public/data/transits')
     a = ap.parse_args()
 
@@ -280,17 +395,25 @@ def main():
     texts = json.loads(tp.read_text()) if tp.exists() else {}
     mp = Path(a.moon_texts)
     moon_texts = json.loads(mp.read_text()) if mp.exists() else {}
+    lp = Path(a.lunation_texts)
+    lun_texts = json.loads(lp.read_text()) if lp.exists() else {}
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     for w in range(a.weeks):
         m = monday + dt.timedelta(weeks=w)
-        data = week(m, texts, moon_texts)
+        data = week(m, texts, moon_texts, lun_texts)
         (out / f'{m.isoformat()}.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')))
         n = sum(len(v) for v in data['hits'].values())
         keys = {k for c in data['moon'] for k in moon_keys(c)}
         n_moon = sum(k in data['texts'] for k in keys)
-        print(f'{m}  {n} hits on {len(data["hits"])} degrees, {len(data["texts"]) - n_moon} texts; '
-              f'{len(data["moon"])} Moon contacts, {n_moon} of {len(keys)} Moon texts')
+        lkeys = {h['key'] for x in data['lunations'] for h in x['hits'].values()}
+        n_lun = sum(k in data['texts'] for k in lkeys)
+        print(f'{m}  {n} hits on {len(data["hits"])} degrees, {len(data["texts"]) - n_moon - n_lun} texts; '
+              f'{len(data["moon"])} Moon contacts, {n_moon} of {len(keys)} Moon texts'
+              + ''.join(f'; {x["kind"]} {x["exact"]} {SIGNS[x["moonDeg"] // 30]} {x["moonDeg"] % 30 + 1}'
+                        f'{" (" + x["eclipse"] + " eclipse)" if x["eclipse"] else ""}, {len(x["hits"])} Sun degrees'
+                        for x in data['lunations'])
+              + (f', {n_lun} of {len(lkeys)} lunation texts' if lkeys else ''))
 
 
 if __name__ == '__main__':

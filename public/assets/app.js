@@ -409,14 +409,14 @@ function weekLabel(data) {
 const AREAS = ['SELF', 'MONEY', 'EVERYDAY TALK', 'HOME & FAMILY', 'LOVE & PLAY', 'DAILY ROUTINE', 'PARTNERS',
   'INTIMACY & SHARING', 'TRAVEL & BELIEFS', 'WORK & STATUS', 'FRIENDS & GROUPS', 'REST & RETREAT'];
 // rows: { house, when, html }; equal area and time next to each other share one label, as in the carousel
-function areaList(rows) {
+function areaList(rows, first = '') {
   const items = [];
   for (const r of rows) {
     const prev = items[items.length - 1];
     if (prev && prev.house === r.house && prev.when === r.when) prev.html += r.html;
     else items.push({ ...r });
   }
-  return `<ul class="transit-list">${items.map(it => `<li>
+  return `<ul class="transit-list">${first}${items.map(it => `<li>
       <p class="tr-head"><span class="tr-label">${AREAS[it.house - 1]}</span><span class="tr-when">${it.when}</span></p>
       ${it.html}
     </li>`).join('')}</ul>`;
@@ -450,6 +450,35 @@ function moonSection(rows) {
   return rows.length ? `<p class="kicker" style="margin: 28px 0 0">OTHER AREAS, BRIEFLY</p>${areaList(rows)}` : '';
 }
 
+// New and Full Moons (Sandra, 12.10.2026, plans/lunationen-transit-woche.md): in the week of a lunation (24-hour rule)
+// the Sun degrees it hits (lunation degree ±1, the five major aspects) show it first, like the transit post: label
+// "FULL MOON · <area of the Moon> ↔ <area of the Sun> · <days>" or "NEW MOON · <area> · <days>", " · ECLIPSE" after
+// the kind (as carousel-pick.py), days = the 24-hour window before exact; no planet, aspect or house number. The text
+// is keyed per Sun degree; without a text nothing is shown. A transit in one of its life areas is read in that text
+// (Sandra, 12.10.2026: "Zusammenführen", /transit-woche rule 10b point 5a), so it drops out here; the Moon section
+// takes other areas too (as in the carousel).
+const LUNATION_KIND = { NewMoon: 'NEW MOON', FullMoon: 'FULL MOON' };
+function lunationRows(data, deg) {
+  const rows = [];
+  for (const x of data.lunations || []) {
+    const h = x.hits && x.hits[String(deg)];
+    const text = h && data.texts[h.key];
+    if (!text) continue;
+    const areas = x.kind === 'FullMoon' ? `${AREAS[h.moonHouse - 1]} ↔ ${AREAS[h.sunHouse - 1]}` : AREAS[h.moonHouse - 1];
+    const days = windowDays(x);
+    rows.push({ houses: [h.moonHouse, h.sunHouse],
+      label: `${LUNATION_KIND[x.kind]}${x.eclipse ? ' · ECLIPSE' : ''} · ${areas}`,
+      when: days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`,
+      html: `<p class="tr-text">${esc(text)}</p>` });
+  }
+  return rows;
+}
+// list items, set at the top of the transit list (one list, so the spacing stays as between transits)
+const lunationItems = rows => rows.map(r => `<li>
+      <p class="tr-head"><span class="tr-label">${r.label}</span><span class="tr-when">${r.when}</span></p>
+      ${r.html}
+    </li>`).join('');
+
 // Each life area once per week (Sandra, 10.10.2026, as in the carousel): two hits in one house keep one. A slow planet
 // beats a fast one (the fast one is already its trigger line, rule 10); two fast ones keep the longer time in the week;
 // then the stronger aspect, then the earlier exact.
@@ -467,13 +496,18 @@ function onePerHouse(hits) {
 function weekBody(data, sunLon) {
   const deg = Math.floor(norm360(sunLon));
   // only transits with a text, like the post: past exact drops out (Sandra, 09.10.2026), its house is free for the Moon
-  const hits = onePerHouse((data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]));
-  const moon = moonRows(data, sunLon, new Set(hits.map(h => h.house)));
+  const lun = lunationRows(data, deg);
+  const lunHouses = new Set(lun.flatMap(r => r.houses));
+  const hits = onePerHouse((data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]
+    && !lunHouses.has(h.house)));
+  const moon = moonRows(data, sunLon, new Set([...hits.map(h => h.house), ...lunHouses]));
   if (!hits.length) {
-    return `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>${moonSection(moon)}`;
+    // the quiet line would be wrong when a New or Full Moon touches the degree
+    return lun.length ? `<ul class="transit-list">${lunationItems(lun)}</ul>${moonSection(moon)}`
+      : `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>${moonSection(moon)}`;
   }
   return areaList(hits.map(h => ({ house: h.house, when: whenLabel(h, data.week),
-    html: `<p class="tr-text">${esc(data.texts[h.key])}</p>${triggerLines(h)}` }))) + moonSection(moon);
+    html: `<p class="tr-text">${esc(data.texts[h.key])}</p>${triggerLines(h)}` })), lunationItems(lun)) + moonSection(moon);
 }
 
 // From Friday on, next week's file is shown too: the weekend transit posts read the coming week
