@@ -1657,6 +1657,11 @@ export const twLogExpiry = endYmd => Math.floor(Date.UTC(Number(String(endYmd).s
 const TW_TEXT_KEEP = 14 * 86400; // after sending
 const TW_LATE_MS = 7 * 86400000;
 const twTextKey = (base, order, slug, week) => `twtext:${base}:${order}:${slug}:${String(week).padStart(2, '0')}`;
+// Earliest send time of a waiting text (ms), so the 5-minute runs list twtext: only when a mail can be due:
+// KV Free allows 1,000 list operations a day, and two idle runs every 5 minutes listing each time used ~1,150
+// (Cloudflare 90 % alert, 16.10.2026). Missing = list once; an upload deletes it; "none waiting" = far future.
+const TW_NEXT_KEY = 'twnext';
+const TW_NEXT_NONE = 8640000000000000;
 export const twWeekMonday = (b, week) => addDays(b.start, 7 * (week - 1));
 
 async function twLog(env, monday, order, slug, week, result, nowMs, id = '', end = monday) {
@@ -1941,6 +1946,7 @@ async function handleTwTexts(request, env) {
       await env.ORDERS.put(tk, md, { expiration: Math.floor((at + TW_LATE_MS) / 1000) + TW_TEXT_KEEP, metadata: { at, sent: 0 } });
       stored.push(label);
     }
+    if (stored.length) await env.ORDERS.delete(TW_NEXT_KEY); // the next run lists again and finds the new send times
   }
   // Status, also after an upload: waiting and sent texts, and what is still missing for weeks not yet over.
   const have = await env.ORDERS.list({ prefix: `twtext:${b.base}:${b.order}:`, limit: 1000 });
@@ -1955,14 +1961,20 @@ async function handleTwTexts(request, env) {
 // One portion of due weekly emails, oldest send time first. Runs only when the invoice or correction queue is idle.
 export async function runTwMails(env, nowMs = Date.now()) {
   if (!env.MAILJET_API_KEY) return { skipped: true };
+  const next = Number(await env.ORDERS.get(TW_NEXT_KEY));
+  if (next && nowMs < next) return { due: 0 };
   const due = [];
+  let later = TW_NEXT_NONE; // earliest waiting text not yet due
   let cursor;
   do {
     const page = await env.ORDERS.list({ prefix: 'twtext:', limit: 1000, cursor });
-    for (const { name, metadata } of page.keys) if (metadata && !metadata.sent && metadata.at <= nowMs) due.push({ name, meta: metadata });
+    for (const { name, metadata } of page.keys) {
+      if (!metadata || metadata.sent) continue;
+      if (metadata.at <= nowMs) due.push({ name, meta: metadata }); else later = Math.min(later, metadata.at);
+    }
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
-  if (!due.length) return { due: 0 };
+  if (!due.length) { await env.ORDERS.put(TW_NEXT_KEY, String(later)); return { due: 0 }; }
   due.sort((x, y) => x.meta.at - y.meta.at);
   const result = { sent: 0, stopped: 0, expired: 0, failed: 0, retry: 0, left: Math.max(0, due.length - TW_SEND_BATCH) };
   for (const { name, meta } of due.slice(0, TW_SEND_BATCH)) {
@@ -1991,6 +2003,8 @@ export async function runTwMails(env, nowMs = Date.now()) {
       await sendMail(env, { to: env.OWNER_EMAIL, subject: `Transit Weekly: Mail nicht zugestellt (${order})`, text: `Die Wochenmail ${order} · ${slugArea(slug)} · Woche ${week} ist ${TW_SEND_TRIES}-mal bei Mailjet gescheitert und wird nicht mehr versucht.\nFehler: ${String(err).slice(0, 300)}\n\nBitte im Mailjet-Dashboard nachsehen (Adresse gesperrt oder falsch?) und der Kundin den Text auf anderem Weg schicken.` }).catch(e => console.error('tw warn', e));
     }
   }
+  // portion left or a retry: list again in the next run; otherwise wait until the next send time
+  await env.ORDERS.put(TW_NEXT_KEY, String(result.left || result.retry ? nowMs : later));
   return result;
 }
 

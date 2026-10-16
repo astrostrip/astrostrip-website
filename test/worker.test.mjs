@@ -899,6 +899,10 @@ console.log('newsletter ok');
     assert.equal(log.result, 'sent'); assert.ok(log.id);
     { const { twLogExpiry } = await import('../src/worker.js'); assert.equal(new Date(twLogExpiry('2027-01-31') * 1000).toISOString().slice(0, 10), '2031-01-01', 'log: 3 years from the end of the term year'); } assert.ok(!JSON.stringify(log).includes('example.com') && !JSON.stringify(log).includes('depth'), 'log without address and text');
     assert.equal((await runTwMails(env, ny7('2026-11-02') + 600000)).due, 0, 'never twice');
+    // KV Free allows 1,000 list operations a day: idle runs read the next send time instead of listing (16.10.2026)
+    { const orig = env.ORDERS.list; let n = 0; env.ORDERS.list = async o => { if (o.prefix === 'twtext:') n++; return orig(o); };
+      for (let i = 1; i <= 3; i++) assert.equal((await runTwMails(env, ny7('2026-11-02') + 600000 + i * 300000)).due, 0);
+      assert.equal(n, 0, 'idle runs do not list twtext:'); env.ORDERS.list = orig; }
     o = await (await up({ order: B.order, texts: [{ area: 'love', week: 1, sendAt: ny7('2026-11-02'), text: md }] })).json();
     assert.match(o.skipped[0], /schon verschickt/);
     // German booking: German subject and time zone line
