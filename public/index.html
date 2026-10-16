@@ -21,7 +21,7 @@
       <a href="#strips">Strips</a>
       <a class="nav-wide" href="#method">Method</a>
       <a href="#faq">FAQ</a>
-      <a class="nav-wide" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank">Instagram</a>
+      <a class="nav-ig" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank" aria-label="Instagram"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" class="ig-dot"/></svg><span class="ig-text">Instagram</span></a>
     </nav>
   </header>
 
@@ -176,6 +176,44 @@
             tabs.hidden = false;
           })();
         </script>
+        <!-- sample pages open large on the page instead of a bare image tab (Sandra, 16.10.2026: "unprofessionell");
+             without JavaScript the links still open the image -->
+        <dialog class="lightbox" aria-label="Sample page">
+          <button type="button" class="lb-close" aria-label="Close">&times;</button>
+          <button type="button" class="lb-prev" aria-label="Previous page">&lsaquo;</button>
+          <img class="lb-img" src="" alt="">
+          <button type="button" class="lb-next" aria-label="Next page">&rsaquo;</button>
+        </dialog>
+        <script>
+          (function () {
+            var box = document.querySelector('.lightbox');
+            if (!box || typeof box.showModal !== 'function') return;
+            var img = box.querySelector('.lb-img'), prev = box.querySelector('.lb-prev'), next = box.querySelector('.lb-next');
+            var group = [], pos = 0;
+            function show(i) {
+              pos = (i + group.length) % group.length;
+              var link = group[pos], thumb = link.querySelector('img');
+              img.src = link.getAttribute('href'); img.alt = thumb ? thumb.alt : '';
+              prev.hidden = next.hidden = group.length < 2;
+            }
+            document.querySelectorAll('.preview-page').forEach(function (link) {
+              link.addEventListener('click', function (e) {
+                e.preventDefault();
+                group = Array.prototype.slice.call(link.closest('.preview-pages').querySelectorAll('.preview-page'));
+                show(group.indexOf(link));
+                box.showModal();
+              });
+            });
+            prev.addEventListener('click', function () { show(pos - 1); });
+            next.addEventListener('click', function () { show(pos + 1); });
+            box.querySelector('.lb-close').addEventListener('click', function () { box.close(); });
+            box.addEventListener('click', function (e) { if (e.target === box) box.close(); });  // click beside the page closes
+            box.addEventListener('keydown', function (e) {
+              if (e.key === 'ArrowRight') show(pos + 1);
+              if (e.key === 'ArrowLeft') show(pos - 1);
+            });
+          })();
+        </script>
       </div>
       <p class="fine center">All prices include 19&nbsp;% VAT.</p>
       <p class="fine center">Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.</p>
@@ -285,9 +323,8 @@
       <a href="terms.html">AGB · Terms</a>
       <a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a>
       <a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a>
-      <a href="https://github.com/astrostrip/astrostrip-website" rel="noopener">Source code</a>
     <a href="cancel.html">Verträge hier kündigen · Cancel contracts here</a></nav>
-    <p class="credits">Chart calculation: Swiss Ephemeris &copy; Astrodienst AG, used under the AGPL-3.0. The source code of this website is public. Place data: <a href="https://www.geonames.org/" rel="noopener">GeoNames</a>, CC BY 4.0. Typeface: Playfair Display, SIL Open Font License.</p>
+    <p class="credits">Chart calculation: Swiss Ephemeris &copy; Astrodienst AG, used under the AGPL-3.0; source code: see legal notice. Place data: <a href="https://www.geonames.org/" rel="noopener">GeoNames</a>, CC BY 4.0. Typeface: Playfair Display, SIL Open Font License.</p>
   </footer>
 
   <script>
