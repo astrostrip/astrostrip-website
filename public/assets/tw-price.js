@@ -10,7 +10,8 @@
     for (const el of root.querySelectorAll('[data-tw-term]')) el.textContent = eur(data.cents);
     for (const el of root.querySelectorAll('.tw-founding')) el.hidden = !data.founding;
     for (const el of root.querySelectorAll('[data-tw-left]')) {
-      el.textContent = data.founding ? ` Only ${data.left} place${data.left === 1 ? '' : 's'} left.` : '';
+      el.textContent = !data.founding ? '' : document.documentElement.lang === 'de' // German page /de/ (Sandra, 18.10.2026)
+        ? ` Nur noch ${data.left} ${data.left === 1 ? 'Platz' : 'Plätze'} frei.` : ` Only ${data.left} place${data.left === 1 ? '' : 's'} left.`;
       el.hidden = !data.founding;
     }
   }

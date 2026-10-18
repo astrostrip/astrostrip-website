@@ -15,7 +15,7 @@ import { TEMPLATE_B64, TEMPLATE_META as T } from './invoice-template.js';
 import { CORRECTION_META as C } from './invoice-correction-template.js';
 
 export const SELLER = {
-  name: 'Sandra Willuweit', trading: 'astro.strip', street: 'Bundesweg 4', zip: '20149', city: 'Hamburg',
+  name: 'Sandra Willuweit', trading: 'astro.strip', street: 'Renzelstraße 10c', zip: '20146', city: 'Hamburg',
   country: 'DE', email: 'hello@astrostrip.com', vatId: 'DE317306093',
 };
 export const VAT_RATE = 19;

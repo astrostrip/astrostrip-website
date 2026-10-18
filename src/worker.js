@@ -54,6 +54,7 @@ export const STRIPS = {
   ultra: { name: 'Ultra Strip', tag: 'Complete dossier', cents: 12900, days: 10, weekly: 6 },
 };
 
+const STRIP_TAG_DE = { mini: 'Das Wesentliche', maxi: 'Das ganze Horoskop', ultra: 'Das komplette Dossier' }; // Stripe page on /de/
 export const LIFE_AREAS = ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family', 'Creativity and self-expression', 'Friends and belonging', 'Personal growth'];
 export const RELATIONSHIP = ['Single', 'Dating', 'In a relationship', 'Married', 'Separated or divorced', 'Widowed'];
 export const TIME_SOURCES = { certificate: 'Birth certificate or hospital record', family: 'From family memory', approximate: 'Approximate' };
@@ -602,7 +603,7 @@ export function customerMail(order, id, env) {
     'Terms: ' + site + '/terms.html',
     'Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.',
     '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+    'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
   ].filter(l => l !== null).join('\n');
 }
 
@@ -612,7 +613,7 @@ export const CANCELLATION_POLICY = {
   "de": [
     "Widerrufsrecht",
     "Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.",
-    "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Deutschland, hello@astrostrip.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Sie können Ihr Widerrufsrecht auch online unter https://astrostrip.com/withdraw.html ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.",
+    "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (astro.strip, Sandra Willuweit, Renzelstraße 10c, 20146 Hamburg, Deutschland, hello@astrostrip.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Sie können Ihr Widerrufsrecht auch online unter https://astrostrip.com/withdraw.html ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.",
     "Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.",
     "Folgen des Widerrufs",
     "Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.",
@@ -623,7 +624,7 @@ export const CANCELLATION_POLICY = {
   "en": [
     "Right of withdrawal",
     "You have the right to withdraw from this contract within 14 days without giving any reason. The withdrawal period will expire after 14 days from the day of the conclusion of the contract.",
-    "To exercise the right of withdrawal, you must inform us (astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Germany, hello@astrostrip.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or an email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at https://astrostrip.com/withdraw.html. If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.",
+    "To exercise the right of withdrawal, you must inform us (astro.strip, Sandra Willuweit, Renzelstraße 10c, 20146 Hamburg, Germany, hello@astrostrip.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or an email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at https://astrostrip.com/withdraw.html. If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.",
     "To meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of the right of withdrawal before the withdrawal period has expired.",
     "Effects of withdrawal",
     "If you withdraw from this contract, we shall reimburse to you all payments received from you without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract. We will carry out such reimbursement using the same means of payment as you used for the initial transaction, unless you have expressly agreed otherwise; in any event, you will not incur any fees as a result of such reimbursement.",
@@ -635,7 +636,7 @@ export const CANCELLATION_POLICY = {
 export const WITHDRAWAL_FORM = {
   "de": [
     "(Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie es zurück.)",
-    "An astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Deutschland, hello@astrostrip.com:",
+    "An astro.strip, Sandra Willuweit, Renzelstraße 10c, 20146 Hamburg, Deutschland, hello@astrostrip.com:",
     "Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung: ____",
     "Bestellt am ____ / Bestellnummer ____",
     "Name des/der Verbraucher(s) ____",
@@ -646,7 +647,7 @@ export const WITHDRAWAL_FORM = {
   ],
   "en": [
     "(Complete and return this form only if you wish to withdraw from the contract.)",
-    "To astro.strip, Sandra Willuweit, Bundesweg 4, 20149 Hamburg, Germany, hello@astrostrip.com:",
+    "To astro.strip, Sandra Willuweit, Renzelstraße 10c, 20146 Hamburg, Germany, hello@astrostrip.com:",
     "I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract for the provision of the following service: ____",
     "Ordered on ____ / Order number ____",
     "Name of consumer(s) ____",
@@ -693,7 +694,7 @@ export function withdrawalReceipt({ name, contract, email, received, receivedEn,
 // Both language blocks (German first) or only one, then the address line.
 function receiptJoin(langs, de, en) {
   const blocks = [langs.includes('de') ? de : null, langs.includes('en') ? en : null].filter(Boolean).map(b => b.filter(l => l !== null).join('\n'));
-  return [blocks.join('\n\n---\n\n'), '', 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com'].join('\n');
+  return [blocks.join('\n\n---\n\n'), '', 'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com'].join('\n');
 }
 
 // Language of the receipts for withdrawal and notice (Sandra, 12.10.2026): only the language the order was booked in;
@@ -777,7 +778,7 @@ export async function startDoubleOptIn(env, email, source, ip) {
       'The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.',
       'Der Link gilt 7 Tage. Wenn du dich nicht angemeldet hast, ignoriere diese Mail einfach; du bekommst dann nichts von uns.',
       '',
-      'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+      'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
     ].join('\n'),
   });
 }
@@ -932,7 +933,7 @@ export function invoiceMailText(d, strip) {
     '',
     'Viel Freude beim Erforschen deiner Sterne. Bald lassen sie für dich die Hüllen fallen.',
     '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+    'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
   ].join('\n');
 }
 
@@ -1071,7 +1072,7 @@ export function correctionMailText(d, strip) {
     `wir haben dir ${amount} für deinen ${strip.name} auf dein ursprüngliches Zahlungsmittel erstattet. Je nach Bank ist der Betrag in 5 bis 10 Werktagen sichtbar.`,
     'Anbei die Rechnungskorrektur. Bitte bewahre sie zusammen mit der Rechnung auf.',
     '',
-    'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · hello@astrostrip.com',
+    'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
   ].join('\n');
 }
 
@@ -1222,13 +1223,16 @@ async function handleCheckout(request, env) {
   try { body = await request.json(); } catch { return json({ error: 'Invalid request.' }, 400); }
   const { errors, order } = validateOrder(body);
   if (errors.length) return json({ error: errors.join(' ') }, 400);
-  if (await rateLimited(env, request, 'checkout', 5)) return json({ error: 'Too many attempts. Please wait an hour or email hello@astrostrip.com.' }, 429);
+  // German site /de/ (Sandra, 18.10.2026): messages, Stripe page and return pages in German
+  const ui = body.site === 'de' ? 'de' : 'en';
+  const T = (en, de) => (ui === 'de' ? de : en);
+  if (await rateLimited(env, request, 'checkout', 5)) return json({ error: T('Too many attempts. Please wait an hour or email hello@astrostrip.com.', 'Zu viele Versuche. Bitte warte eine Stunde oder schreib an hello@astrostrip.com.') }, 429);
   const state = await usedSlots(env);
   const slots = freeSlotsFrom(state);
   const slot = slots[order.strip];
-  if (!slot.next) return json({ error: `This strip is fully booked until ${longDate(slot.until)}. New weeks open every Monday.`, soldOut: true, slots }, 409);
+  if (!slot.next) return json({ error: T(`This strip is fully booked until ${longDate(slot.until)}. New weeks open every Monday.`, `Dieser Strip ist bis ${longDate(slot.until, 'de')} ausgebucht. Jeden Montag kommen neue Wochen dazu.`), soldOut: true, slots }, 409);
   if (order.week && order.week !== slot.next) {
-    return json({ error: `Someone was quicker: the next free week for this strip is now the week of ${longDate(slot.next)}. Please check and continue again.`, weekChanged: true, slots }, 409);
+    return json({ error: T(`Someone was quicker: the next free week for this strip is now the week of ${longDate(slot.next)}. Please check and continue again.`, `Jemand war schneller: Die nächste freie Woche für diesen Strip ist jetzt die Woche ab ${longDate(slot.next, 'de')}. Bitte prüfe das und mach dann weiter.`), weekChanged: true, slots }, 409);
   }
   order.week = slot.next;
   order.thisWeek = slot.thisWeek;
@@ -1238,14 +1242,14 @@ async function handleCheckout(request, env) {
   if (order.transit) {
     const deadline = servicePeriod(order, STRIPS[order.strip], berlinYmd(now)).end;
     const plan = planTransit(state, weekStart(Date.parse(deadline + 'T12:00:00Z')), order.transit.areas.length, now);
-    if (!plan) return json({ error: 'Transit Weekly is fully booked for the weeks after your strip. You can order the strip alone and add Transit Weekly later with your order number.', transitSoldOut: true, slots }, 409);
+    if (!plan) return json({ error: T('Transit Weekly is fully booked for the weeks after your strip. You can order the strip alone and add Transit Weekly later with your order number.', 'Transit Weekly ist für die Wochen nach deinem Strip ausgebucht. Du kannst den Strip allein bestellen und Transit Weekly später mit deiner Bestellnummer dazubuchen.'), transitSoldOut: true, slots }, 409);
     Object.assign(order.transit, plan);
   }
-  return createCheckout(request, env, order, { week: String(slot.nextStart), now, cancelUrl: `order.html?strip=${order.strip}&cancelled=1` });
+  return createCheckout(request, env, order, { week: String(slot.nextStart), now, cancelUrl: `order.html?strip=${order.strip}&cancelled=1`, ui });
 }
 
 // Stripe Checkout for a strip and/or Transit Weekly. Birth data stays in KV until payment, never goes to Stripe.
-async function createCheckout(request, env, order, { week, now, cancelUrl }) {
+async function createCheckout(request, env, order, { week, now, cancelUrl, ui = 'en' }) {
   const id = orderId(now);
   order.createdAt = now;
   const s = STRIPS[order.strip];
@@ -1253,23 +1257,32 @@ async function createCheckout(request, env, order, { week, now, cancelUrl }) {
   if (t) { const p = await twPrice(env); t.unitCents = p.cents; t.founding = p.founding; }
   const site = env.SITE_URL || new URL(request.url).origin;
   const items = [];
-  if (s) items.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: s.cents, product_data: { name: s.name, description: `${s.tag}. Personal reading prepared for your chart, PDF by email ${deliveryText(order)}. Price includes 19 % VAT.` } } });
-  if (t) items.push({ quantity: t.areas.length, price_data: { currency: 'eur', unit_amount: t.unitCents, product_data: { name: `Transit Weekly · 13 weeks per life area${t.founding ? ' · founding price' : ''}`, description: `Weekly transit emails for ${t.areas.join(', ')}, every Monday from ${longDate(t.start)} for 13 weeks (${euro(t.unitCents / 3)} a month per area). Ends by itself. Price includes 19 % VAT.` } } });
+  // Ordered on the German site: the Stripe page in German, and back to /de/ (Sandra, 18.10.2026)
+  const de = ui === 'de';
+  const back = de ? 'de/' : '';
+  if (s) items.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: s.cents, product_data: { name: s.name, description: de
+    ? `${STRIP_TAG_DE[order.strip]}. Persönliche Deutung, eigens für dein Horoskop, als PDF per E-Mail. ${deliveryText(order, 'de')}. Preis inklusive 19 % MwSt.`
+    : `${s.tag}. Personal reading prepared for your chart, PDF by email ${deliveryText(order)}. Price includes 19 % VAT.` } } });
+  if (t) items.push({ quantity: t.areas.length, price_data: { currency: 'eur', unit_amount: t.unitCents, product_data: de
+    ? { name: `Transit Weekly · 13 Wochen je Lebensbereich${t.founding ? ' · Gründungspreis' : ''}`, description: `Wöchentliche Transit-Mails für ${t.areas.map(a => AREA_DE[a] || a).join(', ')}, jeden Montag ab ${longDate(t.start, 'de')}, 13 Wochen lang (${euro(t.unitCents / 3)} im Monat je Bereich). Endet von selbst. Preis inklusive 19 % MwSt.` }
+    : { name: `Transit Weekly · 13 weeks per life area${t.founding ? ' · founding price' : ''}`, description: `Weekly transit emails for ${t.areas.join(', ')}, every Monday from ${longDate(t.start)} for 13 weeks (${euro(t.unitCents / 3)} a month per area). Ends by itself. Price includes 19 % VAT.` } } });
   const meta = { order_id: id, strip: order.strip, week: s ? week : undefined, tw_week: t ? String(mondayOnOrAfter(t.readWeek)) : undefined, tw_week2: t && t.readWeek2 ? String(mondayOnOrAfter(t.readWeek2)) : undefined, tw_n: t ? String(t.areas.length) : undefined, tw_unit: t ? String(t.unitCents) : undefined, tw_start: t ? t.start : undefined, base: order.base || undefined };
   const session = await stripe(env, 'POST', 'checkout/sessions', {
     mode: 'payment',
-    locale: order.language === 'de' ? 'de' : 'en',
+    locale: order.language === 'de' || de ? 'de' : 'en',
     customer_email: order.email,
     billing_address_collection: 'required', // for the invoice (Sandra, 02.10.2026)
     submit_type: 'pay',
     client_reference_id: id,
     expires_at: Math.floor(now / 1000) + SESSION_MINUTES * 60,
-    success_url: `${site}/thanks.html?order=${id}`,
-    cancel_url: `${site}/${cancelUrl}`,
+    success_url: `${site}/${back}thanks.html?order=${id}`,
+    cancel_url: `${site}/${back}${cancelUrl}`,
     line_items: Object.fromEntries(items.map((x, i) => [i, x])),
     metadata: meta,
     payment_intent_data: { metadata: { ...meta, week: s ? order.week : undefined } },
-    custom_text: { submit: { message: `By paying you place a binding order for ${s ? 'the ' : ''}${productLabel(order)} (${euro(orderCents(order))} incl. 19 % VAT).` } },
+    custom_text: { submit: { message: de
+      ? `Mit der Zahlung bestellst du verbindlich ${s ? 'den ' : ''}${productLabel(order, 'de')} (${euro(orderCents(order))} inkl. 19 % MwSt.).`
+      : `By paying you place a binding order for ${s ? 'the ' : ''}${productLabel(order)} (${euro(orderCents(order))} incl. 19 % VAT).` } },
   });
   // Order details wait here until payment; kept at most 2 days.
   await env.ORDERS.put(`order:${session.id}`, JSON.stringify({ id, ...order }), { expirationTtl: 172800 });
@@ -1303,11 +1316,13 @@ async function handleRebook(request, env) {
   try { body = await request.json(); } catch { return json({ error: 'Invalid request.' }, 400); }
   const { errors, order } = validateRebook(body);
   if (errors.length) return json({ error: errors.join(' ') }, 400);
-  if (await rateLimited(env, request, 'rebook', 5)) return json({ error: 'Too many attempts. Please wait an hour or email hello@astrostrip.com.' }, 429);
+  const ui = body.site === 'de' ? 'de' : 'en'; // German site /de/ (Sandra, 18.10.2026)
+  const T = (en, de) => (ui === 'de' ? de : en);
+  if (await rateLimited(env, request, 'rebook', 5)) return json({ error: T('Too many attempts. Please wait an hour or email hello@astrostrip.com.', 'Zu viele Versuche. Bitte warte eine Stunde oder schreib an hello@astrostrip.com.') }, 429);
   const now = Date.now();
   const paid = await findStripPayment(env, order.base, order.email, now);
-  if (paid?.tooOld) return json({ error: 'This order is too old to add Transit Weekly: we no longer keep its reading. Please order a new Maxi or Ultra Strip first.' }, 400);
-  if (!paid) return json({ error: 'We could not find a paid Maxi or Ultra Strip with this order number and email address. Please check both (the email you used for the strip), or write to hello@astrostrip.com.' }, 400);
+  if (paid?.tooOld) return json({ error: T('This order is too old to add Transit Weekly: we no longer keep its reading. Please order a new Maxi or Ultra Strip first.', 'Diese Bestellung ist zu alt, um Transit Weekly dazuzubuchen: Ihre Deutung bewahren wir nicht mehr auf. Bitte bestell zuerst einen neuen Maxi oder Ultra Strip.') }, 400);
+  if (!paid) return json({ error: T('We could not find a paid Maxi or Ultra Strip with this order number and email address. Please check both (the email you used for the strip), or write to hello@astrostrip.com.', 'Wir haben zu dieser Bestellnummer und E-Mail-Adresse keinen bezahlten Maxi oder Ultra Strip gefunden. Bitte prüfe beides (die E-Mail-Adresse, mit der du den Strip bestellt hast) oder schreib an hello@astrostrip.com.') }, 400);
   // Renewal: an area that still runs continues seamlessly, the Monday after its last week.
   const today = berlinYmd(now);
   const running = (await transitBookings(env, order.base)).filter(b => b.end >= today && b.areas.some(a => order.transit.areas.includes(a)));
@@ -1316,13 +1331,14 @@ async function handleRebook(request, env) {
   // Booked later: part 1 this week if at least three days are left (Mon–Thu), else next week.
   const from = Math.max(weekStart(now + 3 * 86400000), seamless ? addWeeks(seamless, -1) : 0);
   if (seamless && !state.twWeeks.includes(from)) {
-    return json({ error: `Your Transit Weekly runs until ${longDate(running.map(b => b.end).sort().pop())}. You can renew it from ${longDate(weekDate(addWeeks(from, -(TW_WEEKS_AHEAD - 1))))}.` }, 409);
+    return json({ error: T(`Your Transit Weekly runs until ${longDate(running.map(b => b.end).sort().pop())}. You can renew it from ${longDate(weekDate(addWeeks(from, -(TW_WEEKS_AHEAD - 1))))}.`,
+      `Dein Transit Weekly läuft bis ${longDate(running.map(b => b.end).sort().pop(), 'de')}. Verlängern kannst du ab ${longDate(weekDate(addWeeks(from, -(TW_WEEKS_AHEAD - 1))), 'de')}.`) }, 409);
   }
   const plan = planTransit(state, from, order.transit.areas.length, now, seamless);
-  if (!plan) return json({ error: `Transit Weekly is fully booked until ${longDate(freeSlotsFrom(state).transit.until)}. New weeks open every Monday.`, transitSoldOut: true }, 409);
+  if (!plan) return json({ error: T(`Transit Weekly is fully booked until ${longDate(freeSlotsFrom(state).transit.until)}. New weeks open every Monday.`, `Transit Weekly ist bis ${longDate(freeSlotsFrom(state).transit.until, 'de')} ausgebucht. Jeden Montag kommen neue Wochen dazu.`), transitSoldOut: true }, 409);
   Object.assign(order.transit, plan);
   if (seamless) order.renews = running.map(b => b.order).join(', ');
-  return createCheckout(request, env, order, { now, cancelUrl: 'transit-weekly.html?cancelled=1' });
+  return createCheckout(request, env, order, { now, cancelUrl: 'transit-weekly.html?cancelled=1', ui });
 }
 
 // After payment: the booking the weekly emails will run on (Stufe 6), kept until 14 days after the term ends.
@@ -1821,7 +1837,7 @@ ${pre ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc
 ${body}
 </td></tr>
 <tr><td class="x-pad" style="padding:22px 36px 30px 36px;">${rule(TWM.line)}
-<p style="margin:18px 0 6px 0;${pStyle(13, `line-height:1.6;color:${TWM.muted};`)}">astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Germany · <a href="mailto:hello@astrostrip.com" style="color:${TWM.accent};text-decoration:underline;">hello@astrostrip.com</a></p>
+<p style="margin:18px 0 6px 0;${pStyle(13, `line-height:1.6;color:${TWM.muted};`)}">astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · <a href="mailto:hello@astrostrip.com" style="color:${TWM.accent};text-decoration:underline;">hello@astrostrip.com</a></p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 

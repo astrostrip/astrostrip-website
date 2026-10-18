@@ -176,7 +176,7 @@ def static_content(v, meta_ys):
 
     c.append(label(LEFT, 675, 'Rechnungsempfänger · Billed to'))
     c.append(label(330, 675, 'Von · From'))
-    for i, (s, f) in enumerate([('Sandra Willuweit · astro.strip', 'B'), ('Bundesweg 4', 'R'), ('20149 Hamburg, Deutschland', 'R'),
+    for i, (s, f) in enumerate([('Sandra Willuweit · astro.strip', 'B'), ('Renzelstraße 10c', 'R'), ('20146 Hamburg, Deutschland', 'R'),
                                  ('hello@astrostrip.com', 'R'), ('USt-IdNr. · VAT ID: DE317306093', 'R')]):
         c.append(text(330, 660 - 14 * i, s, f, 10 if f == 'B' else 9.5))
 
@@ -209,7 +209,7 @@ def static_content(v, meta_ys):
         y -= 4
 
     c.append(rule(LEFT, 62, RIGHT, GOLD, 0.5))
-    c.append(text(W / 2, 48, 'astro.strip · Sandra Willuweit · Bundesweg 4 · 20149 Hamburg · Deutschland', 'R', 7.8, GREY, 'center'))
+    c.append(text(W / 2, 48, 'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Deutschland', 'R', 7.8, GREY, 'center'))
     c.append(text(W / 2, 37, 'hello@astrostrip.com · astrostrip.com · USt-IdNr. DE317306093', 'R', 7.8, GREY, 'center'))
     return ('q\n' + ''.join(c) + 'Q\n').encode('latin-1')
 

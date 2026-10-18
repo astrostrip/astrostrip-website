@@ -685,6 +685,17 @@ console.log('newsletter ok');
   assert.match(p1.get('custom_text[submit][message]'), /the Maxi Strip and Transit Weekly \(2 life areas\) \(313,00 € incl\. 19 % VAT\)/);
   assert.equal(p1.get('payment_intent_data[metadata][tw_n]'), '2');
   assert.ok(!s1.body.includes('1990-05-01') && !s1.body.includes('New York') && !s1.body.includes('America'), 'no birth data or residence at Stripe');
+  assert.equal(p1.get('success_url'), `https://astrostrip.com/thanks.html?order=${stored.id}`);
+  // ordered on the German site /de/ (Sandra, 18.10.2026): Stripe page in German, return pages under /de/
+  r = await worker.fetch(req('/api/checkout', 'POST', { ...maxi, site: 'de' }, { ip: '10.0.0.9' }), env);
+  assert.equal(r.status, 200, JSON.stringify(await r.clone().json()));
+  const pd = new URLSearchParams(sessions[sessions.length - 1].body);
+  assert.equal(pd.get('locale'), 'de');
+  assert.match(pd.get('success_url'), /\/de\/thanks\.html\?order=AS-/);
+  assert.match(pd.get('cancel_url'), /\/de\/order\.html\?strip=maxi&cancelled=1$/);
+  assert.match(pd.get('custom_text[submit][message]'), /^Mit der Zahlung bestellst du verbindlich den Maxi Strip und Transit Weekly \(2 Lebensbereiche\) \(313,00 € inkl\. 19 % MwSt\.\)\.$/);
+  assert.match(pd.get('line_items[1][price_data][product_data][description]'), /^Wöchentliche Transit-Mails für Liebe und Beziehungen, /);
+  console.log('checkout /de/ ok');
   // minutes: 300 per reading week; 60 per area, split 20 (part 1) / 40 (part 2) -> until a week is full, then later
   const four = { ...maxi, transit: { areas: ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family'], earlyStart: true } };
   const plans = [];
@@ -713,8 +724,8 @@ console.log('newsletter ok');
   assert.ok(!/<img|prefers-color-scheme/.test(mCustomer.html), 'no images, light only');
   for (const l of ['Widerrufsbelehrung (Deutsch)', 'Model withdrawal form', CANCELLATION_POLICY.de[1], CANCELLATION_POLICY.en[1]]) assert.ok(mCustomer.html.includes(l.replace(/&/g, '&amp;')), 'legal text complete: ' + l.slice(0, 40));
   { const { brandFromText } = await import('../src/worker.js');
-    const h = brandFromText('Hi Ann,\n\nthanks.\n\n\nHallo Ann,\n\nReceived: today\nName: Ann\n\nastro.strip · Sandra Willuweit · Bundesweg 4', { kicker: 'Test · Kicker', attach: 'PDF' });
-    assert.match(h, /<h1[^>]*>Hi Ann,<\/h1>/); assert.match(h, />Received<\/td>/); assert.match(h, /Attached · Anhang/); assert.equal((h.match(/Bundesweg 4/g) || []).length, 1, 'address only in the footer'); }
+    const h = brandFromText('Hi Ann,\n\nthanks.\n\n\nHallo Ann,\n\nReceived: today\nName: Ann\n\nastro.strip · Sandra Willuweit · Renzelstraße 10c', { kicker: 'Test · Kicker', attach: 'PDF' });
+    assert.match(h, /<h1[^>]*>Hi Ann,<\/h1>/); assert.match(h, />Received<\/td>/); assert.match(h, /Attached · Anhang/); assert.equal((h.match(/Renzelstraße 10c/g) || []).length, 1, 'address only in the footer'); }
   assert.match(mOrder.subject, /Maxi Strip und Transit Weekly \(2 Lebensbereiche\)/);
   assert.match(mOrder.text, /Transit Weekly: 2 × 117,00 € = 234,00 € inkl\. 19 % USt/); assert.match(mOrder.text, /Preis gesamt: 313,00 €/);
   assert.match(mOrder.text, new RegExp(`Rechnungen: zwei.*${stored.id}-T`)); assert.match(mOrder.text, /Lesewoche ab Montag/);
@@ -989,8 +1000,8 @@ console.log('newsletter ok');
   assert.deepEqual(await receiptLangs(lenv, 'my order from last week', 'l@example.com'), ['de', 'en'], 'no number');
   const base = { name: 'Lotta', contract: 'AS-1', email: 'l@example.com', received: 'r', receivedEn: 'r', endDe: 'zum Ende', endEn: 'at the end', kind: 'ordinary' };
   const de = cancellationReceipt({ ...base, langs: ['de'] }), en = cancellationReceipt({ ...base, langs: ['en'] });
-  assert.ok(de.includes('Hallo Lotta') && !de.includes('Hi Lotta') && !de.includes('---') && de.includes('Bundesweg 4'));
-  assert.ok(en.includes('Hi Lotta') && !en.includes('Hallo Lotta') && en.includes('Bundesweg 4'));
+  assert.ok(de.includes('Hallo Lotta') && !de.includes('Hi Lotta') && !de.includes('---') && de.includes('Renzelstraße 10c'));
+  assert.ok(en.includes('Hi Lotta') && !en.includes('Hallo Lotta') && en.includes('Renzelstraße 10c'));
   assert.ok(cancellationReceipt(base).indexOf('Hi Lotta') > cancellationReceipt(base).indexOf('Hallo Lotta'), 'default both, German first');
   assert.ok(!withdrawalReceipt({ ...base, langs: ['en'] }).includes('Erstattung:'));
   // the endpoint: German booking gets a German subject and receipt, Sandra is told the language

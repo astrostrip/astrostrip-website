@@ -5,11 +5,24 @@
 // Placidus houses, true node, orbs from the school's table (L8 p. 15).
 
 import SwissEph from '../vendor/swisseph/src/swisseph.js';
-import { TEXTS, ROLES } from './texts.js';
+import { TEXTS as TEXTS_EN, ROLES as ROLES_EN } from './texts.js';
 import { ZODIAC_PATHS, signIcon } from './zodiac.js';
 import { attachPlaceSearch } from './places.js';
 
-const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+// German page /de/ (Sandra, 18.10.2026, plans/website-deutsch.md): one script for both languages, L(english, german).
+// SIGN_KEYS stay English: they name the text files and the keys of the transit texts.
+const DE = document.documentElement.lang === 'de';
+const L = (en, de) => (DE ? de : en);
+const SIGN_KEYS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+const SIGNS = DE ? ['Widder', 'Stier', 'Zwillinge', 'Krebs', 'Löwe', 'Jungfrau', 'Waage', 'Skorpion', 'Schütze', 'Steinbock', 'Wassermann', 'Fische'] : SIGN_KEYS;
+// German Big Three texts once texts-de.js exists (plan step C); until then the English ones
+const TEXTS = DE ? await import('./texts-de.js').then(m => m.TEXTS).catch(() => TEXTS_EN) : TEXTS_EN;
+const ROLES = DE ? { rising: { label: 'ASZENDENT', role: 'ERSTER EINDRUCK' }, sun: { label: 'SONNE', role: 'KERNIDENTITÄT' }, moon: { label: 'MOND', role: 'GEFÜHLSMUSTER' } } : ROLES_EN;
+// "SUN IN LEO" / "SONNE IM LÖWEN": German needs the article per sign
+const SIGN_IN_DE = ['IM WIDDER', 'IM STIER', 'IN DEN ZWILLINGEN', 'IM KREBS', 'IM LÖWEN', 'IN DER JUNGFRAU', 'IN DER WAAGE', 'IM SKORPION', 'IM SCHÜTZEN', 'IM STEINBOCK', 'IM WASSERMANN', 'IN DEN FISCHEN'];
+const signIn = i => (DE ? SIGN_IN_DE[i] : `IN ${SIGNS[i].toUpperCase()}`);
+const POINT_DE = { Sun: 'Sonne', Moon: 'Mond', Mercury: 'Merkur', Neptune: 'Neptun', 'North Node': 'Mondknoten' };
+const pointName = k => (DE ? POINT_DE[k] || k : k);
 const VS = '︎'; // text presentation, keeps glyphs from turning into emoji
 
 // id = Swiss Ephemeris body number; orb = school orb; body = sends aspects
@@ -29,11 +42,11 @@ const POINTS = [
 ];
 
 const ASPECTS = [
-  { name: 'conjunction', angle: 0, glyph: '☌', kind: 'major', hard: true },
-  { name: 'sextile', angle: 60, glyph: '⚹', kind: 'minor', hard: false },
-  { name: 'square', angle: 90, glyph: '□', kind: 'major', hard: true },
-  { name: 'trine', angle: 120, glyph: '△', kind: 'major', hard: false },
-  { name: 'opposition', angle: 180, glyph: '☍', kind: 'major', hard: true },
+  { name: L('conjunction', 'Konjunktion'), angle: 0, glyph: '☌', kind: 'major', hard: true },
+  { name: L('sextile', 'Sextil'), angle: 60, glyph: '⚹', kind: 'minor', hard: false },
+  { name: L('square', 'Quadrat'), angle: 90, glyph: '□', kind: 'major', hard: true },
+  { name: L('trine', 'Trigon'), angle: 120, glyph: '△', kind: 'major', hard: false },
+  { name: L('opposition', 'Opposition'), angle: 180, glyph: '☍', kind: 'major', hard: true },
 ];
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -130,7 +143,7 @@ async function calculateChart({ y, mo, d, h, mi, place, timeKnown, offsetOverrid
   if (timeKnown) {
     let hs = swe.houses(jd, place.lat, place.lon, 'P');
     const bad = !hs || !isFinite(hs.cusps[1]) || Math.abs(place.lat) > 66;
-    if (bad) { hs = swe.houses(jd, place.lat, place.lon, 'O'); houseSystem = 'Porphyry (Placidus is undefined this far north or south)'; }
+    if (bad) { hs = swe.houses(jd, place.lat, place.lon, 'O'); houseSystem = L('Porphyry (Placidus is undefined this far north or south)', 'Porphyrius (Placidus ist so weit im Norden oder Süden nicht definiert)'); }
     houses = Array.from(hs.cusps).slice(1, 13).map(norm360);
     angles = { asc: norm360(hs.ascmc[0]), mc: norm360(hs.ascmc[1]) };
     for (const p of planets) p.house = houseOf(p.lon, houses);
@@ -295,20 +308,22 @@ function wheelSvg(chart) {
     parts.push(`<line x1="${tx}" y1="${ty}" x2="${tx2}" y2="${ty2}" class="w-tick"/>`);
     const [gx, gy] = pos(d, R.planet);
     const retro = p.speed < 0 && p.key !== 'North Node' ? '<tspan class="w-retro" dx="1" dy="-7">r</tspan>' : '';
-    parts.push(`<text x="${gx}" y="${gy}" class="w-planet" text-anchor="middle" dominant-baseline="central"><title>${esc(p.key)} ${fmtDeg(p.lon)} ${SIGNS[signOf(p.lon)]}</title>${p.glyph}${VS}${retro}</text>`);
+    parts.push(`<text x="${gx}" y="${gy}" class="w-planet" text-anchor="middle" dominant-baseline="central"><title>${esc(pointName(p.key))} ${fmtDeg(p.lon)} ${SIGNS[signOf(p.lon)]}</title>${p.glyph}${VS}${retro}</text>`);
   }
 
-  return `<svg viewBox="-40 -20 ${size + 80} ${size + 40}" role="img" aria-label="Birth chart wheel" class="wheel">${parts.join('')}</svg>`;
+  return `<svg viewBox="-40 -20 ${size + 80} ${size + 40}" role="img" aria-label="${L('Birth chart wheel', 'Horoskoprad')}" class="wheel">${parts.join('')}</svg>`;
 }
 
 // ---------- Degree texts (one file per sign, loaded on demand) ----------
 // Degree as counted in the readings: drop the minutes, add 1 (0°00'–0°59' = degree 1).
 const countedDegree = lon => Math.floor(norm360(lon) % 30) + 1;
 const degreeCache = {};
+// German page: degrees-de/<sign>.js once it exists (plan step C), else the English text
 async function degreeText(sign, degree, role) {
   const key = sign.toLowerCase();
   if (!(key in degreeCache)) {
-    degreeCache[key] = await import(`./degrees/${key}.js`).then(m => m.default).catch(() => null);
+    const en = () => import(`./degrees/${key}.js`).then(m => m.default).catch(() => null);
+    degreeCache[key] = await (DE ? import(`./degrees-de/${key}.js`).then(m => m.default).catch(en) : en());
   }
   return degreeCache[key]?.[degree]?.[role] ?? null;
 }
@@ -317,9 +332,11 @@ async function degreeText(sign, degree, role) {
 // Same rules as the weekly transit posts: major aspects, applying orbs inside the sign (Mercury, Venus, Mars 5°,
 // Jupiter to Pluto and Chiron 1°, from the week of 12.10.2026), whole-sign houses from 0° of the Sun sign,
 // weeks run Monday to Sunday in German time. No file for the week, no block.
-const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const ordinal = n => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+const WEEKDAYS = DE ? ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'] : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const MONTHS = DE ? ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'] : ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+// German transit texts: textsDe in the week file once it exists (plan step D), else the English text
+const trText = (data, key) => (DE && data.textsDe && data.textsDe[key]) || data.texts[key];
+const ordinal = n => (DE ? n + '.' : n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'));
 
 function berlinMonday(nowMs = Date.now()) {
   const local = nowMs + tzOffsetMinutes(nowMs, 'Europe/Berlin') * 60000; // Berlin wall clock as if UTC
@@ -339,34 +356,35 @@ const dayOf = s => (new Date(s.slice(0, 10) + 'T00:00:00Z').getUTCDay() + 6) % 7
 function whenLabel(hit, week) {
   const a = dayOf(hit.spans[0].from);
   const b = dayOf(hit.spans[hit.spans.length - 1].to);
-  const range = hit.whole ? 'ALL WEEK' : a === b ? WEEKDAYS[a] : `${WEEKDAYS[a]}–${WEEKDAYS[b]}`;
+  const range = hit.whole ? L('ALL WEEK', 'DIE GANZE WOCHE') : a === b ? WEEKDAYS[a] : `${WEEKDAYS[a]}–${WEEKDAYS[b]}`;
   // A fast planet's exact day is the end of its window, never the date (Sandra, 09.10.2026): " · PEAK <days>" for the
   // 24 hours before exact (Mercury, Venus) or three days before (Mars), cut to the week, as in carousel-pick.py
   if (hit.fast && hit.exactFrom && week) {
     const e = Date.parse(hit.exactFrom + ':00Z');
     const from = Math.max(e - (hit.planet === 'Mars' ? 3 : 1) * 86400000, Date.parse(week + 'T00:00:00Z'));
     const days = windowDays({ windowFrom: new Date(from).toISOString().slice(0, 16), windowTo: hit.exactFrom });
-    return `${range} · PEAK ${days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`}`;
+    return `${range} · ${L('PEAK', 'HÖHEPUNKT')} ${days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`}`;
   }
   // a slow planet: the approach runs into the exact day; name it when the approach started earlier
-  if (hit.exactFrom && hit.spans[0].from !== hit.exactFrom) return `${range} · EXACT ${WEEKDAYS[dayOf(hit.exactFrom)]}`;
+  if (hit.exactFrom && hit.spans[0].from !== hit.exactFrom) return `${range} · ${L('EXACT', 'EXAKT')} ${WEEKDAYS[dayOf(hit.exactFrom)]}`;
   return range;
 }
 // Triggers (D24, L15 pp. 14-16; wording Sandra 06.10.2026): a fast planet on the same Sun degree makes a slow
 // transit tangible. Mercury and Venus work the day before and the day they are exact, Mars about a week,
 // a fast planet stationing in its orb for weeks. The fast planet is not named, like in the texts.
-const DAYNAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAYNAMES = DE ? ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const AND = L(' and ', ' und ');
 function triggerLines(hit) {
   const lines = new Set();
   const tangible = new Set(); // day phrases of Mercury, Venus and the Moon, said in one sentence (Sandra, 09.10.2026)
   for (const t of hit.triggers || []) {
-    if (t.station) lines.add('Lingers for weeks: a fast planet stands still on this degree.');
+    if (t.station) lines.add(L('Lingers for weeks: a fast planet stands still on this degree.', 'Wirkt wochenlang: Ein schneller Planet steht auf diesem Grad still.'));
     else if (t.planet === 'Mars') lines.add(t.exactFrom
-      ? `Building all week, likely most tangible in the days before ${DAYNAMES[dayOf(t.exactFrom)]}.`
-      : 'Building all week.');
+      ? L(`Building all week, likely most tangible in the days before ${DAYNAMES[dayOf(t.exactFrom)]}.`, `Baut sich die ganze Woche auf, am deutlichsten wohl in den Tagen vor ${DAYNAMES[dayOf(t.exactFrom)]}.`)
+      : L('Building all week.', 'Baut sich die ganze Woche auf.'));
     else if (t.exactFrom) {
       const d = dayOf(t.exactFrom);
-      tangible.add(`${DAYNAMES[(d + 6) % 7]} and ${DAYNAMES[d]}`);
+      tangible.add(`${DAYNAMES[(d + 6) % 7]}${AND}${DAYNAMES[d]}`);
     }
   }
   // the Moon on this slow planet while it also aspects the Sun (D24, Sandra 09.10.2026): only the strongest contact
@@ -381,8 +399,8 @@ function triggerLines(hit) {
   }
   const peak = (hit.moonTriggers || []).reduce((a, t) => (!a || MOON_RANK[t.aspect] < MOON_RANK[a.aspect] ? t : a), null);
   const moonDays = (peak ? windowDays(peak) : []).filter(d => !named.has(d)).map(d => DAYNAMES[d]);
-  if (moonDays.length) tangible.add(moonDays.join(' and '));
-  if (tangible.size) lines.add(`Likely most tangible on ${[...tangible].join(', and on ')}.`);
+  if (moonDays.length) tangible.add(moonDays.join(AND));
+  if (tangible.size) lines.add(L(`Likely most tangible on ${[...tangible].join(', and on ')}.`, `Am deutlichsten wohl am ${[...tangible].join(' sowie am ')}.`));
   return [...lines].map(l => `<p class="fine tr-trigger">${l}</p>`).join('');
 }
 // Days a Moon contact's 24-hour window before exact touches (Sandra, 09.10.2026), a day counting from one hour, as in
@@ -406,7 +424,9 @@ function weekLabel(data) {
 // text; no planet, aspect or house number, no list of where the planets stand, no line on the chart's own house (that
 // line from 04.10.2026 is replaced by the fine print). Area words as in the carousel labels (reference/karussell-bot.md,
 // approved by Sandra 09.10.2026).
-const AREAS = ['SELF', 'MONEY', 'EVERYDAY TALK', 'HOME & FAMILY', 'LOVE & PLAY', 'DAILY ROUTINE', 'PARTNERS',
+const AREAS = DE ? ['ICH', 'GELD', 'KONTAKTE & GESPRÄCHE', 'ZUHAUSE & FAMILIE', 'LIEBE & VERGNÜGEN', 'ALLTAG & ROUTINE', 'PARTNERSCHAFT',
+  'INTIMITÄT & TEILEN', 'REISEN & ÜBERZEUGUNGEN', 'BERUF & STATUS', 'FREUNDE & GRUPPEN', 'RÜCKZUG & RUHE'] // German labels: proposal, Sandra reviews
+  : ['SELF', 'MONEY', 'EVERYDAY TALK', 'HOME & FAMILY', 'LOVE & PLAY', 'DAILY ROUTINE', 'PARTNERS',
   'INTIMACY & SHARING', 'TRAVEL & BELIEFS', 'WORK & STATUS', 'FRIENDS & GROUPS', 'REST & RETREAT'];
 // rows: { house, when, html }; equal area and time next to each other share one label, as in the carousel
 function areaList(rows, first = '') {
@@ -435,7 +455,7 @@ function moonRows(data, sunLon, taken) {
   const best = new Map(); // planet house -> strongest contact with a text (the list is sorted by time)
   for (const c of data.moon || []) {
     const house = houseFrom(c.deg, sunSign);
-    const text = c.moonDeg === undefined ? null : data.texts[`${c.key}|H${houseFrom(c.moonDeg, sunSign)}|H${house}`];
+    const text = c.moonDeg === undefined ? null : trText(data, `${c.key}|H${houseFrom(c.moonDeg, sunSign)}|H${house}`);
     if (taken.has(house) || !text) continue;
     const prev = best.get(house);
     if (!prev || MOON_RANK[c.aspect] < MOON_RANK[prev.c.aspect]) best.set(house, { c, text });
@@ -447,7 +467,7 @@ function moonRows(data, sunLon, taken) {
   });
 }
 function moonSection(rows) {
-  return rows.length ? `<p class="kicker" style="margin: 28px 0 0">OTHER AREAS, BRIEFLY</p>${areaList(rows)}` : '';
+  return rows.length ? `<p class="kicker" style="margin: 28px 0 0">${L('OTHER AREAS, BRIEFLY', 'WEITERE BEREICHE IN KÜRZE')}</p>${areaList(rows)}` : '';
 }
 
 // New and Full Moons (Sandra, 12.10.2026, plans/lunationen-transit-woche.md): in the week of a lunation (24-hour rule)
@@ -457,17 +477,17 @@ function moonSection(rows) {
 // is keyed per Sun degree; without a text nothing is shown. A transit in one of its life areas is read in that text
 // (Sandra, 12.10.2026: "Zusammenführen", /transit-woche rule 10b point 5a), so it drops out here; the Moon section
 // takes other areas too (as in the carousel).
-const LUNATION_KIND = { NewMoon: 'NEW MOON', FullMoon: 'FULL MOON' };
+const LUNATION_KIND = DE ? { NewMoon: 'NEUMOND', FullMoon: 'VOLLMOND' } : { NewMoon: 'NEW MOON', FullMoon: 'FULL MOON' };
 function lunationRows(data, deg) {
   const rows = [];
   for (const x of data.lunations || []) {
     const h = x.hits && x.hits[String(deg)];
-    const text = h && data.texts[h.key];
+    const text = h && trText(data, h.key);
     if (!text) continue;
     const areas = x.kind === 'FullMoon' ? `${AREAS[h.moonHouse - 1]} ↔ ${AREAS[h.sunHouse - 1]}` : AREAS[h.moonHouse - 1];
     const days = windowDays(x);
     rows.push({ houses: [h.moonHouse, h.sunHouse],
-      label: `${LUNATION_KIND[x.kind]}${x.eclipse ? ' · ECLIPSE' : ''} · ${areas}`,
+      label: `${LUNATION_KIND[x.kind]}${x.eclipse ? L(' · ECLIPSE', ' · FINSTERNIS') : ''} · ${areas}`,
       when: days.length === 1 ? WEEKDAYS[days[0]] : `${WEEKDAYS[days[0]]}–${WEEKDAYS[days[days.length - 1]]}`,
       html: `<p class="tr-text">${esc(text)}</p>` });
   }
@@ -498,16 +518,16 @@ function weekBody(data, sunLon) {
   // only transits with a text, like the post: past exact drops out (Sandra, 09.10.2026), its house is free for the Moon
   const lun = lunationRows(data, deg);
   const lunHouses = new Set(lun.flatMap(r => r.houses));
-  const hits = onePerHouse((data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && data.texts[h.key]
+  const hits = onePerHouse((data.hits[String(deg)] || []).filter(h => h.status !== 'separating' && trText(data, h.key)
     && !lunHouses.has(h.house)));
   const moon = moonRows(data, sunLon, new Set([...hits.map(h => h.house), ...lunHouses]));
   if (!hits.length) {
     // the quiet line would be wrong when a New or Full Moon touches the degree
     return lun.length ? `<ul class="transit-list">${lunationItems(lun)}</ul>${moonSection(moon)}`
-      : `<p class="tr-quiet">A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.</p>${moonSection(moon)}`;
+      : `<p class="tr-quiet">${L('A quieter week for your Sun degree. Nothing touches it; the slow planets set the background.', 'Eine ruhigere Woche für deinen Sonnengrad. Nichts berührt ihn; die langsamen Planeten bilden den Hintergrund.')}</p>${moonSection(moon)}`;
   }
   return areaList(hits.map(h => ({ house: h.house, when: whenLabel(h, data.week),
-    html: `<p class="tr-text">${esc(data.texts[h.key])}</p>${triggerLines(h)}` })), lunationItems(lun)) + moonSection(moon);
+    html: `<p class="tr-text">${esc(trText(data, h.key))}</p>${triggerLines(h)}` })), lunationItems(lun)) + moonSection(moon);
 }
 
 // From Friday on, next week's file is shown too: the weekend transit posts read the coming week
@@ -525,12 +545,14 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
   // Title in three lines, the dates of the current week on their own (Sandra, 11.10.2026: "besonders beim Datum,
   // weil es sonst verwirrt"); next week gets a wider gap above it
   return `<div class="transits panel">
-    <h3 class="sub-title tr-title">Your week for your Sun on ${sign} ${deg % 30 + 1}<span class="tr-title-strip">Stripped down</span></h3>
+    <h3 class="sub-title tr-title">${L('Your week for your Sun on', 'Deine Woche für deine Sonne auf')} ${sign} ${deg % 30 + 1}<span class="tr-title-strip">Stripped down</span></h3>
     ${now ? `<p class="kicker tr-dates">${weekLabel(now)}</p>${weekBody(now, sunLon)}` : ''}
-    ${next ? `<div class="tr-next">${section(next, 'NEXT WEEK')}</div>` : ''}
-    <p class="tr-more">This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Add Transit Weekly to either one: your transits week by week in the life areas you choose, <span data-tw-month>29 €</span> a month per area<span class="tw-founding"> (founding price)</span>.</p>
-    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a> <a class="card-lock-link" href="transit-weekly.html">ALREADY HAVE A STRIP? ADD TRANSIT WEEKLY</a>
-    <p class="fine">Transits to your Sun only, with the life areas counted from your Sun sign, not from your personal houses. Precise transits need your exact birth time and a full reading of your birth chart first. Week from Monday to Sunday, German time.</p>
+    ${next ? `<div class="tr-next">${section(next, L('NEXT WEEK', 'NÄCHSTE WOCHE'))}</div>` : ''}
+    <p class="tr-more">${L('This is your Sun only. Transits to your Moon, your Rising or the other planets can stir up just as much, sometimes more. The Maxi Strip reads your birth chart as it is; the Ultra Strip adds an overview of your coming transits. Add Transit Weekly to either one: your transits week by week in the life areas you choose, <span data-tw-month>29 €</span> a month per area<span class="tw-founding"> (founding price)</span>.',
+      'Das ist nur deine Sonne. Transite zu deinem Mond, deinem Aszendenten oder den anderen Planeten können genauso viel aufwühlen, manchmal mehr. Der Maxi Strip liest dein Geburtshoroskop, wie es ist; der Ultra Strip ergänzt einen Überblick über deine kommenden Transite. Zu beiden kannst du Transit Weekly dazubuchen: deine Transite Woche für Woche in den Lebensbereichen, die du wählst, <span data-tw-month>29 €</span> im Monat je Bereich<span class="tw-founding"> (Gründungspreis)</span>.')}</p>
+    <a class="card-lock-link" href="#strips">${L('SEE THE STRIPS', 'ZU DEN STRIPS')}</a> <a class="card-lock-link" href="transit-weekly.html">${L('ALREADY HAVE A STRIP? ADD TRANSIT WEEKLY', 'SCHON EINEN STRIP? TRANSIT WEEKLY DAZUBUCHEN')}</a>
+    <p class="fine">${L('Transits to your Sun only, with the life areas counted from your Sun sign, not from your personal houses. Precise transits need your exact birth time and a full reading of your birth chart first. Week from Monday to Sunday, German time.',
+      'Nur Transite zu deiner Sonne, die Lebensbereiche gezählt ab deinem Sonnenzeichen, nicht ab deinen persönlichen Häusern. Für genaue Transite braucht es deine exakte Geburtszeit und zuerst eine vollständige Deutung deines Geburtshoroskops. Woche von Montag bis Sonntag, deutsche Zeit.')}</p>
   </div>`;
 }
 
@@ -538,12 +560,19 @@ async function transitBlock(sunLon, cusps = null, nowMs = Date.now()) {
 // Secondary progressions, one day after birth = one tropical year. The progressed Moon meets the progressed Sun
 // about every 29.5 years; the school teaches four phases of about 7.4 years (L17 pp. 23-24). Texts approved by Sandra.
 const TROP_YEAR = 365.24219;
-const LUNATION = [
+const LUNATION_EN = [
   { label: 'NEW MOON PHASE', text: 'Something new is taking shape in you, often below the surface and before you can put it into words. You may not know yet where it\'s heading. You\'re also more open than usual to whatever wants to begin.' },
   { label: 'FIRST QUARTER', text: 'What started some years ago now wants to become real. This is a phase of pushing ahead and of running into resistance, around you or within you. Frustration is part of it when the new demands feel like a lot. What helps is acting on purpose and facing the obstacles instead of waiting them out.' },
   { label: 'FULL MOON PHASE', text: 'This is the high point of your current cycle: what you started years ago is showing its results. It can feel fulfilling, eye-opening, or like a crisis. Goals, relationships and the way you\'ve set up your life get a hard look. Sudden insights are likely, and so is a wobble when your past and your future no longer fit together.' },
   { label: 'LAST QUARTER', text: 'The direction that has carried you for years starts to matter less. This is a phase of looking back, reorganising things inside and letting go of old habits and ideas. The task now is to see clearly what you\'re ready to leave behind, so there\'s room for what comes next.' },
 ];
+// German phase texts: translation of the approved English ones (Sandra reviews, plans/website-deutsch.md B)
+const LUNATION = DE ? [
+  { label: 'NEUMONDPHASE', text: 'In dir nimmt etwas Neues Gestalt an, oft unter der Oberfläche und bevor du es in Worte fassen kannst. Vielleicht weißt du noch nicht, wohin es führt. Du bist jetzt auch offener als sonst für alles, was beginnen will.' },
+  { label: 'ERSTES VIERTEL', text: 'Was vor einigen Jahren begonnen hat, will jetzt Wirklichkeit werden. Das ist eine Phase des Vorangehens und des Widerstands, um dich herum oder in dir. Frust gehört dazu, wenn das Neue viel verlangt. Was hilft: bewusst handeln und dich den Hindernissen stellen, statt sie auszusitzen.' },
+  { label: 'VOLLMONDPHASE', text: 'Das ist der Höhepunkt deines jetzigen Zyklus: Was du vor Jahren begonnen hast, zeigt seine Ergebnisse. Das kann sich erfüllend anfühlen, erhellend oder wie eine Krise. Ziele, Beziehungen und die Art, wie du dein Leben eingerichtet hast, kommen auf den Prüfstand. Plötzliche Einsichten sind wahrscheinlich, ebenso, dass du ins Wanken gerätst, wenn deine Vergangenheit und deine Zukunft nicht mehr zusammenpassen.' },
+  { label: 'LETZTES VIERTEL', text: 'Die Richtung, die dich jahrelang getragen hat, verliert an Bedeutung. Das ist eine Phase des Zurückschauens, des inneren Neuordnens und des Loslassens alter Gewohnheiten und Vorstellungen. Die Aufgabe ist jetzt, klar zu sehen, was du hinter dir lassen kannst, damit Platz für das Nächste entsteht.' },
+] : LUNATION_EN;
 
 // Phase now, with the calendar years it began and ends (never a future year for the start). Same method as
 // prog_lunation() in the /psychologisch calculator. start is null when the phase began before birth.
@@ -585,7 +614,20 @@ function progressedLunation(swe, jdBirth, nowMs = Date.now()) {
 
 // Life areas for the house of the last progressed New Moon (school keywords L1, wording table in
 // reference/haeuser-psychologisch.md; approved by Sandra 06.10.2026)
-const HOUSE_AREAS = [
+const HOUSE_AREAS = DE ? [
+  'wie du auf andere wirkst und wie du Dinge anpackst',
+  'Geld, Besitz und was dir wertvoll ist',
+  'Kontakt, Kommunikation und Lernen',
+  'Zuhause, Familie und deine Wurzeln',
+  'Kreativität, Freude, Spiel und Romantik',
+  'Alltag, Arbeitsroutinen und dein Rhythmus',
+  'Partnerschaft und Beziehungen zu zweit',
+  'tiefe Bindungen, Krisen und was du mit anderen teilst',
+  'Sinn, Überzeugungen, Reisen und Weiterbildung',
+  'Berufung, Status und deine öffentliche Rolle',
+  'Freunde, Gruppen und gemeinsame Visionen',
+  'Rückzug, Stille und deine innere Welt',
+] : [
   'how you come across and how you start things',
   'money, what you own and what you value',
   'contact, communication and learning',
@@ -602,10 +644,10 @@ const HOUSE_AREAS = [
 
 function newMoonLine(lu, cusps) {
   if (lu.newMoonLon === null) return '';
-  const when = lu.newMoonYear === null ? 'before you were born' : `around ${lu.newMoonYear}`;
-  if (!cusps) return `<p class="tr-text">This cycle began ${when} with your progressed New Moon.</p>`;
+  const when = lu.newMoonYear === null ? L('before you were born', 'vor deiner Geburt') : L(`around ${lu.newMoonYear}`, `um ${lu.newMoonYear}`);
+  if (!cusps) return `<p class="tr-text">${L(`This cycle began ${when} with your progressed New Moon.`, `Dieser Zyklus begann ${when} mit deinem progressiven Neumond.`)}</p>`;
   const h = houseOf(lu.newMoonLon, cusps);
-  return `<p class="tr-text">This cycle began ${when} with your progressed New Moon in your ${ordinal(h)} house: ${HOUSE_AREAS[h - 1]}.</p>`;
+  return `<p class="tr-text">${L(`This cycle began ${when} with your progressed New Moon in your ${ordinal(h)} house: ${HOUSE_AREAS[h - 1]}.`, `Dieser Zyklus begann ${when} mit deinem progressiven Neumond in deinem ${ordinal(h)} Haus: ${HOUSE_AREAS[h - 1]}.`)}</p>`;
 }
 
 // The cycle as a circle: New Moon at the top, clockwise through the four phases; the arc of the current phase in gold,
@@ -622,55 +664,60 @@ function lunationSvg(lu) {
     return `<g class="lu-moon${i === lu.phase ? ' lu-moon-now' : ''}"><circle class="lu-disc" cx="${x}" cy="${y}" r="${m}"/>${lit}<circle class="lu-rim" cx="${x}" cy="${y}" r="${m}"/></g>`;
   };
   const [dx, dy] = at(lu.elong);
-  return `<svg class="lu-wheel" viewBox="0 0 220 220" role="img" aria-label="The progressed lunation cycle: you are in the ${LUNATION[lu.phase].label.toLowerCase()}">
+  return `<svg class="lu-wheel" viewBox="0 0 220 220" role="img" aria-label="${L(`The progressed lunation cycle: you are in the ${LUNATION[lu.phase].label.toLowerCase()}`, `Der progressive Mondzyklus, deine Phase jetzt: ${LUNATION[lu.phase].label}`)}">
     <circle class="lu-ring" cx="${c}" cy="${c}" r="${r}"/>
     <path class="lu-arc" d="M${ax},${ay} A${r},${r} 0 0,1 ${bx},${by}"/>
     ${[0, 1, 2, 3].map(moon).join('')}
     <circle class="lu-dot" cx="${dx}" cy="${dy}" r="4.5"/>
-    <text class="lu-center" x="${c}" y="${c - 4}" text-anchor="middle">ONE CYCLE</text>
-    <text class="lu-center" x="${c}" y="${c + 12}" text-anchor="middle">≈ 29.5 YEARS</text>
+    <text class="lu-center" x="${c}" y="${c - 4}" text-anchor="middle">${L('ONE CYCLE', 'EIN ZYKLUS')}</text>
+    <text class="lu-center" x="${c}" y="${c + 12}" text-anchor="middle">${L('≈ 29.5 YEARS', '≈ 29,5 JAHRE')}</text>
   </svg>`;
 }
 
 // Explanation behind "What is the progressed Moon?": school L17 pp. 23-24 (lunation cycle ~29.5 years, four phases,
 // sign and house of the progressed New Moon); "two or three cycles in a long life" is arithmetic, not a source claim.
 // Layout and wording approved by Sandra 06.10.2026.
-const LUNATION_SHORT = ['A new beginning, often below the surface.', 'Pushing ahead, meeting resistance.', 'Results, insight, or a crisis.', 'Looking back, letting go.'];
+const LUNATION_SHORT = DE ? ['Ein Neubeginn, oft unter der Oberfläche.', 'Vorangehen, auf Widerstand treffen.', 'Ergebnisse, Einsicht oder eine Krise.', 'Zurückschauen, loslassen.']
+  : ['A new beginning, often below the surface.', 'Pushing ahead, meeting resistance.', 'Results, insight, or a crisis.', 'Looking back, letting go.'];
 
 function lunationBlock(lu, timeKnown, cusps = null) {
   if (!lu || lu.end === null) return '';
-  const L = LUNATION[lu.phase];
-  const since = lu.start === null ? 'SINCE BIRTH' : `SINCE ABOUT ${lu.start}`;
+  const P = LUNATION[lu.phase];
+  const since = lu.start === null ? L('SINCE BIRTH', 'SEIT DER GEBURT') : L(`SINCE ABOUT ${lu.start}`, `SEIT ETWA ${lu.start}`);
   const frac = Math.min(1, Math.max(0, (lu.elong - 90 * lu.phase) / 90));
   return `<div class="lunation panel">
-    <h3 class="sub-title">Your progressed Moon phase</h3>
-    <p class="kicker">${L.label} · ${since} · UNTIL ABOUT ${lu.end}</p>
+    <h3 class="sub-title">${L('Your progressed Moon phase', 'Deine progressive Mondphase')}</h3>
+    <p class="kicker">${P.label} · ${since} · ${L('UNTIL ABOUT', 'BIS ETWA')} ${lu.end}</p>
     <div class="lu-grid">
       ${lunationSvg(lu)}
       <div class="lu-body">
-        ${lu.phase === 0 ? '<p class="lu-lead">A new chapter of your life has begun, and it often takes a while before its direction is clear.</p>' : ''}
+        ${lu.phase === 0 ? `<p class="lu-lead">${L('A new chapter of your life has begun, and it often takes a while before its direction is clear.', 'Ein neues Kapitel deines Lebens hat begonnen, und oft dauert es eine Weile, bis seine Richtung klar ist.')}</p>` : ''}
         ${newMoonLine(lu, cusps)}
-        <p class="tr-text">${esc(L.text)}</p>
+        <p class="tr-text">${esc(P.text)}</p>
         <div class="lu-time" aria-hidden="true">
-          <div class="lu-bar"><span class="lu-fill" style="width:${(frac * 100).toFixed(1)}%"></span><span class="lu-now" style="left:${(frac * 100).toFixed(1)}%"><i>NOW</i></span></div>
-          <div class="lu-years"><span>${lu.start === null ? 'BIRTH' : lu.start}</span><span>${lu.end}</span></div>
+          <div class="lu-bar"><span class="lu-fill" style="width:${(frac * 100).toFixed(1)}%"></span><span class="lu-now" style="left:${(frac * 100).toFixed(1)}%"><i>${L('NOW', 'JETZT')}</i></span></div>
+          <div class="lu-years"><span>${lu.start === null ? L('BIRTH', 'GEBURT') : lu.start}</span><span>${lu.end}</span></div>
         </div>
       </div>
     </div>
     ${lu.phase === 3
-      ? `<p class="tr-more">Your next progressed New Moon comes around ${lu.end} and opens a new cycle of about 30 years. Want to know what it holds for you? The Ultra Strip reads the sign and the area of your life where it falls, and where your current cycle began.</p>`
-      : '<p class="tr-more">What is this chapter about for you, in detail? The Ultra Strip reads it in depth, including the sign, the different stages and the area of your life.</p>'}
-    <a class="card-lock-link" href="#strips">SEE THE ULTRA STRIP</a>
+      ? `<p class="tr-more">${L(`Your next progressed New Moon comes around ${lu.end} and opens a new cycle of about 30 years. Want to know what it holds for you? The Ultra Strip reads the sign and the area of your life where it falls, and where your current cycle began.`,
+        `Dein nächster progressiver Neumond kommt um ${lu.end} und öffnet einen neuen Zyklus von etwa 30 Jahren. Du willst wissen, was er für dich bereithält? Der Ultra Strip deutet das Zeichen und den Lebensbereich, in den er fällt, und wo dein jetziger Zyklus begann.`)}</p>`
+      : `<p class="tr-more">${L('What is this chapter about for you, in detail? The Ultra Strip reads it in depth, including the sign, the different stages and the area of your life.', 'Worum geht es in diesem Kapitel für dich, im Detail? Der Ultra Strip deutet es ausführlich, mit dem Zeichen, den einzelnen Etappen und dem Lebensbereich.')}</p>`}
+    <a class="card-lock-link" href="#strips">${L('SEE THE ULTRA STRIP', 'ZUM ULTRA STRIP')}</a>
     <details class="lu-info">
-      <summary>What is the progressed Moon?</summary>
+      <summary>${L('What is the progressed Moon?', 'Was ist der progressive Mond?')}</summary>
       <div class="lu-info-body">
-        <p>Progressions are a slow clock in your birth chart: each day after your birth stands for one year of your life. In this clock the Moon moves fastest. About every 29.5 years it catches up with the Sun, and that meeting, the progressed New Moon, opens a new chapter of your life. From there the cycle runs like the Moon in the sky, through four phases of about seven years each.</p>
-        <p>It doesn't name events. It shows the inner rhythm behind them: how what you want (your Sun) and what you need (your Moon) find each other over the years. When something new begins in you, when it pushes to become real, when it bears fruit, and when it's time to let go.</p>
-        <ul class="lu-phases">${LUNATION.map((p, i) => `<li${i === lu.phase ? ' class="lu-phase-now"' : ''}><b>${p.label}</b><span>${LUNATION_SHORT[i]}${i === lu.phase ? ' <em>You are here.</em>' : ''}</span></li>`).join('')}</ul>
-        <p>In a long life you go through two or three of these cycles. Where yours began, in which sign and in which area of your life, says what the current chapter is about.</p>
+        <p>${L('Progressions are a slow clock in your birth chart: each day after your birth stands for one year of your life. In this clock the Moon moves fastest. About every 29.5 years it catches up with the Sun, and that meeting, the progressed New Moon, opens a new chapter of your life. From there the cycle runs like the Moon in the sky, through four phases of about seven years each.',
+          'Progressionen sind eine langsame Uhr in deinem Geburtshoroskop: Jeder Tag nach deiner Geburt steht für ein Jahr deines Lebens. In dieser Uhr bewegt sich der Mond am schnellsten. Etwa alle 29,5 Jahre holt er die Sonne ein, und diese Begegnung, der progressive Neumond, öffnet ein neues Kapitel deines Lebens. Von dort läuft der Zyklus wie der Mond am Himmel durch vier Phasen von je etwa sieben Jahren.')}</p>
+        <p>${L("It doesn't name events. It shows the inner rhythm behind them: how what you want (your Sun) and what you need (your Moon) find each other over the years. When something new begins in you, when it pushes to become real, when it bears fruit, and when it's time to let go.",
+          'Er benennt keine Ereignisse. Er zeigt den inneren Rhythmus dahinter: wie das, was du willst (deine Sonne), und das, was du brauchst (dein Mond), über die Jahre zueinanderfinden. Wann in dir etwas Neues beginnt, wann es Wirklichkeit werden will, wann es Früchte trägt und wann es Zeit ist loszulassen.')}</p>
+        <ul class="lu-phases">${LUNATION.map((p, i) => `<li${i === lu.phase ? ' class="lu-phase-now"' : ''}><b>${p.label}</b><span>${LUNATION_SHORT[i]}${i === lu.phase ? ` <em>${L('You are here.', 'Hier bist du.')}</em>` : ''}</span></li>`).join('')}</ul>
+        <p>${L('In a long life you go through two or three of these cycles. Where yours began, in which sign and in which area of your life, says what the current chapter is about.',
+          'In einem langen Leben durchläufst du zwei oder drei dieser Zyklen. Wo deiner begann, in welchem Zeichen und in welchem Lebensbereich, sagt, worum es im jetzigen Kapitel geht.')}</p>
       </div>
     </details>
-    <p class="fine">Calculated with secondary progressions.${timeKnown ? '' : ' Without a birth time the chart is set for noon, so the start and end of your phase can shift by up to half a year either way.'}</p>
+    <p class="fine">${L('Calculated with secondary progressions.', 'Berechnet mit Sekundärprogressionen.')}${timeKnown ? '' : L(' Without a birth time the chart is set for noon, so the start and end of your phase can shift by up to half a year either way.', ' Ohne Geburtszeit ist das Horoskop für 12 Uhr mittags berechnet, Beginn und Ende deiner Phase können sich deshalb um bis zu ein halbes Jahr verschieben.')}</p>
   </div>`;
 }
 
@@ -678,51 +725,53 @@ function lunationBlock(lu, timeKnown, cusps = null) {
 // Free calculator (Sandra, 02.10.2026): every card keeps its sign text; only the Sun gets its degree text.
 // Rising and Moon show their degree with a pointer to the strips. Their degree texts are not in the public files.
 async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked = false } = {}) {
+  const key = SIGN_KEYS[signOf(lon)]; // text files and TEXTS are keyed in English
   const sign = SIGNS[signOf(lon)];
   const deg = countedDegree(lon);
-  const [head, body] = TEXTS[sign][role];
+  const [head, body] = TEXTS[key][role];
   const r = ROLES[role];
   if (locked) {
     return `<article class="card card-locked">
     <p class="card-role">${r.role}</p>
-    <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
+    <h3 class="card-title">${r.label} ${signIn(signOf(lon))}</h3>
     <p class="card-head">${esc(head)}</p>
     <p class="card-body card-sign">${esc(body)}</p>
     <div class="card-degree">
-    ${degreeKnown ? `<p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>` : ''}
-    <p class="card-body card-lock-text">For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.</p>
-    <a class="card-lock-link" href="#strips">SEE THE STRIPS</a>
+    ${degreeKnown ? `<p class="card-degree-label">${L('YOUR DEGREE', 'DEIN GRAD')} · ${sign.toUpperCase()} ${deg}</p>` : ''}
+    <p class="card-body card-lock-text">${L(`For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.`,
+      `Was ${degreeKnown ? 'dieser Grad' : role === 'moon' ? 'dein Mond' : 'dein Aszendent'} genau bedeutet und wie er sich in dein ganzes Horoskop fügt, liest du in den Strips.`)}</p>
+    <a class="card-lock-link" href="#strips">${L('SEE THE STRIPS', 'ZU DEN STRIPS')}</a>
     </div>
     ${extra}
   </article>`;
   }
   // Still growing / grown into it form (Sandra, 10.10.2026): same structure as the carousel degree slides.
-  const reif = degreeKnown && role === 'sun' ? await degreeText(sign, deg, 'growing') : null;
-  const dt = degreeKnown && !reif ? await degreeText(sign, deg, role) : null;
+  const reif = degreeKnown && role === 'sun' ? await degreeText(key, deg, 'growing') : null;
+  const dt = degreeKnown && !reif ? await degreeText(key, deg, role) : null;
   // IN REAL LIFE line: Sun only, shown once a sign has it (Sandra, 02.10.2026).
-  const life = degreeKnown && dt && role === 'sun' ? await degreeText(sign, deg, 'life') : null;
+  const life = degreeKnown && dt && role === 'sun' ? await degreeText(key, deg, 'life') : null;
   let degreeBlock = '';
   if (reif) {
-    const [grown, before, after] = await Promise.all(['grown', 'before', 'after'].map(k => degreeText(sign, deg, k)));
+    const [grown, before, after] = await Promise.all(['grown', 'before', 'after'].map(k => degreeText(key, deg, k)));
     degreeBlock = `<div class="card-degree">
-      <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
-      <p class="card-body"><span class="card-stage">Still growing:</span> ${esc(reif)}</p>
-      <p class="card-body"><span class="card-stage">Grown into it:</span> ${esc(grown)}</p>
-      <p class="card-life-label">IN REAL LIFE</p>
-      <p class="card-life">Before: ${esc(before)}</p>
-      <p class="card-life card-life-after">After: ${esc(after)}</p>
+      <p class="card-degree-label">${L('YOUR DEGREE', 'DEIN GRAD')} · ${sign.toUpperCase()} ${deg}</p>
+      <p class="card-body"><span class="card-stage">${L('Still growing:', 'Noch im Wachsen:')}</span> ${esc(reif)}</p>
+      <p class="card-body"><span class="card-stage">${L('Grown into it:', 'Hineingewachsen:')}</span> ${esc(grown)}</p>
+      <p class="card-life-label">${L('IN REAL LIFE', 'IM ALLTAG')}</p>
+      <p class="card-life">${L('Before:', 'Vorher:')} ${esc(before)}</p>
+      <p class="card-life card-life-after">${L('After:', 'Nachher:')} ${esc(after)}</p>
     </div>`;
   } else if (degreeKnown) {
     degreeBlock = `<div class="card-degree">
-      <p class="card-degree-label">YOUR DEGREE · ${sign.toUpperCase()} ${deg}</p>
-      <p class="card-body">${dt ? esc(dt) : 'For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.'}</p>
-      ${life ? `<p class="card-life-label">IN REAL LIFE</p>
+      <p class="card-degree-label">${L('YOUR DEGREE', 'DEIN GRAD')} · ${sign.toUpperCase()} ${deg}</p>
+      <p class="card-body">${dt ? esc(dt) : L('For a precise reading of this degree, including how it fits into your whole chart, see the <a href="#strips">strips</a>.', 'Was dieser Grad genau bedeutet und wie er sich in dein ganzes Horoskop fügt, liest du in den <a href="#strips">Strips</a>.')}</p>
+      ${life ? `<p class="card-life-label">${L('IN REAL LIFE', 'IM ALLTAG')}</p>
       <p class="card-life">${esc(life)}</p>` : ''}
     </div>`;
   }
   return `<article class="card">
     <p class="card-role">${r.role}</p>
-    <h3 class="card-title">${r.label} IN ${sign.toUpperCase()}</h3>
+    <h3 class="card-title">${r.label} ${signIn(signOf(lon))}</h3>
     <p class="card-head">${esc(head)}</p>
     <p class="card-body card-sign">${esc(body)}</p>
     ${degreeBlock}${extra}
@@ -740,7 +789,7 @@ async function renderResult(chart, input) {
     if (signOf(s0) !== signOf(s1) || countedDegree(s0) !== countedDegree(s1)) {
       const from = `${SIGNS[signOf(s0)]} ${countedDegree(s0)}`;
       const to = `${SIGNS[signOf(s1)]} ${countedDegree(s1)}`;
-      sunOpts = { extra: `<p class="card-note">Without a birth time your Sun could be on ${from} or ${to}. The reading above is for noon; your birth time decides which one is yours.</p>` };
+      sunOpts = { extra: `<p class="card-note">${L(`Without a birth time your Sun could be on ${from} or ${to}. The reading above is for noon; your birth time decides which one is yours.`, `Ohne Geburtszeit könnte deine Sonne auf ${from} oder ${to} stehen. Die Deutung oben gilt für 12 Uhr mittags; deine Geburtszeit entscheidet, welcher Grad deiner ist.`)}</p>` };
     }
   }
   cards.push(await bigThreeCard('sun', sun.lon, sunOpts));
@@ -751,45 +800,45 @@ async function renderResult(chart, input) {
       locked: true,
       degreeKnown: false,
       extra: `<p class="card-note">${changed
-        ? `Without a birth time this is uncertain: on that day the Moon moved from ${SIGNS[signOf(chart.moonRange[0])]} into ${SIGNS[signOf(chart.moonRange[1])]}.`
-        : 'The Moon moves about 13 degrees a day, so without a birth time its exact degree, and with it the deeper reading, stays open.'}</p>`,
+        ? L(`Without a birth time this is uncertain: on that day the Moon moved from ${SIGNS[signOf(chart.moonRange[0])]} into ${SIGNS[signOf(chart.moonRange[1])]}.`, `Ohne Geburtszeit ist das unsicher: An diesem Tag wechselte der Mond vom Zeichen ${SIGNS[signOf(chart.moonRange[0])]} ins Zeichen ${SIGNS[signOf(chart.moonRange[1])]}.`)
+        : L('The Moon moves about 13 degrees a day, so without a birth time its exact degree, and with it the deeper reading, stays open.', 'Der Mond wandert etwa 13 Grad am Tag. Ohne Geburtszeit bleiben sein genauer Grad und damit die tiefere Deutung offen.')}</p>`,
     };
   }
   cards.push(await bigThreeCard('moon', moon.lon, { locked: true, ...moonOpts }));
   const transits = await transitBlock(sun.lon, chart.houses).catch(() => '');
 
   const rows = chart.planets.map(p => `<tr>
-      <td><span class="glyph">${p.glyph}${VS}</span>${esc(p.key)}</td>
+      <td><span class="glyph">${p.glyph}${VS}</span>${esc(pointName(p.key))}</td>
       <td>${signIcon(signOf(p.lon))} ${SIGNS[signOf(p.lon)]}</td>
-      <td class="num">${fmtDeg(p.lon)}${p.speed < 0 && p.key !== 'North Node' ? ' <span class="retro" title="retrograde">R</span>' : ''}</td>
+      <td class="num">${fmtDeg(p.lon)}${p.speed < 0 && p.key !== 'North Node' ? ` <span class="retro" title="${L('retrograde', 'rückläufig')}">R</span>` : ''}</td>
       ${chart.houses ? `<td class="num">${p.house}</td>` : ''}
     </tr>`).join('');
   const angleRows = chart.angles ? ['asc', 'mc'].map(k => `<tr>
-      <td><span class="glyph glyph-txt">${k === 'asc' ? 'AC' : 'MC'}</span>${k === 'asc' ? 'Ascendant' : 'Midheaven'}</td>
+      <td><span class="glyph glyph-txt">${k === 'asc' ? 'AC' : 'MC'}</span>${k === 'asc' ? L('Ascendant', 'Aszendent') : L('Midheaven', 'Himmelsmitte')}</td>
       <td>${signIcon(signOf(chart.angles[k]))} ${SIGNS[signOf(chart.angles[k])]}</td>
       <td class="num">${fmtDeg(chart.angles[k])}</td><td class="num">${k === 'asc' ? 1 : 10}</td></tr>`).join('') : '';
 
   // table: only the eight tightest, in 4 rows x 2 columns; the wheel still draws every aspect (Sandra, 06.10.2026)
-  const aspKey = k => k === 'North Node' ? '<span class="asp-long">North </span>Node' : esc(k); // "Node" on phones
+  const aspKey = k => k === 'North Node' ? L('<span class="asp-long">North </span>Node', '<span class="asp-long">Mond</span>knoten') : esc(pointName(k)); // "Node" on phones
   const aspectRows = chart.aspects.slice(0, 8).map(a => `<li>
       <span class="asp-pair">${aspKey(a.a.key)} <span class="glyph">${a.asp.glyph}${VS}</span> ${aspKey(a.b.key)}</span>
       <span class="asp-name">${a.asp.name}</span>
       <span class="asp-orb">${fmtOrb(a.orb)}</span></li>`).join('');
 
   const placeLine = `${input.place.name}${input.place.region ? ', ' + input.place.region : ''}, ${input.place.country}`;
-  const dateLine = new Date(Date.UTC(input.y, input.mo - 1, input.d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const timeLine = chart.timeKnown ? `${String(input.h).padStart(2, '0')}:${String(input.mi).padStart(2, '0')}` : 'time unknown';
-  let tzNote = `${fmtOffset(chart.offset)}${input.offsetOverride !== null ? ', set by you' : ''}`;
-  if (chart.note === 'gap') tzNote += '. Careful: this clock time did not exist that night (clocks jumped forward). Please check your time.';
-  if (chart.note === 'overlap') tzNote += '. Careful: this clock time happened twice that night (clocks went back). If you know it was the second one, set the time zone below manually.';
+  const dateLine = new Date(Date.UTC(input.y, input.mo - 1, input.d)).toLocaleDateString(L('en-GB', 'de-DE'), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const timeLine = chart.timeKnown ? `${String(input.h).padStart(2, '0')}:${String(input.mi).padStart(2, '0')}` : L('time unknown', 'Zeit unbekannt');
+  let tzNote = `${fmtOffset(chart.offset)}${input.offsetOverride !== null ? L(', set by you', ', von dir gesetzt') : ''}`;
+  if (chart.note === 'gap') tzNote += L('. Careful: this clock time did not exist that night (clocks jumped forward). Please check your time.', '. Achtung: Diese Uhrzeit gab es in dieser Nacht nicht (die Uhren wurden vorgestellt). Bitte prüfe deine Zeit.');
+  if (chart.note === 'overlap') tzNote += L('. Careful: this clock time happened twice that night (clocks went back). If you know it was the second one, set the time zone below manually.', '. Achtung: Diese Uhrzeit gab es in dieser Nacht zweimal (die Uhren wurden zurückgestellt). Wenn du weißt, dass es die zweite war, stell die Zeitzone unten von Hand ein.');
 
   $('#result').innerHTML = `
     <div class="result-head">
-      <p class="kicker">YOUR CHART</p>
+      <p class="kicker">${L('YOUR CHART', 'DEIN HOROSKOP')}</p>
       <h2 class="section-title">Stripped down.</h2>
       <p class="meta">${esc(dateLine)} · ${esc(timeLine)} · ${esc(placeLine)} · <span class="nowrap">${esc(tzNote)}</span></p>
     </div>
-    ${chart.timeKnown ? '' : '<p class="notice">No birth time, no Rising and no houses. The chart is set for noon. The planets almost always stay in their signs, but their exact degrees can shift, and the Moon can move by up to seven degrees either way.</p>'}
+    ${chart.timeKnown ? '' : `<p class="notice">${L('No birth time, no Rising and no houses. The chart is set for noon. The planets almost always stay in their signs, but their exact degrees can shift, and the Moon can move by up to seven degrees either way.', 'Ohne Geburtszeit gibt es keinen Aszendenten und keine Häuser. Das Horoskop ist für 12 Uhr mittags berechnet. Die Planeten bleiben fast immer in ihren Zeichen, aber ihre genauen Grade können sich verschieben, und der Mond kann bis zu sieben Grad in jede Richtung abweichen.')}</p>`}
     <div class="big-three">${cards.join('')}</div>
     ${transits}
     ${lunationBlock(chart.lunation, chart.timeKnown, chart.houses)}
@@ -797,22 +846,22 @@ async function renderResult(chart, input) {
       <figure class="wheel-wrap">${wheelSvg(chart)}</figure>
       <div class="tables">
         <table class="positions">
-          <thead><tr><th>Point</th><th>Sign</th><th class="num">Degree</th>${chart.houses ? '<th class="num">House</th>' : ''}</tr></thead>
+          <thead><tr><th>${L('Point', 'Punkt')}</th><th>${L('Sign', 'Zeichen')}</th><th class="num">${L('Degree', 'Grad')}</th>${chart.houses ? `<th class="num">${L('House', 'Haus')}</th>` : ''}</tr></thead>
           <tbody>${angleRows}${rows}</tbody>
         </table>
-        <p class="fine">Tropical zodiac · ${chart.houses ? esc(chart.houseSystem) + ' houses · ' : ''}true node · R = retrograde</p>
-        ${chart.houses ? '<p class="fine">The Rising moves one degree about every four minutes. If your birth time is rounded, your Rising degree may differ by one.</p>' : ''}
+        <p class="fine">${L('Tropical zodiac', 'Tropischer Tierkreis')} · ${chart.houses ? esc(chart.houseSystem) + L(' houses · ', '-Häuser · ') : ''}${L('true node · R = retrograde', 'wahrer Mondknoten · R = rückläufig')}</p>
+        ${chart.houses ? `<p class="fine">${L('The Rising moves one degree about every four minutes. If your birth time is rounded, your Rising degree may differ by one.', 'Der Aszendent rückt etwa alle vier Minuten um einen Grad weiter. Ist deine Geburtszeit gerundet, kann dein Aszendentengrad um eins abweichen.')}</p>` : ''}
       </div>
     </div>
     <div class="aspects">
-      <h3 class="sub-title">Aspects</h3>
-      <p class="fine">The eight tightest major aspects, with the orbs of our school: the tighter, the louder. The wheel draws all of them.</p>
-      <ul class="aspect-list">${aspectRows || '<li>No major aspects within orb.</li>'}</ul>
+      <h3 class="sub-title">${L('Aspects', 'Aspekte')}</h3>
+      <p class="fine">${L('The eight tightest major aspects, with the orbs of our school: the tighter, the louder. The wheel draws all of them.', 'Die acht engsten Hauptaspekte, mit den Orben unserer Schule: je enger, desto stärker. Das Rad zeigt alle.')}</p>
+      <ul class="aspect-list">${aspectRows || `<li>${L('No major aspects within orb.', 'Keine Hauptaspekte innerhalb des Orbis.')}</li>`}</ul>
     </div>
     <div class="teaser">
-      <p class="teaser-line">This is the outline.</p>
-      <p class="teaser-sub">A strip reads how it all works together.</p>
-      <a class="btn" href="#strips">SEE THE STRIPS</a>
+      <p class="teaser-line">${L('This is the outline.', 'Das ist der Umriss.')}</p>
+      <p class="teaser-sub">${L('A strip reads how it all works together.', 'Ein Strip deutet, wie alles zusammenwirkt.')}</p>
+      <a class="btn" href="#strips">${L('SEE THE STRIPS', 'ZU DEN STRIPS')}</a>
     </div>`;
   window.twApply?.($('#result')); // Transit Weekly price: founding or full (tw-price.js)
   $('#result').hidden = false;
@@ -828,7 +877,7 @@ function initForm() {
   const time = $('#time');
   const tzSelect = $('#tz-override');
   const status = $('#form-status');
-  const getPlace = attachPlaceSearch(placeInput, list, () => { status.textContent = 'The place list could not be loaded. Please reload the page.'; });
+  const getPlace = attachPlaceSearch(placeInput, list, () => { status.textContent = L('The place list could not be loaded. Please reload the page.', 'Die Ortsliste konnte nicht geladen werden. Bitte lade die Seite neu.'); });
 
   for (let m = -12 * 60; m <= 14 * 60; m += 15) {
     if (m % 60 !== 0 && ![-570, -210, 210, 270, 330, 345, 390, 525, 570, 630, 765, 825].includes(m) && m % 30 !== 0) continue;
@@ -847,31 +896,31 @@ function initForm() {
     e.preventDefault();
     status.textContent = '';
     const dateVal = $('#date').value;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) { status.textContent = 'Please enter your date of birth.'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) { status.textContent = L('Please enter your date of birth.', 'Bitte gib dein Geburtsdatum ein.'); return; }
     const [y, mo, d] = dateVal.split('-').map(Number);
-    if (y < 1900 || y > 2100) { status.textContent = 'Please enter a year between 1900 and 2100.'; return; }
+    if (y < 1900 || y > 2100) { status.textContent = L('Please enter a year between 1900 and 2100.', 'Bitte gib ein Jahr zwischen 1900 und 2100 ein.'); return; }
     const timeKnown = !unknown.checked;
     let h = 12, mi = 0;
     if (timeKnown) {
-      if (!/^\d{2}:\d{2}/.test(time.value)) { status.textContent = 'Please enter your birth time, or tick “I don’t know”.'; return; }
+      if (!/^\d{2}:\d{2}/.test(time.value)) { status.textContent = L('Please enter your birth time, or tick “I don’t know”.', 'Bitte gib deine Geburtszeit ein oder setz ein Häkchen bei „Ich kenne meine Geburtszeit nicht“.'); return; }
       [h, mi] = time.value.split(':').map(Number);
     }
     const chosen = await getPlace();
-    if (!chosen) { status.textContent = 'Please choose your birth place from the list.'; return; }
+    if (!chosen) { status.textContent = L('Please choose your birth place from the list.', 'Bitte wähle deinen Geburtsort aus der Liste.'); return; }
     const offsetOverride = tzSelect.value === 'auto' ? null : Number(tzSelect.value);
     const btn = $('#submit');
     btn.disabled = true;
-    btn.textContent = 'CALCULATING…';
+    btn.textContent = L('CALCULATING…', 'WIRD BERECHNET …');
     try {
       const input = { y, mo, d, h, mi, place: chosen, timeKnown, offsetOverride };
       const chart = await calculateChart(input);
       await renderResult(chart, input);
     } catch (err) {
       console.error(err);
-      status.textContent = 'Something went wrong with the calculation. Please try again.';
+      status.textContent = L('Something went wrong with the calculation. Please try again.', 'Bei der Berechnung ist etwas schiefgegangen. Bitte versuche es noch einmal.');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'STRIP MY CHART';
+      btn.textContent = L('STRIP MY CHART', 'HOROSKOP BERECHNEN');
     }
   });
 }

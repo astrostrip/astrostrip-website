@@ -1,4 +1,5 @@
 // Newsletter signup forms (index page, newsletter page). Double opt-in runs on the server (/api/subscribe).
+const L = (en, de) => (document.documentElement.lang === 'de' ? de : en); // German site /de/ (Sandra, 18.10.2026)
 for (const form of document.querySelectorAll('form.newsletter-form')) {
   const status = form.querySelector('.form-status');
   form.addEventListener('submit', async e => {
@@ -6,8 +7,8 @@ for (const form of document.querySelectorAll('form.newsletter-form')) {
     const email = form.querySelector('input[type=email]').value.trim();
     const consent = form.querySelector('input[name=consent]').checked;
     status.textContent = '';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status.textContent = 'Please enter a valid email address.'; return; }
-    if (!consent) { status.textContent = 'Please tick the box to agree to the newsletter.'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status.textContent = L('Please enter a valid email address.', 'Bitte gib eine gültige E-Mail-Adresse ein.'); return; }
+    if (!consent) { status.textContent = L('Please tick the box to agree to the newsletter.', 'Bitte setz das Häkchen, um dem Newsletter zuzustimmen.'); return; }
     const btn = form.querySelector('button');
     btn.disabled = true;
     try {
@@ -19,9 +20,9 @@ for (const form of document.querySelectorAll('form.newsletter-form')) {
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || '');
       form.reset();
-      status.textContent = 'Almost done: please check your inbox and confirm your signup.';
+      status.textContent = L('Almost done: please check your inbox and confirm your signup.', 'Fast geschafft: Schau in dein Postfach und bestätige deine Anmeldung.');
     } catch (err) {
-      status.textContent = err instanceof TypeError || !err.message ? 'Signup is not available right now. Please try again later.' : err.message;
+      status.textContent = err instanceof TypeError || !err.message ? L('Signup is not available right now. Please try again later.', 'Die Anmeldung ist gerade nicht möglich. Bitte versuche es später noch einmal.') : err.message;
     } finally {
       btn.disabled = false;
     }
