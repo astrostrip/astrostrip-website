@@ -1,0 +1,5 @@
+# astro.strip (Sandra, 18.10.2026): everything may be crawled; legal and order pages carry noindex themselves
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://astrostrip.com/sitemap.xml

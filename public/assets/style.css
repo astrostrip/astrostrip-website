@@ -103,7 +103,7 @@ p { margin: 0 0 1em; }
 .hero-logo .lw-star { fill: #ecd8a8; stroke: none; filter: drop-shadow(0 0 1px rgba(236, 216, 168, .6)); }
 .hero-logo .lw-glow { fill: url(#lw-glow-fill); stroke: none; }
 .hero-title { font-weight: 400; font-size: clamp(44px, 8vw, 92px); line-height: 1.02; margin: 0 0 24px; text-transform: uppercase; letter-spacing: .02em; }
-.hero-sub { max-width: 560px; margin: 0 auto 20px; color: var(--gold-italic); font-style: italic; font-size: clamp(17px, 2vw, 20px); }
+.hero-sub { max-width: 560px; margin: 0 auto 20px; color: var(--gold-italic); font-size: clamp(17px, 2vw, 20px); } /* upright, easier to read (Sandra, 18.10.2026) */
 
 /* form */
 .chart-form { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; max-width: 720px; margin: 0 auto; padding: clamp(24px, 4vw, 40px); border: 1px solid var(--line); background: rgba(10,10,10,.85); text-align: left; }
@@ -403,6 +403,16 @@ input::placeholder { color: #6f6556; font-style: italic; }
 
 .hero-invite { max-width: 560px; margin: 0 auto 48px; color: var(--cream); opacity: .85; font-size: 16px; }
 .hero-invite a { color: var(--gold); }
+/* section spacing and hero-invite line breaks (Sandra, 18.10.2026): less space above METHOD and NEWSLETTER everywhere,
+   above PERSONAL READINGS on phones; the hero-invite breaks after "Moon" and "pattern?" on laptops, only after "pattern?" on phones */
+.method { padding-top: 64px; }
+#newsletter { padding-top: 60px; }
+@media (max-width: 600px) {
+  .br-wide { display: none; }
+  .strips { padding-top: 56px; }
+  .method { padding-top: 48px; }
+  #newsletter { padding-top: 44px; }
+}
 /* free calculator: Rising and Moon are part of the Mini Strip */
 .card-lock-text { font-style: italic; opacity: .75; }
 .card-lock-link { display: inline-block; margin-top: 6px; font-size: 12px; letter-spacing: .24em; color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 2px; }

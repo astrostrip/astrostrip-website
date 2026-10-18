@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- only the two pages meant for search; legal and order pages are noindex (Sandra, 18.10.2026) -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://astrostrip.com/</loc></url>
+  <url><loc>https://astrostrip.com/newsletter.html</loc></url>
+</urlset>
