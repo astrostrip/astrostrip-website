@@ -417,6 +417,8 @@ function windowDays(c) {
 function weekLabel(data) {
   const [, m1, d1] = data.week.split('-').map(Number);
   const [, m2, d2] = data.until.split('-').map(Number);
+  // /de/: day before month, "9.–15. NOV" instead of "NOV 9–15" (Claude's proposal, Sandra 18.10.2026: "Ja mach das bitte")
+  if (DE) return m1 === m2 ? `${d1}.–${d2}. ${MONTHS[m1 - 1]}` : `${d1}. ${MONTHS[m1 - 1]}–${d2}. ${MONTHS[m2 - 1]}`;
   return m1 === m2 ? `${MONTHS[m1 - 1]} ${d1}–${d2}` : `${MONTHS[m1 - 1]} ${d1}–${MONTHS[m2 - 1]} ${d2}`;
 }
 

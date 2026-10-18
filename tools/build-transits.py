@@ -47,9 +47,16 @@ transit orbs (fast 5, slow 1, applying, same sign). A New Moon names the Full Mo
 stattfand, ist die Blütephase"). Eclipses are flagged (L15: half a year). Texts per Sun degree from lunation-texts.json,
 key '<NewMoon|FullMoon>|<date>|Sun <sign> N' (a lunation degree only comes back after 19 years, so no reuse).
 
+German texts for /de/ (plans/website-deutsch.md, section D, 18.10.2026): texts-de.json, moon-texts-de.json and
+lunation-texts-de.json next to the English files, same keys. The week file gets 'textsDe' for the texts of that week
+that have a German version; app.js shows it on /de/ and falls back to English. A German text is only taken while the
+English text in the week file is the one it was translated from (the source file). --de-only adds 'textsDe' to the
+existing week files without computing anything again, so everything else stays byte for byte.
+
 Usage (from the website folder, with pyswisseph installed):
     python3 tools/build-transits.py --from 2026-10-05 --weeks 65 \
         --ephe ../ephe --texts transits/texts.json --out public/data/transits
+    python3 tools/build-transits.py --from 2026-10-19 --weeks 4 --de-only
 """
 
 import argparse
@@ -58,7 +65,10 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import swisseph as swe
+try:
+    import swisseph as swe
+except ImportError:  # --de-only needs no ephemeris
+    swe = None
 
 TZ = ZoneInfo('Europe/Berlin')
 SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra',
@@ -67,7 +77,7 @@ PLANETS = [  # name, Swiss Ephemeris id, fast (ranked after the slow ones)
     ('Mercury', swe.MERCURY, True), ('Venus', swe.VENUS, True), ('Mars', swe.MARS, True),
     ('Jupiter', swe.JUPITER, False), ('Saturn', swe.SATURN, False), ('Uranus', swe.URANUS, False),
     ('Neptune', swe.NEPTUNE, False), ('Pluto', swe.PLUTO, False), ('Chiron', swe.CHIRON, False),
-]
+] if swe else []
 # offset from the transiting degree to the Sun degree -> aspect
 ASPECTS = {0: 'conjunction', 60: 'sextile', 300: 'sextile', 90: 'square', 270: 'square',
            120: 'trine', 240: 'trine', 180: 'opposition'}
@@ -376,6 +386,23 @@ def week(monday, texts, moon_texts=None, lun_texts=None):
     }
 
 
+def load(path):
+    p = Path(path)
+    return json.loads(p.read_text()) if p.exists() else {}
+
+
+def add_de(data, en_src, de):
+    """'textsDe' after 'texts': the German text of every key whose English text is the translated one."""
+    de_texts = {k: de[k] for k, v in data['texts'].items() if k in de and en_src.get(k) == v}
+    out = {}
+    for k, v in data.items():
+        if k != 'textsDe':
+            out[k] = v
+        if k == 'texts' and de_texts:
+            out['textsDe'] = de_texts
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--from', dest='first', required=True, help='a Monday, YYYY-MM-DD')
@@ -384,24 +411,35 @@ def main():
     ap.add_argument('--texts', default='transits/texts.json')
     ap.add_argument('--moon-texts', default='transits/moon-texts.json')
     ap.add_argument('--lunation-texts', default='transits/lunation-texts.json')
+    ap.add_argument('--texts-de', default='transits/texts-de.json')
+    ap.add_argument('--moon-texts-de', default='transits/moon-texts-de.json')
+    ap.add_argument('--lunation-texts-de', default='transits/lunation-texts-de.json')
+    ap.add_argument('--de-only', action='store_true', help='only add textsDe to the existing week files')
     ap.add_argument('--out', default='public/data/transits')
     a = ap.parse_args()
+    de = {**load(a.texts_de), **load(a.moon_texts_de), **load(a.lunation_texts_de)}
 
     monday = dt.date.fromisoformat(a.first)
     if monday.weekday() != 0:
         raise SystemExit(f'{monday} is not a Monday')
-    swe.set_ephe_path(a.ephe)
-    tp = Path(a.texts)
-    texts = json.loads(tp.read_text()) if tp.exists() else {}
-    mp = Path(a.moon_texts)
-    moon_texts = json.loads(mp.read_text()) if mp.exists() else {}
-    lp = Path(a.lunation_texts)
-    lun_texts = json.loads(lp.read_text()) if lp.exists() else {}
+    texts, moon_texts, lun_texts = load(a.texts), load(a.moon_texts), load(a.lunation_texts)
+    en_src = {**texts, **moon_texts, **lun_texts}
     out = Path(a.out)
+    if a.de_only:
+        for w in range(a.weeks):
+            f = out / f'{(monday + dt.timedelta(weeks=w)).isoformat()}.json'
+            if not f.exists():
+                print(f'{f.name}  missing, skipped')
+                continue
+            data = add_de(json.loads(f.read_text()), en_src, de)
+            f.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')))
+            print(f'{f.name}  {len(data.get("textsDe", {}))} of {len(data["texts"])} texts in German')
+        return
+    swe.set_ephe_path(a.ephe)
     out.mkdir(parents=True, exist_ok=True)
     for w in range(a.weeks):
         m = monday + dt.timedelta(weeks=w)
-        data = week(m, texts, moon_texts, lun_texts)
+        data = add_de(week(m, texts, moon_texts, lun_texts), en_src, de)
         (out / f'{m.isoformat()}.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')))
         n = sum(len(v) for v in data['hits'].values())
         keys = {k for c in data['moon'] for k in moon_keys(c)}
@@ -413,7 +451,8 @@ def main():
               + ''.join(f'; {x["kind"]} {x["exact"]} {SIGNS[x["moonDeg"] // 30]} {x["moonDeg"] % 30 + 1}'
                         f'{" (" + x["eclipse"] + " eclipse)" if x["eclipse"] else ""}, {len(x["hits"])} Sun degrees'
                         for x in data['lunations'])
-              + (f', {n_lun} of {len(lkeys)} lunation texts' if lkeys else ''))
+              + (f', {n_lun} of {len(lkeys)} lunation texts' if lkeys else '')
+              + f'; {len(data.get("textsDe", {}))} in German')
 
 
 if __name__ == '__main__':
