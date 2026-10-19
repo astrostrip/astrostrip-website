@@ -452,13 +452,30 @@ r = await worker.fetch(req('/api/confirm?t=' + token, 'GET'), env);
 assert.match(r.headers.get('Location'), /status=expired/, 'link works only once');
 r = await worker.fetch(req('/api/confirm?t=nonsense', 'GET'), env);
 assert.match(r.headers.get('Location'), /status=expired/);
+// free guide (Sandra, 19.10.2026): only after the confirmed signup, link on the page and by mail
+{
+  const { GUIDE_PATH } = await import('../src/worker.js');
+  mails.length = 0; lists.length = 0;
+  r = await worker.fetch(req('/api/subscribe', 'POST', { email: 'g@example.com', consent: true, source: 'guide' }, { ip: '5.5.6.1' }), env);
+  assert.equal(r.status, 200); assert.equal(mails.length, 1); assert.match(mails[0].subject, /confirm your signup to get your guide/);
+  assert.ok(!mails[0].text.includes(GUIDE_PATH), 'no guide link before confirming');
+  const gt = mails[0].text.match(/t=([0-9a-f]{64})/)[1];
+  r = await worker.fetch(req('/api/confirm?t=' + gt, 'GET', undefined, { ip: '5.5.6.2' }), env);
+  assert.equal(r.status, 303); assert.match(r.headers.get('Location'), /guide\.html\?status=confirmed/);
+  assert.deepEqual(lists.map(l => [l.list, l.Action, l.Email]), [['111', 'addforce', 'g@example.com']]);
+  assert.equal(mails.length, 2); assert.ok(mails[1].text.includes(GUIDE_PATH), 'guide link by mail');
+  assert.equal(JSON.parse(kv.get('consent:g@example.com')).events[0].source, 'guide');
+  const page = readFileSync(new URL('../public/guide.html', import.meta.url), 'utf8');
+  assert.ok(page.includes(GUIDE_PATH.slice(1)), 'download link on guide.html');
+  assert.ok(readFileSync(new URL('../public' + GUIDE_PATH, import.meta.url)).length > 10000, 'guide PDF is in public/');
+}
 console.log('newsletter ok');
 
 // consent wording on the pages must match the versioned proof texts
 {
   const { NEWSLETTER_CONSENT, CUSTOMER_NOTICE } = await import('../src/worker.js');
   const plain = f => readFileSync(new URL('../public/' + f, import.meta.url), 'utf8').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
-  for (const f of ['index.html', 'newsletter.html', 'order.html']) assert.ok(plain(f).includes(NEWSLETTER_CONSENT.en), 'newsletter wording differs on ' + f);
+  for (const f of ['index.html', 'newsletter.html', 'order.html', 'guide.html']) assert.ok(plain(f).includes(NEWSLETTER_CONSENT.en), 'newsletter wording differs on ' + f);
   assert.ok(plain('order.html').includes(CUSTOMER_NOTICE.en), 'customer notice differs on order.html');
   console.log('consent wording = proof ok');
 }
@@ -803,7 +820,7 @@ console.log('newsletter ok');
   out = await r.json(); assert.equal(r.status, 200); assert.match(out.endDe, /mit sofortiger Wirkung/);
   const cancelHtml = readFileSync(new URL('../public/cancel.html', import.meta.url), 'utf8');
   assert.ok(cancelHtml.includes('Verträge hier kündigen') && cancelHtml.includes('JETZT KÜNDIGEN'), '§ 312k wording of both buttons');
-  for (const page of ['index', 'order', 'terms', 'datenschutz', 'impressum', 'cancellation', 'withdraw', 'thanks', 'newsletter', 'transit-weekly']) {
+  for (const page of ['index', 'order', 'terms', 'datenschutz', 'impressum', 'cancellation', 'withdraw', 'thanks', 'newsletter', 'transit-weekly', 'guide']) {
     assert.ok(readFileSync(new URL(`../public/${page}.html`, import.meta.url), 'utf8').includes('href="cancel.html">Verträge hier kündigen'), `cancellation button on ${page}`);
   }
 

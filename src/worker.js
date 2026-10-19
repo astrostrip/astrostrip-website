@@ -737,9 +737,9 @@ export async function rateLimited(env, request, bucket, max, windowSec = 3600) {
 // ---------- newsletter (double opt-in) ----------
 // The consent wording is versioned; the proof stores which version was shown.
 export const NEWSLETTER_CONSENT = {
-  version: 'v2-2026-09-30',
-  en: 'Yes, send me the astro.strip newsletter by email: astrology insights and offers for readings and PDFs, about twice a month. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the privacy notice.',
-  de: 'Ja, schick mir den astro.strip-Newsletter per E-Mail: Astro-Impulse und Angebote zu Readings und PDFs, etwa zweimal im Monat. astro.strip darf auswerten, ob ich ihn öffne und welche Links ich anklicke, um ihn zu verbessern. Abmelden geht jederzeit über den Link in jeder Mail; damit endet auch diese Auswertung. Details in der Datenschutzerklärung.',
+  version: 'v3-2026-10-19', // v3: no frequency (Sandra, 19.10.2026: „Ich weiß noch nicht wie häufig“)
+  en: 'Yes, send me the astro.strip newsletter by email: regular updates on the stars and offers for readings and PDFs. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the privacy notice.',
+  de: 'Ja, schick mir den astro.strip-Newsletter per E-Mail: regelmäßige Updates zu den Sternen und Angebote zu Readings und PDFs. astro.strip darf auswerten, ob ich ihn öffne und welche Links ich anklicke, um ihn zu verbessern. Abmelden geht jederzeit über den Link in jeder Mail; damit endet auch diese Auswertung. Details in der Datenschutzerklärung.',
 };
 
 // Notice shown in the order form before payment (§ 7 Abs. 3 Nr. 4 UWG). Must be repeated in every such email.
@@ -760,10 +760,30 @@ async function logConsent(env, email, event) {
   await env.ORDERS.put(key, JSON.stringify(log));
 }
 
+// Free guide "The birth chart, stripped to the degree." (Sandra, 19.10.2026): only after a confirmed newsletter
+// signup, said openly on guide.html. The file is a public asset with an unlisted name (robots: Disallow).
+export const GUIDE_PATH = '/downloads/astrostrip-birth-chart-guide-34cdce3698ed.pdf';
+
 export async function startDoubleOptIn(env, email, source, ip) {
   const token = randomToken();
   await env.ORDERS.put(`doi:${token}`, JSON.stringify({ email, source, version: NEWSLETTER_CONSENT.version, requestedAt: Date.now(), ip }), { expirationTtl: DOI_TTL });
   const link = `${env.SITE_URL || 'https://astrostrip.com'}/api/confirm?t=${token}`;
+  if (source === 'guide') {
+    // English only, like the guide. Confirmation only, no advertising (BGH VI ZR 134/15).
+    await sendMail(env, {
+      to: email,
+      subject: 'Please confirm your signup to get your guide',
+      text: [
+        'Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your free guide "The birth chart, stripped to the degree.":',
+        link,
+        '',
+        'The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.',
+        '',
+        'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
+      ].join('\n'),
+    });
+    return;
+  }
   // Confirmation only, no advertising in this mail (BGH VI ZR 134/15).
   await sendMail(env, {
     to: email,
@@ -1541,7 +1561,7 @@ async function handleSubscribe(request, env) {
   if (!isEmail(b.email)) return json({ error: 'Please enter a valid email address.' }, 400);
   if (b.consent !== true) return json({ error: 'Please tick the box to agree to the newsletter.' }, 400);
   if (await rateLimited(env, request, 'subscribe', 5)) return json({ error: 'Too many attempts. Please try again later.' }, 429);
-  const source = ['calculator', 'newsletter-page', 'footer'].includes(b.source) ? b.source : 'website';
+  const source = ['calculator', 'newsletter-page', 'footer', 'guide'].includes(b.source) ? b.source : 'website';
   await startDoubleOptIn(env, String(b.email).trim(), source, request.headers.get('CF-Connecting-IP') || '');
   return json({ ok: true }); // same answer whether or not the address is already subscribed
 }
@@ -1550,7 +1570,7 @@ async function handleConfirm(request, env) {
   const site = env.SITE_URL || new URL(request.url).origin;
   const token = new URL(request.url).searchParams.get('t') || '';
   const raw = /^[0-9a-f]{64}$/.test(token) ? await env.ORDERS.get(`doi:${token}`) : null;
-  if (!raw) return Response.redirect(`${site}/newsletter.html?status=expired`, 303);
+  if (!raw) return Response.redirect(`${site}/newsletter.html?status=expired`, 303); // also for the guide: sign up again there
   const d = JSON.parse(raw);
   await mailjetList(env, env.MAILJET_NEWSLETTER_LIST_ID, d.email, 'addforce');
   await logConsent(env, d.email, {
@@ -1559,6 +1579,24 @@ async function handleConfirm(request, env) {
     ipRequest: d.ip || '', ipConfirm: request.headers.get('CF-Connecting-IP') || '',
   });
   await env.ORDERS.delete(`doi:${token}`);
+  if (d.source === 'guide') {
+    // The guide the person asked for: a service mail with the link, so it is not lost with the browser tab.
+    try {
+      await sendMail(env, {
+        to: d.email,
+        subject: 'Your guide: The birth chart, stripped to the degree.',
+        text: [
+          'Thank you for confirming. Here is your free guide:',
+          `${site}${GUIDE_PATH}`,
+          '',
+          'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
+        ].join('\n'),
+      });
+    } catch (err) {
+      console.error('guide mail failed', err); // the page still shows the download
+    }
+    return Response.redirect(`${site}/guide.html?status=confirmed`, 303);
+  }
   return Response.redirect(`${site}/newsletter.html?status=confirmed`, 303);
 }
 

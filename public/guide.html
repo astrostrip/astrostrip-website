@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free guide · The birth chart, stripped to the degree · astro.strip</title>
+  <meta name="description" content="Free guide: how a birth chart is built, what planets, signs, houses and aspects stand for, and why the degree changes everything.">
+  <link rel="canonical" href="https://astrostrip.com/guide.html">
+  <meta property="og:title" content="The birth chart, stripped to the degree · astro.strip">
+  <meta property="og:description" content="Free guide: planets, signs, houses, aspects. Read in the right order.">
+  <meta property="og:url" content="https://astrostrip.com/guide.html">
+  <meta property="og:image" content="https://astrostrip.com/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    /* free guide (Sandra, 19.10.2026): cover beside the signup, stacked on phones */
+    .guide { max-width: 980px; }
+    .guide-grid { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 48px; align-items: start; text-align: left; margin-top: 8px; }
+    .guide-cover { width: 100%; height: auto; border: 1px solid var(--line); display: block; }
+    .guide-list { margin: 18px 0 0; padding-left: 18px; color: var(--cream); opacity: .9; }
+    .guide-list li { margin-bottom: 6px; }
+    .guide-terms { margin: 22px 0 0; padding: 14px 18px; border-left: 1px solid var(--gold); color: var(--gold-italic); font-style: italic; }
+    .guide-ready { text-align: center; }
+    .guide-ready .btn { margin-top: 18px; }
+    @media (max-width: 720px) { .guide-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; } .guide-cover { max-width: 170px; margin: 0 auto; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+  <main class="newsletter newsletter-page guide">
+    <div id="guide-ready" class="guide-ready" hidden>
+      <p class="kicker">YOU’RE IN</p>
+      <h1 class="section-title">Here is your guide.</h1>
+      <p class="section-sub" style="margin: 0 auto">Thank you for confirming. We also sent you the link by email, so you can find it again later.</p>
+      <a class="btn btn-solid" href="downloads/astrostrip-birth-chart-guide-34cdce3698ed.pdf" target="_blank" rel="noopener">OPEN THE GUIDE (PDF)</a>
+      <p class="fine">Next step: find your exact Sun degree for free on <a href="index.html#chart">astrostrip.com</a>.</p>
+    </div>
+    <div id="guide-signup">
+      <p class="kicker">FREE GUIDE</p>
+      <h1 class="section-title">The birth chart,<br><em>stripped to the degree.</em></h1>
+      <div class="guide-grid">
+        <img class="guide-cover" src="assets/guide-cover.jpg" width="827" height="1170" alt="Cover of the free guide: The birth chart, stripped to the degree. A gold zodiac wheel on black.">
+        <div>
+          <p class="section-sub">Planets, signs, houses, aspects. Read in the right order. A PDF of 13 pages, in English.</p>
+          <ul class="guide-list">
+            <li>How a birth chart is built, and how to read the wheel</li>
+            <li>What planets, signs and houses stand for</li>
+            <li>Aspects: how the planets talk to each other</li>
+            <li>Why the exact degree changes everything</li>
+            <li>A chart read step by step</li>
+          </ul>
+          <p class="guide-terms">The guide is free and comes with the astro.strip newsletter: regular updates on the stars. Sign up, confirm your email, and you get the download link right away.</p>
+          <form class="newsletter-form" data-source="guide" novalidate>
+            <div class="newsletter-row">
+              <label for="nl-email" class="sr-only">Email</label>
+              <input id="nl-email" type="email" placeholder="Your email" autocomplete="email" required>
+              <button class="btn btn-solid" type="submit">GET THE GUIDE</button>
+            </div>
+            <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label class="check"><input type="checkbox" name="consent"><span>Yes, send me the astro.strip newsletter by email: regular updates on the stars and offers for readings and PDFs. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the <a href="datenschutz.html">privacy notice</a>.</span></label>
+            <p class="form-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a><a href="cancel.html">Verträge hier kündigen · Cancel contracts here</a></nav>
+  </footer>
+  <script>
+    if (new URLSearchParams(location.search).get('status') === 'confirmed') {
+      document.getElementById('guide-ready').hidden = false;
+      document.getElementById('guide-signup').hidden = true;
+    }
+  </script>
+  <script type="module" src="assets/newsletter.js"></script>
+</body>
+</html>
