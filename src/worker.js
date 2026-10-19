@@ -1609,39 +1609,63 @@ const STAT_CARD = new Set(['mini', 'maxi', 'ultra']);
 export const STAT_MIN_COUNTRY = 5;
 // ISO 3166-1 alpha-2 from request.cf.country; anything else (missing, "XX" unknown, "T1" Tor) counts as "XX".
 const statCountry = request => { const c = request.cf && request.cf.country; return typeof c === 'string' && /^[A-Z]{2}$/.test(c) ? c : 'XX'; };
-export const STATS_ROLLUP_CRON = '10 1 * * 1'; // Monday 01:10 UTC, always after Monday 00:00 Berlin
+// Monday 01:10 UTC, always after Monday 00:00 Berlin. Weekday as "MON", never as a number: Cloudflare counts 1 = Sunday
+// (developers.cloudflare.com/workers/configuration/cron-triggers/); "10 1 * * 1" ran on Sundays until 19.10.2026, so the
+// Monday report found no sum. Must match wrangler.jsonc exactly (event.cron is the configured string).
+export const STATS_ROLLUP_CRON = '10 1 * * MON';
+// First counted week (counting live since 09.10.2026); the rollup never looks further back.
+const STATS_FIRST_WEEK = '2026-10-05';
+// Weeks the rollup looks back for a missing sum (Analytics Engine keeps raw points about 3 months).
+const STATS_CATCHUP_WEEKS = 8;
 
-// A visit (by source and estimated country) or a click on one of the three preview tabs. No IP, no cookie,
+// A visit (by source, estimated country and page language en/de, Sandra 19.10.2026) or a click on one of the three preview tabs. No IP, no cookie,
 // no per-visitor id — only the categories are written to Workers Analytics Engine. Always 204, even on a bad body: this must
 // never surface an error to a visitor or cost more than a trivial amount of CPU.
 async function handleStat(request, env) {
   let b;
   try { b = await request.json(); } catch { return new Response(null, { status: 204 }); }
   if (!env.STATS || !b || typeof b !== 'object') return new Response(null, { status: 204 });
-  if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct', statCountry(request)], indexes: ['visit'] });
+  if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct', statCountry(request), b.lang === 'de' ? 'de' : 'en'], indexes: ['visit'] });
   else if (b.event === 'click' && STAT_CARD.has(b.card)) env.STATS.writeDataPoint({ blobs: ['click', b.card], indexes: ['click'] });
   return new Response(null, { status: 204 });
 }
 
 // Sums last week's events via the Analytics Engine SQL API into one small, permanent KV entry (Analytics
 // Engine itself keeps raw data only 3 months). Runs Mondays; skips if that week's key already exists.
+// Afterwards it fills older weeks without a sum (back to STATS_FIRST_WEEK, at most STATS_CATCHUP_WEEKS), e.g. a week
+// missed by the Sunday cron until 19.10.2026 or by a failed run; only finished weeks, never the current one.
 export async function runStatsRollup(env, nowMs = Date.now()) {
-  const lastWeek = addWeeks(weekStart(nowMs), -1);
-  const key = `stats:week:${weekDate(lastWeek)}`;
   if (!env.CF_ACCOUNT_ID || !env.CF_ANALYTICS_READ_TOKEN) return { skipped: 'CF_ACCOUNT_ID or CF_ANALYTICS_READ_TOKEN not set' };
+  const current = weekStart(nowMs);
+  const result = await rollupWeek(env, addWeeks(current, -1));
+  if (result.error) return result;
+  const caughtUp = [];
+  for (let i = 2; i <= STATS_CATCHUP_WEEKS; i++) {
+    const w = addWeeks(current, -i);
+    if (weekDate(w) < STATS_FIRST_WEEK) break;
+    const r = await rollupWeek(env, w);
+    if (r.error) break;
+    if (r.week) caughtUp.push(r.week);
+  }
+  return caughtUp.length ? { ...result, caughtUp } : result;
+}
+
+async function rollupWeek(env, lastWeek) {
+  const key = `stats:week:${weekDate(lastWeek)}`;
   if (await env.ORDERS.get(key)) return { skipped: key };
   // SUM(_sample_interval), not COUNT(): Analytics Engine may sample (developers.cloudflare.com/analytics/analytics-engine/sql-api/)
-  const sql = `SELECT blob1, blob2, blob3, SUM(_sample_interval) AS n FROM ${STATS_DATASET} WHERE timestamp >= toDateTime(${lastWeek}) AND timestamp < toDateTime(${lastWeek + 7 * 86400}) GROUP BY blob1, blob2, blob3`;
+  const sql = `SELECT blob1, blob2, blob3, blob4, SUM(_sample_interval) AS n FROM ${STATS_DATASET} WHERE timestamp >= toDateTime(${lastWeek}) AND timestamp < toDateTime(${lastWeek + 7 * 86400}) GROUP BY blob1, blob2, blob3, blob4`;
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`, {
     method: 'POST', headers: { Authorization: `Bearer ${env.CF_ANALYTICS_READ_TOKEN}` }, body: sql,
   });
   if (!res.ok) return { error: await res.text() };
-  const summary = { visit: { ig: 0, tt: 0, direct: 0 }, click: { mini: 0, maxi: 0, ultra: 0 } };
+  const summary = { visit: { ig: 0, tt: 0, direct: 0 }, click: { mini: 0, maxi: 0, ultra: 0 }, lang: { en: 0, de: 0 } };
   const byCountry = {}; // source and country are summed separately, never crossed (Sandra, 09.10.2026)
   for (const row of (await res.json()).data || []) {
     const n = Number(row.n) || 0;
     if (summary[row.blob1] && row.blob2 in summary[row.blob1]) summary[row.blob1][row.blob2] += n;
     if (row.blob1 === 'visit') { const c = /^[A-Z]{2}$/.test(row.blob3 || '') ? row.blob3 : 'XX'; byCountry[c] = (byCountry[c] || 0) + n; }
+    if (row.blob1 === 'visit') summary.lang[row.blob4 === 'de' ? 'de' : 'en'] += n; // points before 19.10.2026 have no language: English page
   }
   summary.country = {};
   summary.countryOther = { visits: 0, countries: 0 };

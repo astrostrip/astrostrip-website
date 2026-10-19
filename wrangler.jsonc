@@ -17,7 +17,9 @@
   // the statistics rollup (runStatsRollup) — all src/worker.js. Free plan: 5 cron triggers per account.
   // Transit Weekly emails ride on the two 5-minute runs when their queue is idle (runTwMails), the Friday
   // warning on the hourly run: no fifth trigger.
-  "triggers": { "crons": ["17 * * * *", "*/5 * * * *", "2,7,12,17,22,27,32,37,42,47,52,57 * * * *", "10 1 * * 1"] },
+  // Weekdays only as names ("MON"): Cloudflare counts 1 = Sunday, so "10 1 * * 1" ran on Sundays until 19.10.2026.
+  // The Monday string must stay identical to STATS_ROLLUP_CRON in src/worker.js.
+  "triggers": { "crons": ["17 * * * *", "*/5 * * * *", "2,7,12,17,22,27,32,37,42,47,52,57 * * * *", "10 1 * * MON"] },
   "kv_namespaces": [
     // Create a KV namespace called "astrostrip-orders" in the Cloudflare dashboard
     // (Storage & Databases → KV) and paste its ID here. The ID is not secret.

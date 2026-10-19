@@ -573,12 +573,17 @@ console.log('newsletter ok');
   }
   assert.equal((await stat(null, 'not json')).status, 204, 'broken JSON is ignored');
   assert.equal((await stat(null, 'null')).status, 204, 'JSON null is ignored');
-  assert.deepEqual(points.map(p => p.blobs), [['visit', 'ig', 'DE'], ['visit', 'tt', 'DE'], ['visit', 'direct', 'DE'], ['visit', 'direct', 'DE'], ['visit', 'direct', 'DE'], ['click', 'mini'], ['click', 'ultra']]);
+  assert.deepEqual(points.map(p => p.blobs), [['visit', 'ig', 'DE', 'en'], ['visit', 'tt', 'DE', 'en'], ['visit', 'direct', 'DE', 'en'], ['visit', 'direct', 'DE', 'en'], ['visit', 'direct', 'DE', 'en'], ['click', 'mini'], ['click', 'ultra']]);
   // country (Sandra, 09.10.2026): ISO code from request.cf, anything else = XX; clicks carry no country
   for (const cf of [{ country: 'AT' }, { country: 'T1' }, { country: 'XX' }, {}, null, { country: 'de' }, { country: 'DEU' }]) await stat({ event: 'visit', src: 'ig' }, undefined, cf);
   assert.deepEqual(points.slice(7).map(p => p.blobs[2]), ['AT', 'XX', 'XX', 'XX', 'XX', 'XX', 'XX']);
   assert.ok(!points.slice(7).some(p => JSON.stringify(p).includes('9.9.9.9')));
   assert.ok(!JSON.stringify(points).includes('9.9.9.9'), 'no IP in the data points');
+  // page language (Sandra, 19.10.2026): only "de" counts as German, anything else as English
+  const before = points.length;
+  for (const lang of ['de', 'en', 'fr', undefined, 'DE']) await stat({ event: 'visit', src: 'ig', lang });
+  assert.deepEqual(points.slice(before).map(p => p.blobs[3]), ['de', 'en', 'en', 'en', 'en']);
+  points.length = before;
   assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: '{"event":"visit","src":"ig"}' }), { ...senv, STATS: undefined })).status, 204, 'missing binding: still 204');
 
   // rollup: Monday 12.10.2026 sums the week 05.–11.10. (Berlin)
@@ -590,7 +595,7 @@ console.log('newsletter ok');
     assert.equal(init.headers.Authorization, 'Bearer tok');
     sqls.push(init.body);
     return new Response(JSON.stringify({ data: [
-      { blob1: 'visit', blob2: 'ig', blob3: 'DE', n: '10' }, { blob1: 'visit', blob2: 'ig', blob3: 'LU', n: '1' }, { blob1: 'visit', blob2: 'ig', blob3: 'AT', n: '1' },
+      { blob1: 'visit', blob2: 'ig', blob3: 'DE', blob4: 'de', n: '10' }, { blob1: 'visit', blob2: 'ig', blob3: 'LU', blob4: 'en', n: '1' }, { blob1: 'visit', blob2: 'ig', blob3: 'AT', n: '1' },
       { blob1: 'visit', blob2: 'tt', blob3: 'AT', n: 3 }, { blob1: 'visit', blob2: 'direct', blob3: 'DE', n: '30' }, { blob1: 'visit', blob2: 'direct', blob3: 'AT', n: '1' },
       { blob1: 'visit', blob2: 'direct', blob3: '', n: '6' }, { blob1: 'visit', blob2: 'direct', blob3: 'US', n: '3' },
       { blob1: 'click', blob2: 'maxi', blob3: '', n: '7' }, { blob1: 'click', blob2: 'other', blob3: '', n: '1' }, { blob1: 'x', blob2: 'ig', blob3: 'DE', n: '5' },
@@ -601,8 +606,8 @@ console.log('newsletter ok');
   // source summed over all countries; country summed over all sources (never crossed); AT 1+3+1 = 5 stays, LU 1 and US 3 below 5;
   // points without country (before 09.10.2026) count as XX
   assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-05')), { visit: { ig: 12, tt: 3, direct: 40 }, click: { mini: 0, maxi: 7, ultra: 0 },
-    country: { DE: 40, AT: 5, XX: 6 }, countryOther: { visits: 4, countries: 2 } });
-  assert.ok(sqls[0].includes('GROUP BY blob1, blob2, blob3'));
+    lang: { en: 45, de: 10 }, country: { DE: 40, AT: 5, XX: 6 }, countryOther: { visits: 4, countries: 2 } });
+  assert.ok(sqls[0].includes('GROUP BY blob1, blob2, blob3, blob4'));
   const from = Date.parse('2026-10-04T22:00:00Z') / 1000;
   assert.ok(sqls[0].includes(`toDateTime(${from})`) && sqls[0].includes(`toDateTime(${from + 7 * 86400})`), 'Berlin week bounds');
   assert.ok(sqls[0].includes('FROM astrostrip_stats'));
@@ -612,7 +617,23 @@ console.log('newsletter ok');
   globalThis.fetch = async () => new Response('denied', { status: 403 });
   assert.deepEqual(await runStatsRollup(senv, now + 7 * 86400000), { error: 'denied' });
   assert.ok(!store.has('stats:week:2026-10-12'), 'failed query writes nothing');
+  // catch-up (19.10.2026): a week missed earlier (Sunday cron) is filled on the next Monday, never before the first week
+  globalThis.fetch = async (url, init = {}) => { sqls.push(init.body); return new Response(JSON.stringify({ data: [{ blob1: 'visit', blob2: 'ig', blob3: 'DE', n: '2' }] })); };
+  const before2 = sqls.length;
+  const c = await runStatsRollup(senv, Date.parse('2026-10-26T01:10:00Z'));
+  assert.equal(c.week, '2026-10-19');
+  assert.deepEqual(c.caughtUp, ['2026-10-12'], 'missing KW 42 filled, KW 41 kept, nothing before 05.10.');
+  assert.equal(sqls.length - before2, 2);
+  assert.equal(JSON.parse(store.get('stats:week:2026-10-05')).visit.ig, 12, 'existing week not overwritten');
+  assert.equal(JSON.parse(store.get('stats:week:2026-10-12')).visit.ig, 2);
+  assert.deepEqual(await runStatsRollup(senv, Date.parse('2026-10-26T02:10:00Z')), { skipped: 'stats:week:2026-10-19' }, 'nothing left: no caughtUp');
   globalThis.fetch = realFetch;
+  // cron weekday (19.10.2026): Cloudflare counts 1 = Sunday, so the weekday is a name, and wrangler.jsonc uses the same string
+  { const { STATS_ROLLUP_CRON } = await import('../src/worker.js');
+    assert.equal(STATS_ROLLUP_CRON, '10 1 * * MON');
+    const crons = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8').replace(/^\s*\/\/.*$/gm, '')).triggers.crons;
+    assert.ok(crons.includes(STATS_ROLLUP_CRON), 'wrangler.jsonc has the stats cron');
+    assert.ok(crons.every(c => /^\S+ \S+ \S+ \S+ (\*|[A-Za-z,-]+)$/.test(c)), 'no numeric weekday in any cron'); }
 
   // read: 404 without or with a wrong key, n weeks newest first, empty weeks as {}
   const read = q => worker.fetch(new Request('https://astrostrip.com/api/stats' + q), senv);
@@ -633,6 +654,10 @@ console.log('newsletter ok');
   const page = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.ok(page.includes("fetch('/api/stat'"));
   assert.ok(!/document\.cookie|localStorage|sessionStorage/.test(page), 'no cookie or browser storage on the start page');
+  // the only browser storage: the language choice of assets/lang.js (privacy policy § 4), one key, "en" or "de"
+  const langJs = readFileSync(new URL('../public/assets/lang.js', import.meta.url), 'utf8');
+  assert.deepEqual([...new Set(langJs.match(/localStorage\.\w+/g))].sort(), ['localStorage.getItem', 'localStorage.setItem']);
+  assert.ok(langJs.includes("var KEY = 'astrostrip-lang'") && !/document\.cookie|sessionStorage/.test(langJs));
   console.log('stats ok');
 }
 
@@ -820,7 +845,7 @@ console.log('newsletter ok');
   out = await r.json(); assert.equal(r.status, 200); assert.match(out.endDe, /mit sofortiger Wirkung/);
   const cancelHtml = readFileSync(new URL('../public/cancel.html', import.meta.url), 'utf8');
   assert.ok(cancelHtml.includes('Verträge hier kündigen') && cancelHtml.includes('JETZT KÜNDIGEN'), '§ 312k wording of both buttons');
-  for (const page of ['index', 'order', 'terms', 'datenschutz', 'impressum', 'cancellation', 'withdraw', 'thanks', 'newsletter', 'transit-weekly', 'guide']) {
+  for (const page of ['index', 'order', 'terms', 'datenschutz', 'impressum', 'cancellation', 'withdraw', 'thanks', 'newsletter', 'transit-weekly', 'guide', 'degrees']) {
     assert.ok(readFileSync(new URL(`../public/${page}.html`, import.meta.url), 'utf8').includes('href="cancel.html">Verträge hier kündigen'), `cancellation button on ${page}`);
   }
 
