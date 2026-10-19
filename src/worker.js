@@ -781,6 +781,13 @@ export async function startDoubleOptIn(env, email, source, ip) {
         '',
         'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
       ].join('\n'),
+      // same frame as the other customer mails (Sandra, 19.10.2026: „im Stil der anderen aufbauen“)
+      html: brandMail({ kicker: 'Confirm your signup', pre: 'One tap, then your free guide is yours.', body: [
+        bH1('One tap, then the guide is yours.', 28),
+        bP('Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your free guide <em>The birth chart, stripped to the degree.</em>'),
+        bButton('Confirm and get the guide', link),
+        bSmall(`The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.`),
+      ].join('\n') }),
     });
     return;
   }
@@ -800,6 +807,12 @@ export async function startDoubleOptIn(env, email, source, ip) {
       '',
       'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
     ].join('\n'),
+    html: brandMail({ kicker: 'Confirm your signup · Anmeldung bestätigen', pre: 'Please confirm your newsletter signup.', body: [
+      bP('Please confirm that you want to receive the astro.strip newsletter.'),
+      bP('Bitte bestätige, dass du den astro.strip-Newsletter erhalten möchtest.'),
+      bButton('Confirm · Bestätigen', link),
+      bSmall(`The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.<br>Der Link gilt 7 Tage. Wenn du dich nicht angemeldet hast, ignoriere diese Mail einfach; du bekommst dann nichts von uns.`),
+    ].join('\n') }),
   });
 }
 
@@ -1591,6 +1604,13 @@ async function handleConfirm(request, env) {
           '',
           'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
         ].join('\n'),
+        html: brandMail({ kicker: 'Your free guide', pre: 'Thank you for confirming. Here is your guide.', body: [
+          bH1('The birth chart,<br>stripped to the degree.', 28),
+          bP('Thank you for confirming. Here is your guide: 13 pages on how a chart is built, what planets, signs, houses and aspects stand for, and why the degree changes everything.'),
+          bButton('Open the guide (PDF)', `${site}${GUIDE_PATH}`),
+          bRule,
+          bP(`Next step: find your exact Sun degree for free on <a href="${site}/" style="color:${TWM.accent};text-decoration:underline;">astrostrip.com</a>, or browse <a href="${site}/degrees" style="color:${TWM.accent};text-decoration:underline;">all 360 degrees</a>.`, 15, TWM.muted),
+        ].join('\n') }),
       });
     } catch (err) {
       console.error('guide mail failed', err); // the page still shows the download
