@@ -27,8 +27,8 @@
       <fieldset class="field field-wide strip-choice">
         <legend>Wähle deinen Strip</legend>
         <label class="strip-option"><input type="radio" name="strip" value="mini"><span><b>MINI STRIP</b> · 39&nbsp;&euro; <em>Deine Big Three ausführlich: Häuser, wichtigste Aspekte und genaue Grade von Aszendent, Sonne und Mond.</em><small class="slot" data-slot="mini"></small></span></label>
-        <label class="strip-option"><input type="radio" name="strip" value="maxi"><span><b>MAXI STRIP</b> · 79&nbsp;&euro; <em>Das ganze Horoskop als ein zusammenhängendes Muster.</em><small class="slot" data-slot="maxi"></small></span></label>
-        <label class="strip-option"><input type="radio" name="strip" value="ultra"><span><b>ULTRA STRIP</b> · 129&nbsp;&euro; <em>Das ganze Reading plus ein Lebensbereich im Detail, deine kommenden Transite und das Lebenskapitel, in dem du gerade steckst.</em><small class="slot" data-slot="ultra"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="maxi"><span><b>MAXI STRIP</b> · ab 79&nbsp;&euro; <em>Das ganze Horoskop als ein zusammenhängendes Muster.</em><small class="slot" data-slot="maxi"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="ultra"><span><b>ULTRA STRIP</b> · ab 129&nbsp;&euro; <em>Das ganze Reading plus ein Lebensbereich im Detail, deine kommenden Transite und das Lebenskapitel, in dem du gerade steckst.</em><small class="slot" data-slot="ultra"></small></span></label>
       </fieldset>
 
       <div class="field">
@@ -123,8 +123,20 @@
 
       <fieldset class="field field-wide options" id="options">
         <legend>Zusatz-Ebenen</legend>
-        <label class="check"><input id="nodes" type="checkbox"><span>Karmische Deutung deiner Mondknoten hinzufügen (gelesen als Einladung zum Nachdenken, nicht als Tatsache über frühere Leben)</span></label>
-        <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Nur beim Ultra: die Ahnen-Ebene hinzufügen (Muster, die sich in deiner Familie wiederholen können)</span></label>
+        <label class="check"><input id="nodes" type="checkbox"><span>Karmische Deutung deiner Mondknoten hinzufügen, im Preis enthalten (gelesen als Einladung zum Nachdenken, nicht als Tatsache über frühere Leben)</span></label>
+        <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Nur beim Ultra, +5&nbsp;&euro;: die Ahnen-Ebene hinzufügen (Muster, die sich in deiner Familie wiederholen können)</span></label>
+        <p class="hint">Asteroiden: drei oder mehr wählen, oder keinen. Drei für 15&nbsp;&euro;, jeder weitere +3&nbsp;&euro; (alle acht 30&nbsp;&euro;).</p>
+        <div class="transit-areas">
+          <label class="check"><input type="checkbox" name="asteroid" value="juno"><span>Juno: Bindung und was du in einer Partnerschaft brauchst</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="pallas"><span>Pallas: Strategie und wie du Muster erkennst</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="ceres"><span>Ceres: Fürsorge, Nähren, Loslassen</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="vesta"><span>Vesta: Hingabe und wofür du brennst</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="eris"><span>Eris: für das einstehen, was ausgeschlossen wird</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="sedna"><span>Sedna: tiefe Verletzung und langsame Widerstandskraft</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="orcus"><span>Orcus: Versprechen und Integrität</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="eros"><span>Eros: Begehren und was dich entflammt</span></label>
+        </div>
+        <p class="slot" id="asteroid-note"></p>
       </fieldset>
 
       <fieldset class="field field-wide options transit-add" id="transit" hidden>

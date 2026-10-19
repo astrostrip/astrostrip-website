@@ -20,7 +20,7 @@ for (const form of document.querySelectorAll('form.newsletter-form')) {
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || '');
       form.reset();
-      status.textContent = L('Almost done: please check your inbox and confirm your signup.', 'Fast geschafft: Schau in dein Postfach und bestätige deine Anmeldung.');
+      status.textContent = L('Almost done: please check your inbox and confirm your signup. Nothing there? Have a look in your spam folder.', 'Fast geschafft: Schau in dein Postfach und bestätige deine Anmeldung. Nichts da? Dann sieh bitte im Spam-Ordner nach.');
     } catch (err) {
       status.textContent = err instanceof TypeError || !err.message ? L('Signup is not available right now. Please try again later.', 'Die Anmeldung ist gerade nicht möglich. Bitte versuche es später noch einmal.') : err.message;
     } finally {

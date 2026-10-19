@@ -26,8 +26,8 @@
       <fieldset class="field field-wide strip-choice">
         <legend>Choose your strip</legend>
         <label class="strip-option"><input type="radio" name="strip" value="mini"><span><b>MINI STRIP</b> · 39&nbsp;&euro; <em>Your Big Three in depth: houses, key aspects and exact degrees of Rising, Sun and Moon.</em><small class="slot" data-slot="mini"></small></span></label>
-        <label class="strip-option"><input type="radio" name="strip" value="maxi"><span><b>MAXI STRIP</b> · 79&nbsp;&euro; <em>The whole chart as one pattern.</em><small class="slot" data-slot="maxi"></small></span></label>
-        <label class="strip-option"><input type="radio" name="strip" value="ultra"><span><b>ULTRA STRIP</b> · 129&nbsp;&euro; <em>The full reading plus one life area in depth, your coming transits and the chapter of life you're in now.</em><small class="slot" data-slot="ultra"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="maxi"><span><b>MAXI STRIP</b> · from 79&nbsp;&euro; <em>The whole chart as one pattern.</em><small class="slot" data-slot="maxi"></small></span></label>
+        <label class="strip-option"><input type="radio" name="strip" value="ultra"><span><b>ULTRA STRIP</b> · from 129&nbsp;&euro; <em>The full reading plus one life area in depth, your coming transits and the chapter of life you're in now.</em><small class="slot" data-slot="ultra"></small></span></label>
       </fieldset>
 
       <div class="field">
@@ -122,8 +122,20 @@
 
       <fieldset class="field field-wide options" id="options">
         <legend>Optional layers</legend>
-        <label class="check"><input id="nodes" type="checkbox"><span>Add a karmic reading of your lunar nodes (read as an invitation to reflect, not as fact about past lives)</span></label>
-        <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Ultra only: add the ancestral layer (patterns that may run in your family)</span></label>
+        <label class="check"><input id="nodes" type="checkbox"><span>Add a karmic reading of your lunar nodes, included in the price (read as an invitation to reflect, not as fact about past lives)</span></label>
+        <label class="check" id="ancestry-row" hidden><input id="ancestry" type="checkbox"><span>Ultra only, +5&nbsp;&euro;: add the ancestral layer (patterns that may run in your family)</span></label>
+        <p class="hint">Asteroids: choose three or more, or none. Three for 15&nbsp;&euro;, each further one +3&nbsp;&euro; (all eight 30&nbsp;&euro;).</p>
+        <div class="transit-areas">
+          <label class="check"><input type="checkbox" name="asteroid" value="juno"><span>Juno: commitment and what you need in a partner</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="pallas"><span>Pallas: strategy and how you see patterns</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="ceres"><span>Ceres: care, nourishment, letting go</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="vesta"><span>Vesta: devotion and where your focus burns</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="eris"><span>Eris: standing up for what&rsquo;s left out</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="sedna"><span>Sedna: deep hurt and slow resilience</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="orcus"><span>Orcus: promises and integrity</span></label>
+          <label class="check"><input type="checkbox" name="asteroid" value="eros"><span>Eros: desire and what lights you up</span></label>
+        </div>
+        <p class="slot" id="asteroid-note"></p>
       </fieldset>
 
       <fieldset class="field field-wide options transit-add" id="transit" hidden>

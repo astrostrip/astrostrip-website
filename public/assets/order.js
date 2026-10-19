@@ -16,6 +16,11 @@ const DAYS = { mini: 5, maxi: 7, ultra: 10 };
 // tw-price.js asks the worker (Sandra, 11.10.2026). The checkout always shows the binding price.
 let TW_PRICE = window.twPriceData ? window.twPriceData.cents / 100 : 87;
 addEventListener('twprice', e => { TW_PRICE = e.detail.cents / 100; update(); });
+// Extra layers (Sandra, 19.10.2026): asteroids none or 3–8, three for 15 €, each further one +3 €; ancestral layer
+// +5 € (Ultra); karmic nodes included. Same prices as EXTRAS in the worker, which decides.
+const AST_MIN = 3;
+const astPrice = n => (n >= AST_MIN ? 15 + (n - AST_MIN) * 3 : 0);
+const ANCESTRY_PRICE = 5;
 const UNSURE_TIME = ['family', 'approximate'];
 const DRAFT_KEY = 'astrostrip-order-draft'; // kept in this tab only, so a cancelled payment keeps the details
 
@@ -28,6 +33,7 @@ let slots = null;
 
 const selected = () => form.querySelector('input[name=strip]:checked')?.value || '';
 const twAreas = () => [...form.querySelectorAll('input[name=tw-area]:checked')].map(i => i.value);
+const asteroids = () => [...form.querySelectorAll('input[name=asteroid]:checked')].map(i => i.value);
 const eur = n => `${n.toLocaleString(LOCALE)} €`;
 
 // Dates from /api/slots are Berlin calendar dates (YYYY-MM-DD).
@@ -58,17 +64,25 @@ function update() {
   if (!ultra) $('#ancestry').checked = false;
   // The Mini Strip reads only the Big Three: no karmic nodes layer (Sandra, 03.10.2026).
   $('#options').hidden = strip === 'mini';
-  if (strip === 'mini') $('#nodes').checked = false;
+  if (strip === 'mini') { $('#nodes').checked = false; for (const i of form.querySelectorAll('input[name=asteroid]')) i.checked = false; }
+  const nAst = asteroids().length;
+  const anc = ultra && $('#ancestry').checked;
+  const stripPrice = strip ? PRICES[strip] + astPrice(nAst) + (anc ? ANCESTRY_PRICE : 0) : 0;
+  $('#asteroid-note').textContent = !nAst ? '' : nAst < AST_MIN
+    ? L(`${nAst} chosen: please choose at least ${AST_MIN}, or none.`, `${nAst} gewählt: bitte mindestens ${AST_MIN} wählen, oder keinen.`)
+    : L(`${nAst} asteroids: +${eur(astPrice(nAst))}`, `${nAst} Asteroiden: +${eur(astPrice(nAst))}`);
+  const extras = [nAst >= AST_MIN ? L(`${nAst} asteroids ${eur(astPrice(nAst))}`, `${nAst} Asteroiden ${eur(astPrice(nAst))}`) : '', anc ? L(`ancestral layer ${eur(ANCESTRY_PRICE)}`, `Ahnenschicht ${eur(ANCESTRY_PRICE)}`) : ''].filter(Boolean);
+  const extrasText = extras.length ? ` (${PRICES[strip]} € + ${extras.join(' + ')})` : '';
   const s = strip && slots ? slots[strip] : null;
   const soldOut = !!(s && !s.next);
   const later = !!(s && s.next && !s.thisWeek);
-  const twText = !areas.length ? '' : L(` Plus Transit Weekly for ${areas.length} life area${areas.length === 1 ? '' : 's'} (${areas.join(', ')}): ${eur(areas.length * TW_PRICE)} for 13 weeks. Total ${eur(PRICES[strip] + areas.length * TW_PRICE)} including 19 % VAT.`,
-    ` Dazu Transit Weekly für ${areas.length} ${areas.length === 1 ? 'Lebensbereich' : 'Lebensbereiche'} (${areas.map(areaName).join(', ')}): ${eur(areas.length * TW_PRICE)} für 13 Wochen. Zusammen ${eur(PRICES[strip] + areas.length * TW_PRICE)} inklusive 19 % MwSt.`);
+  const twText = !areas.length ? '' : L(` Plus Transit Weekly for ${areas.length} life area${areas.length === 1 ? '' : 's'} (${areas.join(', ')}): ${eur(areas.length * TW_PRICE)} for 13 weeks. Total ${eur(stripPrice + areas.length * TW_PRICE)} including 19 % VAT.`,
+    ` Dazu Transit Weekly für ${areas.length} ${areas.length === 1 ? 'Lebensbereich' : 'Lebensbereiche'} (${areas.map(areaName).join(', ')}): ${eur(areas.length * TW_PRICE)} für 13 Wochen. Zusammen ${eur(stripPrice + areas.length * TW_PRICE)} inklusive 19 % MwSt.`);
   $('#summary-text').textContent = !strip ? L('Choose a strip above.', 'Wähle oben einen Strip.')
-    : (later ? L(`${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`,
-      `${NAMES[strip]}: ${PRICES[strip]} € inklusive 19 % MwSt. Diese Woche ist ausgebucht, dein Strip ist deshalb für die Woche ab ${longDay(s.next)} gebucht. Eigens für dein Horoskop geschrieben und als PDF per E-Mail geliefert, spätestens ${DAYS[strip]} Werktage nach diesem Montag.`)
-    : L(`${NAMES[strip]}: ${PRICES[strip]} € including 19 % VAT. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`,
-      `${NAMES[strip]}: ${PRICES[strip]} € inklusive 19 % MwSt. Eigens für dein Horoskop geschrieben und als PDF per E-Mail geliefert, spätestens ${DAYS[strip]} Werktage nach der Zahlung.`)) + twText;
+    : (later ? L(`${NAMES[strip]}: ${eur(stripPrice)}${extrasText} including 19 % VAT. This week is fully booked, so your strip is booked for the week of ${longDay(s.next)}. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days from that Monday.`,
+      `${NAMES[strip]}: ${eur(stripPrice)}${extrasText} inklusive 19 % MwSt. Diese Woche ist ausgebucht, dein Strip ist deshalb für die Woche ab ${longDay(s.next)} gebucht. Eigens für dein Horoskop geschrieben und als PDF per E-Mail geliefert, spätestens ${DAYS[strip]} Werktage nach diesem Montag.`)
+    : L(`${NAMES[strip]}: ${eur(stripPrice)}${extrasText} including 19 % VAT. Prepared for your chart alone and delivered as a PDF by email within ${DAYS[strip]} working days after payment.`,
+      `${NAMES[strip]}: ${eur(stripPrice)}${extrasText} inklusive 19 % MwSt. Eigens für dein Horoskop geschrieben und als PDF per E-Mail geliefert, spätestens ${DAYS[strip]} Werktage nach der Zahlung.`)) + twText;
   $('#order-submit').disabled = soldOut;
   status.textContent = soldOut ? L(`This strip is fully booked until ${longDay(s.until)}. New weeks open every Monday.`, `Dieser Strip ist bis ${longDay(s.until)} ausgebucht. Jeden Montag kommen neue Wochen dazu.`) : '';
 }
@@ -105,6 +119,7 @@ function restoreDraft() {
   $('#language').value = d.language || L('en', 'de');
   $('#nodes').checked = !!d.nodes;
   $('#ancestry').checked = !!d.ancestry;
+  for (const i of form.querySelectorAll('input[name=asteroid]')) i.checked = (d.asteroids || []).includes(i.value);
   $('#note').value = d.note || '';
   const q = d.questionnaire || {};
   if (q.residence?.label) $('#residence').value = q.residence.label;
@@ -147,6 +162,7 @@ form.addEventListener('submit', async e => {
     language: $('#language').value,
     nodes: strip !== 'mini' && $('#nodes').checked,
     ancestry: strip === 'ultra' && $('#ancestry').checked,
+    asteroids: strip !== 'mini' ? asteroids() : [],
     note: $('#note').value.trim(),
     sensitiveConsent: $('#sensitive-consent').checked,
     questionnaire: withQ ? {
@@ -174,6 +190,7 @@ form.addEventListener('submit', async e => {
   if (strip === 'ultra' && !data.lifeArea) missing.push(L('the life area', 'den Lebensbereich'));
   if ((strip === 'ultra' || areas.length) && !data.questionnaire.residence) missing.push(L('where you live now (choose it from the list)', 'deinen jetzigen Wohnort (aus der Liste wählen)'));
   if (areas.length && UNSURE_TIME.includes(data.timeSource) && !data.transit.timeConsent) missing.push(L('the Transit Weekly box about your birth time', 'das Häkchen zu deiner Geburtszeit bei Transit Weekly'));
+  if (data.asteroids.length && data.asteroids.length < AST_MIN) missing.push(L(`at least ${AST_MIN} asteroids (or none)`, `mindestens ${AST_MIN} Asteroiden (oder keinen)`));
   if (missing.length) { status.textContent = L(`Please add ${missing.join(', ')}.`, `Bitte ergänze ${missing.join(', ')}.`); return; }
   // Free text may contain sensitive details (Art. 9 GDPR): consent is required whenever any free-text field is filled (Sandra, 05.10.2026).
   const freeText = [data.note, data.questionnaire?.occupation, data.questionnaire?.passions, data.questionnaire?.focus].some(Boolean);
