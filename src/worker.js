@@ -1606,7 +1606,7 @@ async function handleConfirm(request, env) {
         ].join('\n'),
         html: brandMail({ kicker: 'Your free guide', pre: 'Thank you for confirming. Here is your guide.', body: [
           bH1('The birth chart,<br>stripped to the degree.', 28),
-          bP('Thank you for confirming. Here is your guide: 13 pages on how a chart is built, what planets, signs, houses and aspects stand for, and why the degree changes everything.'),
+          bP('Thank you for confirming. Here is your guide, a first step to understanding your own chart: how a chart is built, what planets, signs, houses and aspects stand for, and why the degree changes everything.'),
           bButton('Open the guide (PDF)', `${site}${GUIDE_PATH}`),
           bRule,
           bP(`Next step: find your exact Sun degree for free on <a href="${site}/" style="color:${TWM.accent};text-decoration:underline;">astrostrip.com</a>, or browse <a href="${site}/degrees" style="color:${TWM.accent};text-decoration:underline;">all 360 degrees</a>.`, 15, TWM.muted),

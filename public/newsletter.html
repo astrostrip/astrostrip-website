@@ -6,18 +6,19 @@
   <link rel="apple-touch-icon" href="favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Newsletter · astro.strip</title>
-  <meta name="description" content="The astro.strip newsletter: astrology without the fluff, with regular updates on the stars.">
+  <meta name="description" content="The astro.strip newsletter: regular updates on what’s happening in the sky right now.">
   <link rel="canonical" href="https://astrostrip.com/newsletter">
   <link rel="alternate" hreflang="en" href="https://astrostrip.com/newsletter">
   <link rel="alternate" hreflang="de" href="https://astrostrip.com/de/newsletter">
   <link rel="alternate" hreflang="x-default" href="https://astrostrip.com/newsletter">
   <meta property="og:title" content="Newsletter · astro.strip">
-  <meta property="og:description" content="The astro.strip newsletter: astrology without the fluff, with regular updates on the stars.">
+  <meta property="og:description" content="The astro.strip newsletter: regular updates on what’s happening in the sky right now.">
   <meta property="og:url" content="https://astrostrip.com/newsletter">
   <meta property="og:image" content="https://astrostrip.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <script src="assets/lang.js" data-redirect></script><!-- EN/DE switch and language choice -->
   <link rel="stylesheet" href="assets/style.css">
+  <style>.nl-thanks .section-sub { margin: 0 auto; } .nl-thanks-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; }</style>
 </head>
 <body>
   <header class="site-header">
@@ -25,11 +26,17 @@
     <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a><a class="lang-switch" href="de/newsletter.html" hreflang="de" lang="de" aria-label="Deutsche Fassung">DE</a></nav>
   </header>
   <main class="newsletter newsletter-page">
-    <p id="nl-confirmed" class="notice" hidden>You’re in. Thank you for confirming. · Danke, deine Anmeldung ist bestätigt.</p>
+    <div id="nl-thanks" class="nl-thanks" hidden>
+      <p class="kicker">NEWSLETTER</p>
+      <h1 class="section-title">You’re in.<br><em>Thank you for confirming.</em></h1>
+      <p class="section-sub">The next issue comes straight to your inbox. Until then, find your exact Sun degree for free or follow along on Instagram.</p>
+      <p class="nl-thanks-links"><a class="btn btn-solid" href="index.html#chart">FIND YOUR DEGREE</a><a class="btn" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank">FOLLOW ON INSTAGRAM</a></p>
+    </div>
     <p id="nl-expired" class="notice" hidden>This confirmation link has expired or was already used. Just sign up again below. · Der Link ist abgelaufen oder wurde schon benutzt. Melde dich unten einfach neu an.</p>
+    <div id="nl-signup">
     <p class="kicker">NEWSLETTER</p>
-    <h1 class="section-title">Stripped down,<br><em>in your inbox.</em></h1>
-    <p class="section-sub">Astrology without the fluff, with regular updates on the stars. No spam, unsubscribe any time.</p>
+    <h1 class="section-title">The stars, stripped down,<br><em>in your inbox.</em></h1>
+    <p class="section-sub">Regular updates on what’s happening in the sky right now. No spam, unsubscribe any time.</p>
     <form class="newsletter-form" data-source="newsletter-page" novalidate>
       <div class="newsletter-row">
         <label for="nl-email" class="sr-only">Email</label>
@@ -40,13 +47,15 @@
       <label class="check"><input type="checkbox" name="consent"><span>Yes, send me the astro.strip newsletter by email: regular updates on the stars and offers for readings and PDFs. astro.strip may see whether I open it and which links I click, to improve it. I can unsubscribe at any time via the link in every email; this also ends that evaluation. Details in the <a href="datenschutz.html">privacy notice</a>.</span></label>
       <p class="form-status" role="status" aria-live="polite"></p>
     </form>
+    </div>
   </main>
   <footer class="site-footer">
     <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a><a href="cancel.html">Verträge hier kündigen · Cancel contracts here</a></nav>
   </footer>
   <script>
     var st = new URLSearchParams(location.search).get('status');
-    if (st === 'confirmed') document.getElementById('nl-confirmed').hidden = false;
+    // confirmed: thank-you block instead of the form, no guide here (Sandra, 19.10.2026)
+    if (st === 'confirmed') { document.getElementById('nl-thanks').hidden = false; document.getElementById('nl-signup').hidden = true; }
     if (st === 'expired') document.getElementById('nl-expired').hidden = false;
   </script>
   <script type="module" src="assets/newsletter.js"></script>
