@@ -16,7 +16,6 @@
   <link rel="alternate" hreflang="en" href="https://astrostrip.com/">
   <link rel="alternate" hreflang="de" href="https://astrostrip.com/de/">
   <link rel="alternate" hreflang="x-default" href="https://astrostrip.com/">
-  <meta name="robots" content="noindex"><!-- until the German site goes live (build-de.py LAUNCH) -->
   <meta property="og:type" content="website">
   <meta property="og:locale" content="de_DE">
   <meta property="og:url" content="https://astrostrip.com/de/">
@@ -35,6 +34,7 @@
   ]}
   </script>
   <link rel="preload" href="../fonts/playfair-display-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="../assets/lang.js"></script><!-- EN/DE switch and language choice -->
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -108,6 +108,7 @@
           <p class="strip-price">39&nbsp;&euro;</p>
           <p class="strip-time">5 Werktage</p>
           <p class="strip-pages">PDF, etwa 6 Seiten</p>
+          <p class="strip-pages strip-tw" aria-hidden="true"></p>
           <p class="slot" data-slot="mini"></p>
           <a class="btn" href="order.html?strip=mini" data-strip="mini">BESTELLEN</a>
         </article>
@@ -118,7 +119,7 @@
           <p class="strip-price">79&nbsp;&euro;</p>
           <p class="strip-time">7 Werktage</p>
           <p class="strip-pages">PDF, etwa 11 Seiten</p>
-          <p class="strip-pages">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> im Monat je Lebensbereich<span class="tw-founding"> (Gründungspreis)</span></p>
+          <p class="strip-pages strip-tw">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> im Monat je Lebensbereich<span class="tw-founding"> (Gründungspreis)</span></p>
           <p class="slot" data-slot="maxi"></p>
           <a class="btn btn-solid" href="order.html?strip=maxi" data-strip="maxi">BESTELLEN</a>
         </article>
@@ -129,7 +130,7 @@
           <p class="strip-price">129&nbsp;&euro;</p>
           <p class="strip-time">10 Werktage</p>
           <p class="strip-pages">PDF, etwa 20&ndash;25 Seiten</p>
-          <p class="strip-pages">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> im Monat je Lebensbereich<span class="tw-founding"> (Gründungspreis)</span></p>
+          <p class="strip-pages strip-tw">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> im Monat je Lebensbereich<span class="tw-founding"> (Gründungspreis)</span></p>
           <p class="slot" data-slot="ultra"></p>
           <a class="btn" href="order.html?strip=ultra" data-strip="ultra">BESTELLEN</a>
         </article>
@@ -302,7 +303,7 @@
         </details>
         <details class="faq-item">
           <summary>Was passiert mit meinen Daten?</summary>
-          <p>Der kostenlose Rechner läuft in deinem Browser. Deine Geburtsdaten werden nirgendwohin gesendet und nicht gespeichert. Wenn du bestellst, werden deine Geburtsdaten nur verwendet, um deinen Strip zu schreiben; Stripe wickelt die Zahlung ab und bekommt deine Geburtsdaten nie zu sehen. Wir löschen deine Geburtsdaten und deine Antworten drei Monate nach der Lieferung; buchst du Transit Weekly, drei Monate nachdem die Wochentexte deiner letzten Buchung fertig sind. Für Transit Weekly behalten wir bis zwei Wochen nach dem Ende nur deine E-Mail-Adresse, deine Lebensbereiche und die Zeitzone deines Wohnorts, nicht den Ort selbst. Um zu sehen, welche Kanäle funktionieren, zählt die Seite Besuche (nach Herkunft und nach Land) und Klicks auf die Beispiele anonym: keine Cookies, kein Profil, keine gespeicherte IP-Adresse (das Land wird aus ihr geschätzt, gespeichert wird nur das Länderkürzel). Alles Weitere steht in der <a href="../datenschutz.html">Datenschutzerklärung</a>.</p>
+          <p>Der kostenlose Rechner läuft in deinem Browser. Deine Geburtsdaten werden nirgendwohin gesendet und nicht gespeichert. Wenn du bestellst, werden deine Geburtsdaten nur verwendet, um deinen Strip zu schreiben; Stripe wickelt die Zahlung ab und bekommt deine Geburtsdaten nie zu sehen. Wir löschen deine Geburtsdaten und deine Antworten drei Monate nach der Lieferung; buchst du Transit Weekly, drei Monate nachdem die Wochentexte deiner letzten Buchung fertig sind. Für Transit Weekly behalten wir bis zwei Wochen nach dem Ende nur deine E-Mail-Adresse, deine Lebensbereiche und die Zeitzone deines Wohnorts, nicht den Ort selbst. Um zu sehen, welche Kanäle funktionieren, zählt die Seite Besuche (nach Herkunft, Land und Sprache der Seite) und Klicks auf die Beispiele anonym: keine Cookies, kein Profil, keine gespeicherte IP-Adresse (das Land wird aus ihr geschätzt, gespeichert wird nur das Länderkürzel). Wählst du über den Knopf EN/DE Englisch oder Deutsch, merkt sich dein Browser diese Wahl; sie verlässt dein Gerät nicht. Alles Weitere steht in der <a href="../datenschutz.html">Datenschutzerklärung</a>.</p>
         </details>
         <details class="faq-item">
           <summary>Was brauche ich für eine Bestellung?</summary>
@@ -407,9 +408,10 @@
     })();
   </script>
   <script>
-    // anonymous counter (no cookie, no id, nothing stored in the browser): one visit by source, and clicks
+    // anonymous counter (no cookie, no id, nothing stored in the browser): one visit by source and page language, and clicks
     // on the three sample tabs. Only the category goes to /api/stat; failures are silently ignored.
     (function () {
+      if (window.astrostripLangRedirect) return; // sent on to /de/ by assets/lang.js, counted there
       function stat(body) {
         try { fetch('/api/stat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(function () {}); } catch (e) {}
       }
@@ -423,7 +425,7 @@
         // drop ?src from the address bar, so a copied or shared link is not counted as Instagram/TikTok again
         if (q !== null) { var u = new URL(location.href); u.searchParams.delete('src'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
       } catch (e) {}
-      stat({ event: 'visit', src: src });
+      stat({ event: 'visit', src: src, lang: document.documentElement.lang === 'de' ? 'de' : 'en' }); // page language (Sandra, 19.10.2026)
       ['mini', 'maxi', 'ultra'].forEach(function (card) {
         var b = document.getElementById('tab-' + card);
         if (b) b.addEventListener('click', function () { stat({ event: 'click', card: card }); });

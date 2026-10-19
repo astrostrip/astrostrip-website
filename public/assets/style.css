@@ -371,10 +371,11 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .nav .nav-wide { display: none; } /* phones show Chart, Strips, FAQ and the Instagram icon; Method stays on wider screens */
   .ig-icon { display: block; }
   .ig-text { display: none; }
-  .site-header { gap: 16px; }
-  .site-header .wordmark { letter-spacing: .2em; white-space: nowrap; }
-  .nav { gap: 13px; align-items: center; }
-  .nav a { letter-spacing: .14em; }
+  /* tighter since the EN/DE button (19.10.2026): wordmark, four links and the icon fit 375 px without side scrolling */
+  .site-header { gap: 12px; }
+  .site-header .wordmark { letter-spacing: .14em; white-space: nowrap; }
+  .nav { gap: 10px; align-items: center; }
+  .nav a { letter-spacing: .1em; }
   .chart-form { grid-template-columns: 1fr; }
   .positions td, .positions th { padding-left: 4px; padding-right: 4px; font-size: 14px; }
   .positions .glyph { min-width: 26px; }
@@ -385,11 +386,12 @@ input::placeholder { color: #6f6556; font-style: italic; }
   .asp-pair { white-space: nowrap; }
   .asp-long { display: none; }
 }
+@media (max-width: 400px) { .nav { gap: 9px; } .nav a { font-size: 11px; } } /* German "HOROSKOP" plus EN still inside the right margin at 375 px */
 @media (max-width: 360px) {
-  .site-header { gap: 10px; }
-  .site-header .wordmark { font-size: 13px; letter-spacing: .14em; }
-  .nav { gap: 9px; }
-  .nav a { font-size: 11px; letter-spacing: .1em; }
+  .site-header { gap: 8px; }
+  .site-header .wordmark { font-size: 12px; letter-spacing: .1em; }
+  .nav { gap: 7px; }
+  .nav a { font-size: 10.5px; letter-spacing: .06em; }
 }
 /* hero ring up to 760 px (Sandra, 02.10.2026): fits the screen below the kicker, the title sits in its centre.
    Since 11.10.2026 (logo wheel) the italic lines follow right after the title and cover the lower half of the wheel
@@ -407,12 +409,21 @@ input::placeholder { color: #6f6556; font-style: italic; }
    above PERSONAL READINGS on phones; the hero-invite breaks after "Moon" and "pattern?" on laptops, only after "pattern?" on phones */
 .method { padding-top: 64px; }
 #newsletter { padding-top: 60px; }
+/* PERSONAL READINGS and FAQ like METHOD (Sandra, 19.10.2026: „müssen analog angepasst werden“) */
+.strips, .faq { padding-top: 64px; }
 @media (max-width: 600px) {
   .br-wide { display: none; }
-  .strips { padding-top: 56px; }
+  .strips, .faq { padding-top: 48px; }
   .method { padding-top: 48px; }
   #newsletter { padding-top: 44px; }
 }
+/* strip cards: rows shared across the three cards, so prices, slots and buttons sit on one line even though
+   the Mini has no Transit Weekly line (Sandra, 19.10.2026: price of the Mini sat lower). Fallback without subgrid: as before. */
+@supports (grid-template-rows: subgrid) {
+  .strip { display: grid; grid-row: span 9; grid-template-rows: subgrid; row-gap: 0; justify-items: center; align-content: start; }
+  .strip-desc { flex: none; }
+}
+.strip-tw:empty { margin: 0; }
 /* free calculator: Rising and Moon are part of the Mini Strip */
 .card-lock-text { font-style: italic; opacity: .75; }
 .card-lock-link { display: inline-block; margin-top: 6px; font-size: 12px; letter-spacing: .24em; color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 2px; }

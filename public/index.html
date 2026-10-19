@@ -12,6 +12,9 @@
   <meta property="og:description" content="Your chart, your Big Three and what your exact degrees mean. Calculated in your browser.">
   <!-- SEO (Sandra, 18.10.2026): canonical address, link preview with the logo (og-image.png, 1200x630), structured data -->
   <link rel="canonical" href="https://astrostrip.com/">
+  <link rel="alternate" hreflang="en" href="https://astrostrip.com/">
+  <link rel="alternate" hreflang="de" href="https://astrostrip.com/de/">
+  <link rel="alternate" hreflang="x-default" href="https://astrostrip.com/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://astrostrip.com/">
   <meta property="og:site_name" content="astro.strip">
@@ -29,6 +32,7 @@
   ]}
   </script>
   <link rel="preload" href="fonts/playfair-display-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="assets/lang.js" data-redirect></script><!-- EN/DE switch and language choice -->
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -39,6 +43,7 @@
       <a href="#strips">Strips</a>
       <a class="nav-wide" href="#method">Method</a>
       <a href="#faq">FAQ</a>
+      <a class="lang-switch" href="de/" hreflang="de" lang="de" aria-label="Deutsche Fassung">DE</a>
       <a class="nav-ig" href="https://www.instagram.com/astro.strip/" rel="noopener" target="_blank" aria-label="Instagram"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" class="ig-dot"/></svg><span class="ig-text">Instagram</span></a>
     </nav>
   </header>
@@ -101,6 +106,7 @@
           <p class="strip-price">39&nbsp;&euro;</p>
           <p class="strip-time">5 working days</p>
           <p class="strip-pages">PDF, about 6 pages</p>
+          <p class="strip-pages strip-tw" aria-hidden="true"></p>
           <p class="slot" data-slot="mini"></p>
           <a class="btn" href="order.html?strip=mini" data-strip="mini">ORDER</a>
         </article>
@@ -111,7 +117,7 @@
           <p class="strip-price">79&nbsp;&euro;</p>
           <p class="strip-time">7 working days</p>
           <p class="strip-pages">PDF, about 11 pages</p>
-          <p class="strip-pages">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> a month per life area<span class="tw-founding"> (founding price)</span></p>
+          <p class="strip-pages strip-tw">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> a month per life area<span class="tw-founding"> (founding price)</span></p>
           <p class="slot" data-slot="maxi"></p>
           <a class="btn btn-solid" href="order.html?strip=maxi" data-strip="maxi">ORDER</a>
         </article>
@@ -122,7 +128,7 @@
           <p class="strip-price">129&nbsp;&euro;</p>
           <p class="strip-time">10 working days</p>
           <p class="strip-pages">PDF, about 20&ndash;25 pages</p>
-          <p class="strip-pages">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> a month per life area<span class="tw-founding"> (founding price)</span></p>
+          <p class="strip-pages strip-tw">+ Transit Weekly, <span data-tw-month>29&nbsp;&euro;</span> a month per life area<span class="tw-founding"> (founding price)</span></p>
           <p class="slot" data-slot="ultra"></p>
           <a class="btn" href="order.html?strip=ultra" data-strip="ultra">ORDER</a>
         </article>
@@ -295,7 +301,7 @@
         </details>
         <details class="faq-item">
           <summary>What happens with my data?</summary>
-          <p>The free calculator runs in your browser. Your birth data is not sent anywhere and not stored. When you order, your birth data is used only to write your strip; Stripe handles the payment and never receives it. We delete your birth data and your answers three months after delivery; if you book Transit Weekly, three months after the weekly texts of your last booking are finished. For Transit Weekly we keep, until two weeks after it ends, only your email, your life areas and the time zone of where you live, not the place itself. To see which channels work, the site counts visits (by source and by country) and clicks on the samples anonymously: no cookies, no profile, and no IP address is stored (the country is estimated from it and only the country code is kept). Everything else is in the <a href="datenschutz.html">privacy notice</a>.</p>
+          <p>The free calculator runs in your browser. Your birth data is not sent anywhere and not stored. When you order, your birth data is used only to write your strip; Stripe handles the payment and never receives it. We delete your birth data and your answers three months after delivery; if you book Transit Weekly, three months after the weekly texts of your last booking are finished. For Transit Weekly we keep, until two weeks after it ends, only your email, your life areas and the time zone of where you live, not the place itself. To see which channels work, the site counts visits (by source, country and page language) and clicks on the samples anonymously: no cookies, no profile, and no IP address is stored (the country is estimated from it and only the country code is kept). If you pick English or German with the EN/DE button, your browser remembers that choice; it never leaves your device. Everything else is in the <a href="datenschutz.html">privacy notice</a>.</p>
         </details>
         <details class="faq-item">
           <summary>What do I need to order?</summary>
@@ -400,9 +406,10 @@
     })();
   </script>
   <script>
-    // anonymous counter (no cookie, no id, nothing stored in the browser): one visit by source, and clicks
+    // anonymous counter (no cookie, no id, nothing stored in the browser): one visit by source and page language, and clicks
     // on the three sample tabs. Only the category goes to /api/stat; failures are silently ignored.
     (function () {
+      if (window.astrostripLangRedirect) return; // sent on to /de/ by assets/lang.js, counted there
       function stat(body) {
         try { fetch('/api/stat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(function () {}); } catch (e) {}
       }
@@ -416,7 +423,7 @@
         // drop ?src from the address bar, so a copied or shared link is not counted as Instagram/TikTok again
         if (q !== null) { var u = new URL(location.href); u.searchParams.delete('src'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
       } catch (e) {}
-      stat({ event: 'visit', src: src });
+      stat({ event: 'visit', src: src, lang: document.documentElement.lang === 'de' ? 'de' : 'en' }); // page language (Sandra, 19.10.2026)
       ['mini', 'maxi', 'ultra'].forEach(function (card) {
         var b = document.getElementById('tab-' + card);
         if (b) b.addEventListener('click', function () { stat({ event: 'click', card: card }); });

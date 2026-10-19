@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All 360 degrees · astro.strip</title>
+  <meta name="description" content="Every degree of the zodiac from Aries 1 to Pisces 30: its theme, how it acts while still growing and how it looks once grown into.">
+  <link rel="canonical" href="https://astrostrip.com/degrees.html">
+  <meta property="og:title" content="All 360 degrees · astro.strip">
+  <meta property="og:description" content="Same sign, 30 shapes. Every degree, stripped down.">
+  <meta property="og:url" content="https://astrostrip.com/degrees.html">
+  <meta property="og:image" content="https://astrostrip.com/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    /* degree library (Sandra, 19.10.2026): the 360 public Sun degree texts, one sign at a time */
+    .degrees { max-width: var(--max); margin: 0 auto; padding: 72px var(--gutter) 90px; text-align: center; }
+    .degrees .section-sub { margin: 0 auto; }
+    .sign-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 36px auto 12px; max-width: 860px; }
+    .sign-tabs button { font-family: var(--serif); font-size: 12px; letter-spacing: .24em; color: var(--cream); background: transparent; border: 1px solid var(--line); padding: 10px 14px; cursor: pointer; }
+    .sign-tabs button[aria-selected="true"] { background: var(--gold); color: var(--black); border-color: var(--gold); }
+    .sign-tabs button:hover { border-color: var(--gold); }
+    .deg-how { color: var(--muted); font-size: 15px; max-width: 640px; margin: 8px auto 0; }
+    .deg-how em { color: var(--gold-italic); }
+    .deg-how a { color: var(--gold); }
+    .deg-intro { color: var(--gold-italic); font-style: italic; margin: 18px auto 32px; max-width: 620px; min-height: 1.4em; }
+    .deg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; text-align: left; }
+    .deg-card { border: 1px solid var(--line); background: var(--panel); padding: 26px 24px; scroll-margin-top: 90px; min-width: 0; }
+    .deg-card:target { border-color: var(--gold); }
+    .deg-card h3 { font-weight: 400; font-size: 13px; letter-spacing: .28em; color: var(--gold-label); margin: 0 0 14px; }
+    .deg-card p { margin: 0 0 12px; color: var(--cream); opacity: .92; font-size: 16px; }
+    .deg-theme { color: var(--gold-italic); font-style: italic; font-size: 18px; line-height: 1.45; opacity: 1 !important; }
+    .deg-cta { margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--line-faint); }
+    .deg-cta .btn { margin: 18px 8px 0; }
+    @media (max-width: 720px) { .deg-grid { grid-template-columns: minmax(0, 1fr); } .sign-tabs button { padding: 9px 10px; letter-spacing: .16em; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">astro.strip</a>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+  </header>
+  <main class="degrees">
+    <p class="kicker">ALL 360 DEGREES</p>
+    <h1 class="section-title">Same sign.<br><em>30 shapes.</em></h1>
+    <p class="section-sub">Every degree, stripped down: its theme, how it acts while still growing, and how it looks once grown into it. Not sure which degree is yours? <a href="index.html#chart">Enter your birthday</a> and the calculator shows it.</p>
+    <div class="sign-tabs" role="tablist" aria-label="Signs"></div>
+    <p class="deg-how">What each planet stands for, and how to put planet, sign, house and degree together, is in our <a href="guide.html">free guide</a>. Looking up a planet from your chart? Take the number before the ° and add one: Venus at 14°32′ Libra sits on <a href="#libra-15">Libra 15</a>.</p>
+    <p class="deg-intro" id="deg-intro"></p>
+    <div class="deg-grid" id="deg-grid" aria-live="polite"><p>Loading the degrees …</p></div>
+    <div class="deg-cta">
+      <p class="kicker">YOUR WHOLE CHART</p>
+      <p class="section-sub" style="margin: 0 auto">Your Sun is one degree of many. Your Moon, your Rising and every planet sit on a degree of their own.</p>
+      <a class="btn btn-solid" href="index.html#chart">FIND YOUR DEGREE</a>
+      <a class="btn" href="index.html#strips">SEE THE STRIPS</a>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <nav class="footer-nav"><a href="impressum.html">Impressum · Legal notice</a><a href="datenschutz.html">Datenschutz · Privacy</a><a href="terms.html">AGB · Terms</a><a href="cancellation.html">Widerrufsbelehrung · Cancellation policy</a><a class="withdraw-link" href="withdraw.html">Vertrag widerrufen · Withdraw from contract</a><a href="cancel.html">Verträge hier kündigen · Cancel contracts here</a></nav>
+  </footer>
+  <script type="module">
+    // Reads the same public Sun degree files as the calculator (assets/degrees/<sign>.js); nothing is sent anywhere.
+    const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+    const tabs = document.querySelector('.sign-tabs'), grid = document.getElementById('deg-grid'), intro = document.getElementById('deg-intro');
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const cache = {};
+    // theme sentence first; the IN REAL LIFE lines stay on the calculator, they are written for the Sun (Sandra, 19.10.2026)
+    const themes = await import('./assets/degree-themes.js').then(m => m.default).catch(() => ({}));
+    for (const s of SIGNS) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.role = 'tab'; b.textContent = s.toUpperCase(); b.dataset.sign = s.toLowerCase();
+      b.addEventListener('click', () => { history.replaceState(null, '', '#' + b.dataset.sign); show(b.dataset.sign); });
+      tabs.appendChild(b);
+    }
+    async function show(key, focusDeg) {
+      for (const b of tabs.children) b.setAttribute('aria-selected', String(b.dataset.sign === key));
+      const name = SIGNS.find(s => s.toLowerCase() === key);
+      intro.textContent = `${name}: 30 degrees, 30 shapes of the same sign.`;
+      try {
+        cache[key] ??= (await import(`./assets/degrees/${key}.js`)).default;
+      } catch {
+        grid.innerHTML = '<p>The degrees could not be loaded. Please try again later.</p>'; return;
+      }
+      const d = cache[key];
+      grid.innerHTML = Array.from({ length: 30 }, (_, i) => i + 1).map(n => {
+        const t = d[n] || {};
+        return `<article class="deg-card" id="${key}-${n}">
+          <h3>${name.toUpperCase()} ${n}</h3>
+          ${themes[key]?.[n] ? `<p class="deg-theme">${esc(themes[key][n])}</p>` : ''}
+          ${t.growing ? `<p><span class="card-stage">Still growing:</span> ${esc(t.growing)}</p>` : ''}
+          ${t.grown ? `<p><span class="card-stage">Grown into it:</span> ${esc(t.grown)}</p>` : ''}
+        </article>`;
+      }).join('');
+      if (focusDeg) document.getElementById(`${key}-${focusDeg}`)?.scrollIntoView();
+    }
+    // #aries or #aries-15 opens a sign (and a degree); default Aries
+    function fromHash() {
+      const m = location.hash.slice(1).toLowerCase().match(/^([a-z]+)(?:-(\d{1,2}))?$/);
+      const key = m && SIGNS.some(s => s.toLowerCase() === m[1]) ? m[1] : 'aries';
+      show(key, m && m[2] && +m[2] >= 1 && +m[2] <= 30 ? +m[2] : null);
+    }
+    addEventListener('hashchange', fromHash);
+    fromHash();
+  </script>
+</body>
+</html>
