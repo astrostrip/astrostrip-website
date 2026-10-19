@@ -210,7 +210,7 @@ assert.match(mails[2].text, /Invoice: follows in a separate email/);
   assert.ok(pdf.startsWith('%PDF-1.7') && pdf.trimEnd().endsWith('%%EOF'), 'complete PDF');
   assert.ok(pdf.includes('/AFRelationship /Alternative') && pdf.includes('(factur-x.xml)'), 'ZUGFeRD attachment');
   const xml = Buffer.from(toCustomer.attachments[0].Base64Content, 'base64').toString('utf8');
-  assert.ok(xml.includes(`<ram:ID>${orderId}</ram:ID>`) && xml.includes('<ram:LineOne>Teststraße 5</ram:LineOne>') && xml.includes('<ram:GrandTotalAmount>129.00</ram:GrandTotalAmount>'), 'XML with order number, address, total');
+  assert.ok(xml.includes(`<ram:ID>${orderId}</ram:ID>`) && xml.includes('<ram:LineOne>Teststraße 5</ram:LineOne>') && xml.includes('<ram:GrandTotalAmount>134.00</ram:GrandTotalAmount>') && xml.includes('Ahnenschicht'), 'XML with order number, address, total (Ultra 129 € + ancestral layer 5 €)');
   assert.ok(!kv.has(jobKey), 'job removed after sending');
   // a job that keeps failing: retried, then Sandra is warned
   kv.set('invoice:AS-BROKEN', JSON.stringify({ order: { id: 'AS-BROKEN', email: 'x@example.com', strip: 'nope' }, customer_details: {}, paidAt: Date.now(), attempts: 0 }));
@@ -457,7 +457,7 @@ assert.match(r.headers.get('Location'), /status=expired/);
   const { GUIDE_PATH } = await import('../src/worker.js');
   mails.length = 0; lists.length = 0;
   r = await worker.fetch(req('/api/subscribe', 'POST', { email: 'g@example.com', consent: true, source: 'guide' }, { ip: '5.5.6.1' }), env);
-  assert.equal(r.status, 200); assert.equal(mails.length, 1); assert.match(mails[0].subject, /confirm your signup to get your guide/);
+  assert.equal(r.status, 200); assert.equal(mails.length, 1); assert.match(mails[0].subject, /Confirm your email address/); assert.ok(!/free/i.test(mails[0].subject), 'no spam word in the DOI subject');
   assert.ok(!mails[0].text.includes(GUIDE_PATH), 'no guide link before confirming');
   assert.ok(mails[0].html && mails[0].html.includes('Confirm and get the guide'), 'guide DOI mail in the brand frame');
   const gt = mails[0].text.match(/t=([0-9a-f]{64})/)[1];
@@ -1056,4 +1056,44 @@ console.log('newsletter ok');
   assert.equal(mails[0].subject, 'Eingangsbestätigung Kündigung (AS-20261012-LANG1)'); assert.ok(!mails[0].text.includes('Hi Lotta'));
   assert.match(mails[1].text, /Bestätigung an die Kundin auf Deutsch\./);
   console.log('receipt languages ok');
+}
+
+// Extra layers with a surcharge (Sandra, 19.10.2026): asteroids none or 3–8 (15 € for three, +3 € each further one),
+// ancestral layer +5 € (Ultra), karmic nodes included; Maxi and Ultra only.
+{
+  const { ASTEROIDS, EXTRAS, asteroidCents, extrasCents, stripCents, orderCents, invoiceProduct, ownerReadingMail, extrasBreakdown } = await import('../src/worker.js');
+  assert.deepEqual([0, 3, 4, 8].map(asteroidCents), [0, 1500, 1800, 3000]);
+  assert.equal(EXTRAS.ancestryCents, 500); assert.equal(ASTEROIDS.length, 8);
+  const ultra = { ...good, asteroids: ['Eros', 'juno', 'ceres', 'vesta', 'pluto', 'juno'] };
+  const v = validateOrder(ultra);
+  assert.equal(v.errors.length, 0, JSON.stringify(v.errors));
+  assert.deepEqual(v.order.asteroids, ['juno', 'ceres', 'vesta', 'eros'], 'known names only, once, in the fixed order');
+  assert.equal(stripCents(v.order), 12900 + 1800 + 500); assert.equal(orderCents(v.order), 15200);
+  assert.equal(extrasBreakdown(v.order), 'Ultra Strip 129,00 € + asteroids (4: Juno, Ceres, Vesta, Eros) 18,00 € + ancestral layer 5,00 €');
+  assert.ok(validateOrder({ ...good, asteroids: ['juno', 'ceres'] }).errors.some(e => /at least three asteroids/.test(e)), 'one or two asteroids: error');
+  assert.equal(validateOrder({ ...good, asteroids: [] }).errors.length, 0, 'no asteroids is fine');
+  const mini = validateOrder({ ...good, strip: 'mini', lifeArea: '', asteroids: ['juno', 'ceres', 'vesta'] }).order;
+  assert.deepEqual(mini.asteroids, [], 'Mini: no asteroids'); assert.equal(stripCents(mini), 3900);
+  const maxi = validateOrder({ ...good, strip: 'maxi', lifeArea: '', asteroids: ASTEROIDS }).order;
+  assert.equal(maxi.ancestry, false, 'ancestral layer Ultra only'); assert.equal(maxi.nodes, true, 'nodes included'); assert.equal(stripCents(maxi), 7900 + 3000);
+  // reading data mail: the skill takes the asteroids from here
+  assert.match(ownerReadingMail(v.order, 'AS-X'), /^Asteroiden: Juno, Ceres, Vesta, Eros \(bestellt\) · Skill: asteroiden:juno,ceres,vesta,eros$/m);
+  assert.match(ownerReadingMail({ ...v.order, asteroids: [] }, 'AS-X'), /^Asteroiden: keine bestellt · Skill: asteroiden:keine$/m);
+  assert.ok(!/Asteroiden:/.test(ownerReadingMail(mini, 'AS-X')), 'no asteroid line for the Mini');
+  // invoice: one row with the total, extras in the description
+  const ip = invoiceProduct({ strip: 'ultra', ast: ['juno', 'ceres', 'vesta', 'eros'], anc: true });
+  assert.equal(ip.cents, 15200); assert.equal(ip.days, 10); assert.match(ip.desc, /4 Asteroiden \(Juno, Ceres, Vesta, Eros\) \+ Ahnenschicht/);
+  assert.equal(invoiceProduct({ strip: 'maxi', ast: [], anc: false }), STRIPS.maxi, 'no extras: plain strip');
+  assert.equal(invoiceProduct({ strip: 'maxi' }), STRIPS.maxi, 'older jobs without the fields');
+  // checkout: own Stripe lines and metadata
+  const r = await worker.fetch(req('/api/checkout', 'POST', { ...ultra, transit: null }, { ip: '10.0.9.9' }), env);
+  const out = await r.json();
+  assert.equal(r.status, 200, JSON.stringify(out));
+  const s = sessions[sessions.length - 1]; const p = new URLSearchParams(s.body);
+  assert.equal(p.get('line_items[0][price_data][unit_amount]'), '12900');
+  assert.equal(p.get('line_items[1][price_data][unit_amount]'), '1800'); assert.equal(p.get('line_items[1][price_data][product_data][name]'), 'Asteroids (4): Juno, Ceres, Vesta, Eros');
+  assert.equal(p.get('line_items[2][price_data][unit_amount]'), '500'); assert.equal(p.get('line_items[2][price_data][product_data][name]'), 'Ancestral layer');
+  assert.equal(s.metadata.ast, 'juno,ceres,vesta,eros'); assert.equal(s.metadata.anc, '1');
+  assert.deepEqual(JSON.parse(kv.get('order:' + s.id)).asteroids, ['juno', 'ceres', 'vesta', 'eros']);
+  console.log('extra layers ok');
 }

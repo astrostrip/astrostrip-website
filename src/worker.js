@@ -54,6 +54,28 @@ export const STRIPS = {
   ultra: { name: 'Ultra Strip', tag: 'Complete dossier', cents: 12900, days: 10, weekly: 6 },
 };
 
+// Extra layers with a surcharge (Sandra, 19.10.2026: „3 für 15€ jeder weitere 3€“, „Mindestens 3 wählen“,
+// „Mondknoten included aber Ahnen bitte 5€“): asteroids none or 3–8 of the eight (Maxi, Ultra), ancestral layer
+// +5 € (Ultra only); the karmic nodes reading stays included. Founding prices of the strips unchanged.
+export const ASTEROIDS = ['juno', 'pallas', 'ceres', 'vesta', 'eris', 'sedna', 'orcus', 'eros'];
+const ASTEROID_NAME = a => a[0].toUpperCase() + a.slice(1);
+export const EXTRAS = { astMin: 3, astBaseCents: 1500, astEachCents: 300, ancestryCents: 500 };
+export const asteroidCents = n => (n >= EXTRAS.astMin ? EXTRAS.astBaseCents + (n - EXTRAS.astMin) * EXTRAS.astEachCents : 0);
+export const extrasCents = o => asteroidCents(o.asteroids?.length || 0) + (o.ancestry ? EXTRAS.ancestryCents : 0);
+export const stripCents = o => (STRIPS[o.strip] ? STRIPS[o.strip].cents + extrasCents(o) : 0);
+const asteroidList = o => (o.asteroids || []).map(ASTEROID_NAME).join(', ');
+// "Ultra Strip 129,00 € + asteroids (4: Juno, Ceres, Vesta, Eros) 18,00 € + ancestral layer 5,00 €"
+export function extrasBreakdown(o, lang = 'en') {
+  const s = STRIPS[o.strip];
+  if (!s) return '';
+  const de = lang === 'de';
+  const n = o.asteroids?.length || 0;
+  return [`${s.name} ${euro(s.cents)}`,
+    n ? `${de ? 'Asteroiden' : 'asteroids'} (${n}: ${asteroidList(o)}) ${euro(asteroidCents(n))}` : null,
+    o.ancestry ? `${de ? 'Ahnenschicht' : 'ancestral layer'} ${euro(EXTRAS.ancestryCents)}` : null,
+  ].filter(Boolean).join(' + ');
+}
+
 const STRIP_TAG_DE = { mini: 'Das Wesentliche', maxi: 'Das ganze Horoskop', ultra: 'Das komplette Dossier' }; // Stripe page on /de/
 export const LIFE_AREAS = ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family', 'Creativity and self-expression', 'Friends and belonging', 'Personal growth'];
 export const RELATIONSHIP = ['Single', 'Dating', 'In a relationship', 'Married', 'Separated or divorced', 'Widowed'];
@@ -382,6 +404,13 @@ export function validateOrder(o) {
     lifeArea = clean(o.lifeArea, 80);
     if (!LIFE_AREAS.includes(lifeArea)) errors.push('Please choose the life area for your Ultra Strip.');
   }
+  // Asteroids chosen in the form (Maxi, Ultra): none, or at least three of the eight; unknown names are dropped.
+  let asteroids = [];
+  if (strip === 'maxi' || strip === 'ultra') {
+    const raw = Array.isArray(o.asteroids) ? o.asteroids.map(a => String(a).toLowerCase()) : [];
+    asteroids = ASTEROIDS.filter(a => raw.includes(a));
+    if (asteroids.length && asteroids.length < EXTRAS.astMin) errors.push('Please choose at least three asteroids, or none.');
+  }
   // Questionnaire for Maxi and Ultra. Only the current city is required (Ultra: solar return and transits).
   let questionnaire = null;
   if (strip === 'maxi' || strip === 'ultra') {
@@ -414,6 +443,7 @@ export function validateOrder(o) {
     birthDate: o.birthDate, birthTime: o.birthTime, timeSource: o.timeSource,
     place: { label: clean(place.label), lat: Number(place.lat), lon: Number(place.lon), tz: clean(place.tz, 60) },
     lifeArea, nodes: strip !== 'mini' && o.nodes === true, ancestry: strip === 'ultra' && o.ancestry === true, // Mini = Big Three only, no nodes layer
+    asteroids,
     note: clean(o.note, 500),
     questionnaire,
     sensitiveConsent,
@@ -459,7 +489,7 @@ const euro = cents => `${(cents / 100).toFixed(2).replace('.', ',')} €`;
 // (87 € founding price or 117 €, fixed at checkout).
 export const transitUnit = order => order.transit?.unitCents || TRANSIT.cents;
 export const transitCents = order => (order.transit ? order.transit.areas.length * transitUnit(order) : 0);
-export const orderCents = order => (STRIPS[order.strip]?.cents || 0) + transitCents(order);
+export const orderCents = order => stripCents(order) + transitCents(order);
 // "Ultra Strip and Transit Weekly (2 life areas)", "Transit Weekly (1 life area)"
 export function productLabel(order, lang = 'en') {
   const s = STRIPS[order.strip];
@@ -477,7 +507,8 @@ export function ownerOrderMail(order, id, session) {
     `Bestellung ${id} (Buchhaltung, 8 Jahre aufbewahren)`,
     '',
     `Produkt: ${productLabel(order, 'de')}`,
-    s && t ? `  ${s.name}: ${grossLine(s.cents)}` : null,
+    s && t ? `  ${s.name}: ${grossLine(stripCents(order))}` : null,
+    s && extrasCents(order) ? `  Zusammensetzung ${s.name}: ${extrasBreakdown(order, 'de')}` : null,
     t ? `  Transit Weekly: ${t.areas.length} × ${euro(transitUnit(order))}${t.founding ? ' (Founding-Preis)' : ''} = ${grossLine(transitCents(order))}; Bereiche: ${t.areas.join(', ')}` : null,
     `Preis gesamt: ${grossLine(orderCents(order))}, bezahlt`,
     `Bestellt: ${berlinStamp(order.createdAt)}`,
@@ -514,6 +545,7 @@ export function ownerReadingMail(order, id) {
     `Geburtsort: ${order.place.label} · ${order.place.lat}, ${order.place.lon} · ${order.place.tz}`,
     order.strip === 'ultra' ? `Lebensbereich: ${order.lifeArea}` : null,
     s ? `Karmische Mondknoten-Deutung: ${order.nodes ? 'ja' : 'nein'}` : null,
+    s && order.strip !== 'mini' ? `Asteroiden: ${order.asteroids?.length ? `${asteroidList(order)} (bestellt) · Skill: asteroiden:${order.asteroids.join(',')}` : 'keine bestellt · Skill: asteroiden:keine'}` : null,
     order.strip === 'ultra' ? `Ahnenschicht: ${order.ancestry ? 'ja' : 'nein'}` : null,
     order.note ? `Anmerkung: ${order.note}` : null,
     s ? `Einwilligung für sensible Angaben (Art. 9 DSGVO): ${order.sensitiveConsent ? 'ja' : 'nicht erteilt (keine Freitextangaben)'}` : null,
@@ -572,6 +604,7 @@ export function customerMail(order, id, env) {
     s ? `Product: ${s.name} (${s.tag}), a personal astrology reading prepared for your birth chart and delivered as a PDF by email.` : `Product: ${productLabel(order)}, weekly transit emails for your birth chart.`,
     s && t ? `Added: ${productLabel({ transit: t })}.` : null,
     order.base ? `Booked for the reading of your order ${order.base}.` : null,
+    s && extrasCents(order) ? `Extra layers: ${extrasBreakdown(order)}.` : null,
     `Price: ${euro(orderCents(order))} including 19 % VAT, paid.`,
     s && t ? 'Invoices: two, for the strip and for Transit Weekly, follow in separate emails within a few minutes (PDF e-invoices).' : 'Invoice: follows in a separate email within a few minutes (PDF e-invoice).',
     s ? `Delivery: ${deliveryText(order)}.` : null,
@@ -772,9 +805,9 @@ export async function startDoubleOptIn(env, email, source, ip) {
     // English only, like the guide. Confirmation only, no advertising (BGH VI ZR 134/15).
     await sendMail(env, {
       to: email,
-      subject: 'Please confirm your signup to get your guide',
+      subject: 'Confirm your email address · astro.strip', // no 'free'/'guide' in the subject: landed in web.de spam (Sandra, 19.10.2026)
       text: [
-        'Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your free guide "The birth chart, stripped to the degree.":',
+        'Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your guide "The birth chart, stripped to the degree.":',
         link,
         '',
         'The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.',
@@ -784,7 +817,7 @@ export async function startDoubleOptIn(env, email, source, ip) {
       // same frame as the other customer mails (Sandra, 19.10.2026: „im Stil der anderen aufbauen“)
       html: brandMail({ kicker: 'Confirm your signup', pre: 'One tap, then your free guide is yours.', body: [
         bH1('One tap, then the guide is yours.', 28),
-        bP('Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your free guide <em>The birth chart, stripped to the degree.</em>'),
+        bP('Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your guide <em>The birth chart, stripped to the degree.</em>'),
         bButton('Confirm and get the guide', link),
         bSmall(`The link is valid for 7 days. If you did not sign up, simply ignore this email; you will not hear from us.`),
       ].join('\n') }),
@@ -917,7 +950,21 @@ const invoicePdfKey = id => `invoicepdf:${id}`; // not under 'invoice:', so the 
 // What an invoice job bills: a strip, or Transit Weekly (n life areas, service period = the 13 weeks).
 const dmyText = ymd => ymd.split('-').reverse().join('.');
 export function invoiceProduct(o) {
-  if (o.strip !== 'transit') return STRIPS[o.strip];
+  if (o.strip !== 'transit') {
+    // A strip with extra layers: one row with the total, the extras named in the description (Sandra, 19.10.2026).
+    const s = STRIPS[o.strip];
+    const x = { strip: o.strip, asteroids: Array.isArray(o.ast) ? o.ast.filter(a => ASTEROIDS.includes(a)) : [], ancestry: o.anc === true };
+    if (!s || !extrasCents(x)) return s;
+    const n = x.asteroids.length;
+    const de = [n ? `${n} Asteroiden (${asteroidList(x)})` : '', x.ancestry ? 'Ahnenschicht' : ''].filter(Boolean).join(' + ');
+    const en = [n ? `${n} asteroids` : '', x.ancestry ? 'ancestral layer' : ''].filter(Boolean).join(' + ');
+    return {
+      ...s, cents: stripCents(x),
+      desc: `Reading als PDF mit ${de} · Personal reading (PDF) with ${en}`,
+      xmlDesc: `Persönliches astrologisches Reading als PDF mit ${de} / personal astrology reading (PDF) with ${en}`,
+      noteDe: `persönliches astrologisches Reading als PDF per E-Mail; enthalten: ${extrasBreakdown(x, 'de')}`,
+    };
+  }
   const n = Number(o.n) || 0;
   if (!n || !o.period) return undefined;
   return {
@@ -942,7 +989,7 @@ async function queueTransitInvoice(env, order, session) {
 
 async function queueInvoice(env, order, session) {
   const job = {
-    order: { id: order.id, name: order.name, email: order.email, strip: order.strip, week: order.week || '', thisWeek: order.thisWeek !== false },
+    order: { id: order.id, name: order.name, email: order.email, strip: order.strip, week: order.week || '', thisWeek: order.thisWeek !== false, ast: order.asteroids || [], anc: order.ancestry === true },
     customer_details: { name: session.customer_details?.name || '', address: session.customer_details?.address || {} },
     paidAt: Date.now(), attempts: 0, pi: typeof session.payment_intent === 'string' ? session.payment_intent : '',
   };
@@ -1296,10 +1343,18 @@ async function createCheckout(request, env, order, { week, now, cancelUrl, ui = 
   if (s) items.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: s.cents, product_data: { name: s.name, description: de
     ? `${STRIP_TAG_DE[order.strip]}. Persönliche Deutung, eigens für dein Horoskop, als PDF per E-Mail. ${deliveryText(order, 'de')}. Preis inklusive 19 % MwSt.`
     : `${s.tag}. Personal reading prepared for your chart, PDF by email ${deliveryText(order)}. Price includes 19 % VAT.` } } });
+  // Extra layers as their own lines (Sandra, 19.10.2026)
+  const nAst = s ? order.asteroids?.length || 0 : 0;
+  if (nAst) items.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: asteroidCents(nAst), product_data: de
+    ? { name: `Asteroiden (${nAst}): ${asteroidList(order)}`, description: `Zusatz-Ebene zum ${s.name}: drei Asteroiden 15 €, jeder weitere 3 €. Preis inklusive 19 % MwSt.` }
+    : { name: `Asteroids (${nAst}): ${asteroidList(order)}`, description: `Extra layer for your ${s.name}: three asteroids 15 €, each further one 3 €. Price includes 19 % VAT.` } } });
+  if (s && order.ancestry) items.push({ quantity: 1, price_data: { currency: 'eur', unit_amount: EXTRAS.ancestryCents, product_data: de
+    ? { name: 'Ahnenschicht', description: `Zusatz-Ebene zum ${s.name}: Muster, die in deiner Familie weiterlaufen können. Preis inklusive 19 % MwSt.` }
+    : { name: 'Ancestral layer', description: `Extra layer for your ${s.name}: patterns that may run in your family. Price includes 19 % VAT.` } } });
   if (t) items.push({ quantity: t.areas.length, price_data: { currency: 'eur', unit_amount: t.unitCents, product_data: de
     ? { name: `Transit Weekly · 13 Wochen je Lebensbereich${t.founding ? ' · Gründungspreis' : ''}`, description: `Wöchentliche Transit-Mails für ${t.areas.map(a => AREA_DE[a] || a).join(', ')}, jeden Montag ab ${longDate(t.start, 'de')}, 13 Wochen lang (${euro(t.unitCents / 3)} im Monat je Bereich). Endet von selbst. Preis inklusive 19 % MwSt.` }
     : { name: `Transit Weekly · 13 weeks per life area${t.founding ? ' · founding price' : ''}`, description: `Weekly transit emails for ${t.areas.join(', ')}, every Monday from ${longDate(t.start)} for 13 weeks (${euro(t.unitCents / 3)} a month per area). Ends by itself. Price includes 19 % VAT.` } } });
-  const meta = { order_id: id, strip: order.strip, week: s ? week : undefined, tw_week: t ? String(mondayOnOrAfter(t.readWeek)) : undefined, tw_week2: t && t.readWeek2 ? String(mondayOnOrAfter(t.readWeek2)) : undefined, tw_n: t ? String(t.areas.length) : undefined, tw_unit: t ? String(t.unitCents) : undefined, tw_start: t ? t.start : undefined, base: order.base || undefined };
+  const meta = { order_id: id, strip: order.strip, week: s ? week : undefined, tw_week: t ? String(mondayOnOrAfter(t.readWeek)) : undefined, tw_week2: t && t.readWeek2 ? String(mondayOnOrAfter(t.readWeek2)) : undefined, tw_n: t ? String(t.areas.length) : undefined, tw_unit: t ? String(t.unitCents) : undefined, tw_start: t ? t.start : undefined, base: order.base || undefined, ast: nAst ? order.asteroids.join(',') : undefined, anc: s && order.ancestry ? '1' : undefined };
   const session = await stripe(env, 'POST', 'checkout/sessions', {
     mode: 'payment',
     locale: order.language === 'de' || de ? 'de' : 'en',
@@ -1959,6 +2014,7 @@ export function customerMailHtml(order, id, env) {
     ['Order', escH(id)],
     s ? ['Strip', `${escH(s.name)} · ${escH(s.tag)}. A personal astrology reading for your birth chart, PDF by email.`] : ['Product', `${escH(productLabel(order))}, weekly transit emails for your birth chart.`],
     s ? ['Delivery', escH(deliveryText(order))] : null,
+    s && extrasCents(order) ? ['Extra layers', escH(extrasBreakdown(order))] : null,
     s && t ? ['Added', escH(productLabel({ transit: t }))] : null,
     order.base ? ['For', `the reading of your order ${escH(order.base)}`] : null,
     ['Price', `${bStrong(escH(euro(orderCents(order))))} including 19 % VAT, paid`],
