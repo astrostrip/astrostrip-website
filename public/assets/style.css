@@ -285,6 +285,9 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .strip-tag { font-size: 11px; letter-spacing: .3em; color: var(--gold-label); margin-bottom: 22px; }
 .strip-desc { color: var(--gold-italic); font-style: italic; flex: 1; }
 .strip-price { font-size: 40px; margin: 10px 0 0; line-height: 1.1; }
+/* "from"/"ab" before the Maxi and Ultra price, clearly smaller (Sandra, 19.10.2026: „Bitte mache das from (bei den Preisen) deutlich kleiner“) */
+.price-from { font-size: .4em; letter-spacing: .08em; } /* on the baseline of the number (Sandra: „Das ab muss unten bündig mit der Zahl sein“) */
+.strip-option .price-from { font-size: .75em; }
 .strip-time { font-size: 13px; color: var(--muted); letter-spacing: .08em; margin-bottom: 26px; }
 
 /* method */
