@@ -288,6 +288,8 @@ input::placeholder { color: #6f6556; font-style: italic; }
 /* "from"/"ab" before the Maxi and Ultra price, clearly smaller (Sandra, 19.10.2026: „Bitte mache das from (bei den Preisen) deutlich kleiner“) */
 .price-from { font-size: .4em; letter-spacing: .08em; } /* on the baseline of the number (Sandra: „Das ab muss unten bündig mit der Zahl sein“) */
 .strip-option .price-from { font-size: .75em; }
+/* lining figures: Playfair's default old-style 7 and 9 hang below the baseline, so "ab" looked higher (Sandra: „Das ab sitzt noch nicht bündig. Vor allem beim Maxi“) */
+.strip-price, .strip-option { font-variant-numeric: lining-nums; }
 .strip-time { font-size: 13px; color: var(--muted); letter-spacing: .08em; margin-bottom: 26px; }
 
 /* method */
