@@ -38,7 +38,7 @@ export default {
   },
   6: {
     theme: "Timeless roles. This degree is about living out the great human roles, like hosting, friendship or guiding others, in your own way in everyday life, and sensing how you come across.",
-    growing: "Thinks about themselves constantly and analyzes every feeling until they become a puzzle to themselves. In the process they lose the ability to act spontaneously and with full commitment. Or they let their feelings alone steer them and barely notice what's happening around them.",
+    growing: "Thinks about themselves so much that they miss the role the moment calls for: they agonize over how they come across instead of welcoming guests or comforting someone. In the process they lose the ability to act spontaneously and with full commitment. Or they let their feelings alone steer them and don’t notice what others need from them right now.",
     grown: "consciously takes on the roles people have always played for one another, like hosting, comforting or guiding, and fills them in their own way. They notice clearly how they land with others and understand their own motives better and better. Feeling and thinking work together, and that makes them tactful and easy to be around.",
     before: "overthinks every sentence at a friend's housewarming and leaves early, worn out by their own head.",
     after: "gets the shyest guest at a friend's housewarming laughing and notices, in passing, whose glass is empty.",
@@ -93,9 +93,9 @@ export default {
     after: "notices the signs of a rent increase early, calmly compares options, and has found a cheaper place in time.",
   },
   14: {
-    theme: "The ordinary road. This degree is about getting past obstacles with determination on the everyday road of work, home and friendships, while staying kind and reliable.",
+    theme: "Taking on obstacles. This degree is about determinedly getting past obstacles on the everyday road of work, home and friendships, while staying kind and reliable.",
     growing: "Accepts their life as it is because it could always be worse, and does their duties reluctantly. Or they push with all their strength in the wrong direction, believing fame and money will make them happy. Ordinary daily life with its tasks then feels narrow and confining.",
-    grown: "finds contentment in everyday tasks and relationships and tackles hard stretches with determination. They stay polite and helpful even toward people they barely know, and put their skills to use for others. That's exactly what keeps sharpening those skills and carries them through uncertain times.",
+    grown: "finds contentment in everyday tasks and relationships, and when an obstacle comes up, they take it on directly: they pin down what exactly is in the way, check soberly whether their plan actually works, and then work through it step by step instead of dodging it or waiting. They stay polite and helpful even toward people they barely know. That's exactly what keeps sharpening their skills and carries them through uncertain times.",
     before: "grumbles for a whole year about the construction next door and stops greeting the neighbors.",
     after: "gets through the year of construction next door with patience and kind words, agrees on quiet hours with the builders, and brings the crew water in summer.",
   },
@@ -171,7 +171,7 @@ export default {
   },
   25: {
     theme: "Two feelings at once. This degree is about not getting swept away by every feeling, holding even contradictory emotions at the same time, and using your quirks as a strength.",
-    growing: "Gets swept away by every strong feeling and loses their composure. They experience their own weaknesses and quirks as flaws and react with defiance or rebellion. Or they turn being different into a touchy pride they constantly have to defend.",
+    growing: "Gets swept away by every strong feeling and can’t bear to feel two opposite things at once: when sad, they forbid themselves any joy, and when someone disappoints them, they can no longer see anything good in that person. So they flee the situation or let the stronger feeling take over. Their own quirks feel like flaws, and they defend them defiantly.",
     grown: "can feel two opposite emotions, like grief and joy, at the same time without being overwhelmed by either. They look closely at what sets them apart from others and accept their imperfections too. Over time, those very quirks become the particular strength that makes them who they are.",
     before: "is overwhelmed by grief for their late father at their sister's wedding and leaves before dinner starts.",
     after: "feels grief for their late father and joy at their sister's wedding at the same time, tells a funny story about their father at dinner, and stays until the last dance.",

@@ -95,7 +95,7 @@ export default {
   14: {
     theme: "What lasts. This degree is about recognizing, behind everything that keeps changing, what truly lasts, and so being able to look at the dark sides of your past without judgment.",
     growing: "Hides the parts of their past they’re ashamed of and acts as if they never happened. That keeps them stuck in old confusion, unsure what they’re actually living for. And the more they push away, the less they dare to hope for anything good.",
-    grown: "knows what lasts beyond all passing worries, and from there looks calmly at the light and the dark in their life. They accept the hard chapters without condemning themselves and forgive what went wrong back then. That brings calm and clarity, and every day can be a real fresh start.",
+    grown: "keeps in mind that their life is finite, and so sees which worries won’t matter in a few years and what will still be true and important then. With that distance they look calmly at the dark chapters of their past, accept them and forgive themselves for what went wrong back then. That brings calm and clarity, and every day can be a real fresh start.",
     before: "changes the subject whenever their early twenties come up and still carries the old shame.",
     after: "talks calmly about their worst years, knows what truly lasts, and has forgiven their younger self.",
   },
@@ -143,7 +143,7 @@ export default {
   },
   21: {
     theme: "The price of success. This degree is about striving wholeheartedly to be really good at something while knowing what success costs. In the end, success and failure are mostly feelings that come and go.",
-    growing: "Mainly wants applause and admiration and never asks what the success actually costs them. Or they only admire other people’s talent from the audience and leave their own unused. Either way their mood depends entirely on how well they’re going down right now.",
+    growing: "Chases applause and status without noticing what gets lost along the way: sleep, friendships, time with the people they love. Even after a success the happiness they hoped for doesn’t come, so they’re straight off after the next one. Or they only admire other people’s talent from the audience and leave their own unused.",
     grown: "works with dedication at one thing until they’re truly good at it, and knows the price: time, practice and giving things up. Other people’s attention spurs them on but never replaces the work. They enjoy a success and shake off a failure, because both are feelings that pass.",
     before: "knows every episode of the talent show by heart and hasn’t touched their own guitar in years.",
     after: "practices guitar every evening, plays their first gig at the bar around the corner, enjoys the applause, and knows exactly how many evenings it cost.",

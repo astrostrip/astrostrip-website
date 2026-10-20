@@ -81,8 +81,8 @@ export default {
   },
   12: {
     theme: "Verstehen wollen. Bei diesem Grad geht es darum, beharrlich nach Antworten zu suchen und so ans Licht zu holen, was einem bisher nicht bewusst war, auch wenn das Mühe kostet.",
-    growing: "Hält eine Lage, die einen unglücklich macht, jahrelang aus und nennt das Durchhaltevermögen. Man fragt nicht mehr, warum man bleibt, und die Neugier stumpft nach und nach ab. Am Ende läuft man einfach mit, wie alle anderen, und glaubt nicht mehr daran, dass sich etwas ändern lässt.",
-    grown: "Bleibt an schwierigen Fragen dran, auch wenn die Suche anstrengend ist, und versteht dadurch Dinge über sich, die vorher verborgen waren. Harte Zeiten machen einen zäh und innerlich gefestigt, aber man hält sie nicht länger aus als nötig. Merkt man, dass etwas nicht mehr funktioniert, nutzt man den wachen, neugierigen Kopf, um einen Ausweg zu finden, und ändert es.",
+    growing: "Will lieber nicht so genau wissen, warum einen etwas unglücklich macht, und stellt die unbequemen Fragen gar nicht erst. So hält man eine Lage jahrelang aus und nennt das Durchhaltevermögen. Die Neugier stumpft nach und nach ab, und am Ende glaubt man nicht mehr daran, dass sich etwas ändern lässt.",
+    grown: "Fragt beharrlich nach, warum etwas so ist, wie es ist, liest sich ein, spricht mit Menschen, die sich auskennen, und sucht weiter, auch wenn es anstrengend wird. Dabei kommt ans Licht, was man vorher über sich nicht wusste, etwa welche Gewohnheit einem die Kraft raubt. Harte Zeiten machen einen zäh, aber man hält sie nicht länger aus als nötig und ändert, was nicht mehr funktioniert.",
     before: "Hasst den Arbeitsweg und den Job seit fünf Jahren und sagt, so sei das Erwachsenenleben eben.",
     after: "Fragt sich ehrlich, warum der Job so viel Kraft raubt, und findet dann heraus, was ein Wechsel in ein anderes Feld erfordert.",
   },

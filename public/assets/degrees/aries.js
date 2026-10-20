@@ -163,7 +163,7 @@ export default {
     after: "says no early, sees what the one real project holds, and quietly sees it through.",
   },
   24: {
-    theme: "Open to abundance. This degree is about paying attention to life’s quiet hints, letting them guide you, and generously sharing what you have.",
+    theme: "Generosity. This degree is about not feeling poor, giving and receiving gladly and without ulterior motives, and taking an opportunity when it comes up.",
     growing: "Holds on to everything for fear of missing out, even when there’s actually enough. Or they do give, but make a big deal of it to be admired. Either way they feel poor inside.",
     grown: "pays attention to coincidences and openings and grabs a chance when it comes. They share gladly and with no strings attached, with open hands. Living that generously makes them feel rich, and luck often follows.",
     before: "splits every bill down to the cent and still feels broke.",

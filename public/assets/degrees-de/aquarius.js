@@ -39,7 +39,7 @@ export default {
   },
   6: {
     theme: "Zeitlose Rollen. Bei diesem Grad geht es darum, die großen menschlichen Rollen, etwa Gastfreundschaft, Freundschaft oder Begleitung, auf die eigene Art im Alltag zu leben und dabei zu spüren, wie man auf andere wirkt.",
-    growing: "Denkt ständig über sich selbst nach und analysiert jedes eigene Gefühl, bis man sich selbst ein Rätsel wird. Darüber verliert man die Fähigkeit, spontan und mit ganzem Einsatz zu handeln. Oder man lässt sich nur von den eigenen Gefühlen steuern und bekommt kaum mit, was um einen herum geschieht.",
+    growing: "Denkt so viel über sich selbst nach, dass man die Rolle verpasst, die gerade gebraucht wird: Man grübelt über den eigenen Auftritt, statt Gäste willkommen zu heißen oder jemanden zu trösten. Darüber verliert man die Fähigkeit, spontan und mit ganzem Einsatz zu handeln. Oder man lässt sich nur von den eigenen Gefühlen steuern und merkt nicht, was die anderen in diesem Moment von einem bräuchten.",
     grown: "Übernimmt im Alltag bewusst Rollen, die Menschen seit jeher füreinander spielen, etwa Gastgeben, Trösten oder Anleiten, und füllt sie auf die eigene Art. Man merkt genau, wie man bei anderen ankommt, und versteht immer besser, warum man selbst tut, was man tut. Gefühl und Verstand arbeiten dabei zusammen, und das macht einen taktvoll und angenehm im Umgang.",
     before: "Grübelt auf der Einweihungsfeier einer befreundeten Person über jeden eigenen Satz nach und geht früh, erschöpft von sich selbst.",
     after: "Bringt auf der Einweihungsfeier einer befreundeten Person den schüchternsten Gast zum Lachen und bemerkt nebenbei, wessen Glas leer ist.",
@@ -94,9 +94,9 @@ export default {
     after: "Bemerkt die Hinweise auf die Mieterhöhung früh, vergleicht in Ruhe die Möglichkeiten und hat rechtzeitig eine günstigere Wohnung gefunden.",
   },
   14: {
-    theme: "Der gewöhnliche Weg. Bei diesem Grad geht es darum, Hindernisse auf dem ganz normalen Weg von Arbeit, Zuhause und Freundschaften entschlossen zu überwinden und dabei freundlich und verlässlich zu bleiben.",
+    theme: "Hindernisse anpacken. Bei diesem Grad geht es darum, Hindernisse auf dem ganz normalen Weg von Arbeit, Zuhause und Freundschaften entschlossen zu überwinden und dabei freundlich und verlässlich zu bleiben.",
     growing: "Nimmt das eigene Leben hin, wie es ist, weil es ja schlimmer sein könnte, und erledigt die Pflichten widerwillig. Oder man strengt sich mit aller Kraft in die falsche Richtung an, weil man glaubt, Ruhm und Geld machten glücklich. Der normale Alltag mit seinen Aufgaben fühlt sich dann eng und unfrei an.",
-    grown: "Findet Zufriedenheit in den alltäglichen Aufgaben und Beziehungen und geht schwierige Phasen entschlossen an. Man bleibt dabei auch Menschen gegenüber höflich und hilfsbereit, die man kaum kennt, und setzt die eigenen Fähigkeiten für andere ein. Gerade dadurch werden diese Fähigkeiten immer besser, und man kommt auch durch unsichere Zeiten.",
+    grown: "Findet Zufriedenheit in den alltäglichen Aufgaben und Beziehungen, und taucht ein Hindernis auf, packt man es direkt an: Man klärt, was genau im Weg steht, prüft nüchtern, ob der eigene Plan wirklich funktioniert, und geht dann Schritt für Schritt hindurch, statt auszuweichen oder abzuwarten. Dabei bleibt man auch Menschen gegenüber höflich und hilfsbereit, die man kaum kennt. Gerade dadurch werden die eigenen Fähigkeiten immer besser, und man kommt auch durch unsichere Zeiten.",
     before: "Schimpft ein ganzes Jahr lang über die Bauarbeiten nebenan und grüßt in der Nachbarschaft niemanden mehr.",
     after: "Übersteht das Jahr der Bauarbeiten nebenan mit Geduld und freundlichen Worten, vereinbart Ruhezeiten mit der Baufirma und bringt den Leuten auf der Baustelle im Sommer Wasser.",
   },
@@ -172,7 +172,7 @@ export default {
   },
   25: {
     theme: "Zwei Gefühle zugleich. Bei diesem Grad geht es darum, sich nicht von jedem Gefühl mitreißen zu lassen, auch widersprüchliche Gefühle gleichzeitig auszuhalten und die eigenen Eigenheiten als Stärke zu nutzen.",
-    growing: "Gerät bei jedem heftigen Gefühl außer sich und verliert die Fassung. Die eigenen Schwächen und Eigenheiten erlebt man als Makel und reagiert darauf trotzig oder rebellisch. Oder man macht aus dem eigenen Anderssein einen beleidigten Stolz, den man ständig verteidigen muss.",
+    growing: "Gerät bei jedem heftigen Gefühl außer sich und hält es nicht aus, zwei gegensätzliche Dinge zugleich zu fühlen: Ist man traurig, verbietet man sich jede Freude, und ist man von einem Menschen enttäuscht, sieht man nichts Gutes mehr an diesem Menschen. Man flieht dann aus der Situation oder lässt das stärkere Gefühl alles bestimmen. Die eigenen Eigenheiten erlebt man dabei als Makel und verteidigt sie trotzig.",
     grown: "Kann zwei gegensätzliche Gefühle, etwa Trauer und Freude, gleichzeitig spüren, ohne von einem davon überwältigt zu werden. Man schaut genau hin, was einen von anderen abhebt, und nimmt auch die eigenen Unvollkommenheiten an. Gerade aus diesen Eigenheiten wird mit der Zeit die besondere Stärke, die einen ausmacht.",
     before: "Wird auf der Hochzeit der Schwester von der Trauer um den verstorbenen Vater überwältigt und geht, bevor das Essen beginnt.",
     after: "Spürt auf der Hochzeit der Schwester Trauer um den verstorbenen Vater und zugleich Freude, erzählt beim Essen eine lustige Geschichte über ihn und bleibt bis zum letzten Tanz.",

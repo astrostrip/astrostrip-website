@@ -137,7 +137,7 @@ export default {
   20: {
     theme: "Flexible and steady at once. This degree is about willingly going along with changes bigger than yourself, staying steady inside, and paying attention to the hints that show your next step.",
     growing: "Goes along with every change without a direction of their own and decides nothing really matters anyway. Or they cling to what’s familiar until nothing moves at all. On top of that, they lose a lot of energy on things that truly don’t matter.",
-    grown: "goes along with changes willingly, even ones they didn’t start, and stays calm inside. They put their energy fully into what’s happening here and now and watch for hints about where the next step could lead. Whatever doesn’t matter, they consciously leave alone.",
+    grown: "goes along with change willingly, even when they didn’t start it, and stays steady inside. They put their energy fully into what’s in front of them and notice what turns up after the shift: an unexpected offer, a topic that keeps coming back, a task that suddenly feels easy. That’s how they recognise the next step, and whatever truly doesn’t matter, they consciously set aside.",
     before: "shrugs through the company reorg, saying none of it matters, and quietly falls behind.",
     after: "goes along with the reorg willingly, learns the new system early, and helps others settle in.",
   },
@@ -151,7 +151,7 @@ export default {
   22: {
     theme: "Paying attention to signs. This degree is about noticing what your surroundings, encounters and coincidences are showing you right now, and trusting that there’s always a way out.",
     growing: "Expects danger and scarcity everywhere and reads every little thing as a bad sign. Their mind jumps from one worry to the next and never settles. Because they’re so busy brooding, they miss the good hints life keeps giving them.",
-    grown: "pays attention to what’s happening around them and trusts there’s always a way out. They get advice from people they trust and have clear reasons for what they do. Staying relaxed isn’t carelessness for them, it’s the best strategy.",
+    grown: "notices when several people bring up the same thing independently, or when a rejection frees up time for something else, and sees the way out in it first, not the danger. When unsure, they get advice from people they trust and act for clear reasons rather than out of fear. Staying relaxed isn’t carelessness for them, it’s the best strategy.",
     before: "reads every short reply from the boss as proof they're about to be let go.",
     after: "asks a trusted mentor for perspective, and notices the boss just gave them the bigger project.",
   },

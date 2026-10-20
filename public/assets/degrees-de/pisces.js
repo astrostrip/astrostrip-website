@@ -39,7 +39,7 @@ export default {
   },
   6: {
     theme: "Der Gemeinschaft dienen. Bei diesem Grad geht es darum, sich für eine Gruppe einzusetzen und dafür ihren Rückhalt zu bekommen, und Reibung so lange auszuhalten, bis eine echte Grenze erreicht ist.",
-    growing: "Passt sich jeder Gepflogenheit der Gruppe an, weil man auf Titel, Vorteile und Anerkennung aus ist. Man hält den äußeren Glanz für das Echte und strengt sich enorm an, dazuzugehören. Am Ende hat man vielleicht einen Posten, aber wenig, das wirklich zu einem passt.",
+    growing: "Nimmt in der Gruppe alles hin, was einen stört, nur um dazuzugehören, oder steigt beim ersten Ärger ganz aus. Wer alles hinnimmt, gibt sich mit der Zeit selbst auf, und wer bei jeder Reibung geht, findet nirgends Rückhalt. Oder man passt sich nur an, weil man auf Titel und Anerkennung aus ist, und hat am Ende einen Posten, aber wenig, das wirklich zu einem passt.",
     grown: "Setzt sich für die Gemeinschaft ein und bekommt dafür ihre Unterstützung. Man hält Reibereien und die Eigenheiten der anderen aus und zieht erst dann eine Grenze, wenn etwas wirklich nicht mehr zu ertragen ist. Titel und Auszeichnungen nimmt man nicht so wichtig, weil man weiß, dass es um die Sache selbst geht und nicht um den Schein.",
     before: "Geht wegen des Titels und des Fotos in den Vorstand des Laufvereins und drückt sich dann vor der eigentlichen Arbeit.",
     after: "Erledigt die langweiligen Aufgaben im Verein, nimmt die Eigenheiten hin und zieht sich erst zurück, als eine Grenze überschritten wird.",
@@ -144,10 +144,10 @@ export default {
   },
   21: {
     theme: "Optimismus üben. Bei diesem Grad geht es darum, sich durch kleine Freuden zur Zuversicht zu erziehen und dem Leben offen und unverstellt zu begegnen.",
-    growing: "Entscheidet sich im Zweifel für Resignation oder Angst und rechnet eher mit dem Schlimmsten. Erlebnisse stehen unverbunden nebeneinander, als hätte im eigenen Leben nichts mit etwas anderem zu tun. Alles wirkt zufällig, und man fühlt sich leer.",
+    growing: "Entscheidet sich im Zweifel für Resignation oder Angst und rechnet eher mit dem Schlimmsten. Ein Lächeln, eine Umarmung oder ein sonniger Morgen zählen für einen kaum, oder man tut sie als Kleinigkeit ab. So fehlt die tägliche Übung in Zuversicht, und alles wirkt zufällig und leer.",
     grown: "Übt Optimismus an kleinen Dingen: einer sanften Berührung, einem Lächeln, einem schönen Moment, den man bewusst genießt. Man begegnet dem Leben offen und ohne Misstrauen und lässt sich von Unwichtigem nicht ablenken. So erkennt man, wie die verstreuten Erfahrungen des eigenen Lebens zusammenhängen, und daraus wird ein klares Bild der eigenen Person und der eigenen Ziele.",
     before: "Zählt nach einem harten Jahr nur auf, was schiefgelaufen ist, und erwartet, dass das nächste noch schlimmer wird.",
-    after: "Führt eine Liste kleiner schöner Momente und beginnt zu sehen, wie das harte Jahr zusammenpasst.",
+    after: "Schreibt nach dem harten Jahr jeden Abend drei kleine schöne Momente auf und merkt nach ein paar Wochen, dass man dem neuen Jahr wieder mit Zuversicht entgegensieht.",
   },
   22: {
     theme: "Ein eigener Verhaltenskodex. Bei diesem Grad geht es darum, nach festen inneren Regeln zu leben, etwa „Behandle andere so, wie du selbst behandelt werden willst“, und das im Umgang mit allen zu zeigen.",
@@ -172,7 +172,7 @@ export default {
   },
   25: {
     theme: "Innerlich aufräumen. Bei diesem Grad geht es darum, sich von negativen Gedanken und von dem, was mit der Zeit schlecht geworden ist, zu befreien und frisch zu beginnen.",
-    growing: "Lässt negative Gedanken immer mehr werden und urteilt hart über Führungskräfte, Vorbilder oder Lehrende. Man verlangt von ihnen eine Fehlerlosigkeit, die man von sich selbst nie verlangt. Die Enttäuschung über sich selbst lädt man so bei anderen ab.",
+    growing: "Lässt Grübeleien, Groll und abwertende Gedanken über sich und andere immer mehr werden und hält an Gewohnheiten fest, die einem längst schaden. Den Ärger über sich selbst lädt man bei anderen ab und urteilt hart über Führungskräfte, Vorbilder oder Lehrende. Von ihnen verlangt man eine Fehlerlosigkeit, die man von sich selbst nie verlangt.",
     grown: "Befreit sich von negativen Gedanken und räumt mit dem auf, was im eigenen Leben schlecht geworden ist, auch wenn das unangenehm ist. Manchmal ist es besser, ganz neu anzufangen, als Altes immer weiter auszubessern. Von anderen erwartet man nicht mehr, als man selbst zu geben bereit ist.",
     before: "Schimpft die ganze Saison über die Trainingsleitung, fragt sich aber nie, was man selbst hat schleifen lassen.",
     after: "Lässt den Groll gegen die Trainingsleitung los, macht den Kopf frei und startet unbelastet in die neue Saison.",

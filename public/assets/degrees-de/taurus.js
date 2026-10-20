@@ -138,7 +138,7 @@ export default {
   20: {
     theme: "Beweglich und stabil zugleich. Bei diesem Grad geht es darum, sich bereitwillig auf Veränderungen einzulassen, die größer sind als man selbst, dabei innerlich stabil zu bleiben und auf die Hinweise zu achten, die einem den nächsten Schritt zeigen.",
     growing: "Macht jede Veränderung ohne eigene Richtung mit und kommt zu dem Schluss, dass ohnehin nichts wirklich zählt. Oder man klammert sich an das Gewohnte, bis sich gar nichts mehr bewegt. Dazu verliert man viel Kraft an Dinge, die wirklich unwichtig sind.",
-    grown: "Geht Veränderungen bereitwillig mit, auch wenn man sie nicht selbst ausgelöst hat, und bleibt dabei innerlich ruhig. Man steckt die eigene Energie ganz in das, was hier und jetzt passiert, und achtet auf Hinweise, wohin der nächste Schritt gehen könnte. Was unwichtig ist, beachtet man bewusst nicht weiter.",
+    grown: "Geht Veränderungen bereitwillig mit, auch wenn man sie nicht selbst ausgelöst hat, und bleibt dabei innerlich gefestigt. Man steckt die Energie ganz in das, was gerade ansteht, und achtet darauf, was sich nach dem Umbruch zeigt: ein Angebot, das unerwartet kommt, ein Thema, das immer wieder auftaucht, eine Aufgabe, die einem plötzlich leichtfällt. Daran erkennt man den nächsten Schritt, und was wirklich unwichtig ist, lässt man bewusst beiseite.",
     before: "Zuckt bei der Umstrukturierung in der Firma mit den Schultern, weil ohnehin nichts davon zähle, und fällt dabei unbemerkt zurück.",
     after: "Trägt die Umstrukturierung bereitwillig mit, lernt das neue System früh und hilft anderen, sich zurechtzufinden.",
   },
@@ -152,7 +152,7 @@ export default {
   22: {
     theme: "Auf Zeichen achten. Bei diesem Grad geht es darum, aufmerksam wahrzunehmen, was Umgebung, Begegnungen und Zufälle einem gerade zeigen, und darauf zu vertrauen, dass es immer einen Ausweg gibt.",
     growing: "Rechnet überall mit Gefahr und Mangel und deutet jede Kleinigkeit als schlechtes Zeichen. Der Kopf springt von einer Sorge zur nächsten und kommt nicht zur Ruhe. Weil man so mit Grübeln beschäftigt ist, übersieht man die guten Hinweise, die einem das Leben gibt.",
-    grown: "Achtet auf das, was ringsum passiert, und vertraut darauf, dass es immer einen Ausweg gibt. Man holt sich Rat bei Menschen, denen man vertraut, und hat klare Gründe für das, was man tut. Entspannt zu bleiben ist dabei kein Leichtsinn, sondern die beste Strategie.",
+    grown: "Merkt, wenn mehrere Menschen unabhängig voneinander dasselbe ansprechen oder eine Absage gleichzeitig Zeit für etwas anderes freimacht, und sieht darin zuerst den Ausweg, nicht die Gefahr. Bei Unsicherheit holt man sich Rat bei Menschen, denen man vertraut, und handelt aus klaren Gründen statt aus Angst. Entspannt zu bleiben ist dabei kein Leichtsinn, sondern die beste Strategie.",
     before: "Liest aus jeder knappen Antwort von oben heraus, dass die Kündigung bevorsteht.",
     after: "Holt sich den Rat einer erfahrenen Vertrauensperson und bemerkt, dass von oben gerade das größere Projekt gekommen ist.",
   },

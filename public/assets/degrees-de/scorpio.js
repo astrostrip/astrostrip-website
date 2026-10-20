@@ -62,8 +62,8 @@ export default {
     theme: "Vorbeugen und reparieren. Bei diesem Grad geht es darum, anderen mit echtem Können bei ihren Problemen zu helfen und Dinge rechtzeitig zu pflegen, statt später den Schaden zu beheben.",
     growing: "Lässt kleine Probleme schleifen, bis sie groß und teuer werden. Dann flickt man sie in Eile und macht weiter wie vorher. Bequeme Abkürzungen fühlen sich im Moment gut an, aber die Rechnung kommt später, oft auch für andere.",
     grown: "Kümmert sich um Dinge, bevor sie kaputtgehen, ob es um die Gesundheit, das Zuhause oder eine Beziehung geht. Das eigene Können und die eigenen Ideen setzt man ein, um anderen ganz praktisch aus der Klemme zu helfen. Was man wirklich weiß und wofür man steht, zeigt sich im gewöhnlichen Alltag, und gerade diese Arbeit macht einen zufrieden.",
-    before: "Ignoriert monatelang das seltsame Geräusch im Auto und bezahlt dann einen ganz neuen Motor.",
-    after: "Lässt das Geräusch schon in der ersten Woche prüfen und zeigt dann jemandem aus dem Freundeskreis, woran man die Warnzeichen erkennt.",
+    before: "Schiebt die Zahnreinigung zwei Jahre vor sich her, trinkt weiter jeden Nachmittag Limonade und braucht dann eine Wurzelbehandlung.",
+    after: "Geht jedes halbe Jahr zur Zahnreinigung, trinkt nachmittags Wasser statt Limonade und zeigt dem Patenkind, wie man richtig putzt.",
   },
   10: {
     theme: "Kameradschaft. Bei diesem Grad geht es darum, Freundschaft und Zusammenhalt in einer Gruppe zu genießen und dabei trotzdem ganz man selbst zu bleiben.",
@@ -123,8 +123,8 @@ export default {
   },
   18: {
     theme: "Sich selbst verwandeln. Bei diesem Grad geht es darum, einschränkende Überzeugungen abzulegen und all die eigenen, scheinbar widersprüchlichen Seiten zu einem Ganzen zu verbinden.",
-    growing: "Sieht nur, was die eigenen alten Erwartungen zulassen, und hält das für die Wirklichkeit. Man misst sich an den Maßstäben anderer und kommt sich dabei nie gut genug vor. Die vielen eigenen Interessen wirken zerstreut, also lässt man die weg, die nicht ins Bild passen.",
-    grown: "Merkt, welche Überzeugungen einen kleinhalten, und legt sie ab. Man lässt alle eigenen Seiten und Fähigkeiten am Leben, auch die, die scheinbar nichts miteinander zu tun haben. Mit der Zeit fügen sie sich zu einer ganz eigenen Mischung, und genau daraus wird die eigene Lebensaufgabe.",
+    growing: "Rechnet immer mit demselben Ausgang („Das klappt bei mir sowieso nicht“) und sieht deshalb nur, was diese Erwartung bestätigt. Man misst sich an den Maßstäben anderer und kommt sich dabei nie gut genug vor. Die vielen eigenen Interessen wirken zerstreut, also lässt man die weg, die nicht ins Bild passen.",
+    grown: "Ertappt sich bei Sätzen wie „Dafür bin ich nicht gemacht“ oder „So bin ich eben“ und prüft, ob sie überhaupt stimmen. Man lässt alle eigenen Seiten und Fähigkeiten am Leben, auch die, die scheinbar nichts miteinander zu tun haben. Mit der Zeit fügen sie sich zu einer ganz eigenen Mischung, und genau daraus wird die eigene Lebensaufgabe.",
     before: "Hält die Liebe zum Design und den Pflegeberuf strikt getrennt, überzeugt, dass beides nie zusammenpasst.",
     after: "Verbindet Pflege und Design zu Ratgebern für Erkrankte, die Kliniken tatsächlich verwenden.",
   },

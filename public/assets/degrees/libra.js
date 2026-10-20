@@ -80,8 +80,8 @@ export default {
   },
   12: {
     theme: "Wanting to understand. This degree is about searching doggedly for answers and bringing to light what you weren’t aware of before, even when it takes effort.",
-    growing: "Puts up with a situation that makes them unhappy for years and calls it perseverance. They stop asking why they stay, and their curiosity slowly dulls. In the end they just go along like everyone else and no longer believe anything can change.",
-    grown: "stays with hard questions even when the search is exhausting, and comes to understand things about themselves that used to be hidden. Hard times make them tough and steady inside, but they don’t put up with them longer than they have to. When something stops working, they use their alert, curious mind to find a way out, and change it.",
+    growing: "Would rather not know exactly why something makes them unhappy, so the uncomfortable questions never get asked. They put up with the situation for years and call it perseverance. Their curiosity slowly dulls, and in the end they no longer believe anything can change.",
+    grown: "keeps asking why things are the way they are, reads up, talks to people who know more, and keeps searching even when it gets exhausting. What comes to light is something they didn't know about themselves, such as which habit is draining their energy. Hard times make them tough, but they don't put up with them longer than they have to, and they change what no longer works.",
     before: "has hated the commute and the job for five years, and says that's just how adult life works.",
     after: "asks honestly why the job drains them, then finds out what it takes to switch fields.",
   },

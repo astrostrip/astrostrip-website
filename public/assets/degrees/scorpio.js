@@ -61,8 +61,8 @@ export default {
     theme: "Prevention and repair. This degree is about helping others with their problems through real skill, and looking after things in time instead of fixing the damage later.",
     growing: "Lets small problems slide until they turn big and expensive. Then they patch them up in a hurry and carry on as before. Easy shortcuts feel fine in the moment, but the bill comes later, often for others too.",
     grown: "takes care of things before they break, whether it’s their body, their home or a relationship. They use their skills and ideas to get others out of a fix in very practical ways. What they really know and stand for shows in ordinary daily life, and that very work is what makes them content.",
-    before: "ignores the strange noise from the car for months, then pays for a whole new engine.",
-    after: "has the noise checked in week one, then shows a friend how to spot the warning signs.",
+    before: "puts off the dental cleaning for two years, keeps drinking soda every afternoon, and ends up needing a root canal.",
+    after: "goes for a dental cleaning every six months, drinks water instead of soda in the afternoon, and shows their godchild how to brush properly.",
   },
   10: {
     theme: "Camaraderie. This degree is about enjoying friendship and solidarity in a group while still staying completely yourself.",
@@ -122,8 +122,8 @@ export default {
   },
   18: {
     theme: "Transforming yourself. This degree is about freeing yourself from limiting beliefs and bringing all your seemingly contradictory sides together into one whole.",
-    growing: "Only sees what their old expectations allow and takes that for reality. They measure themselves by other people’s standards and never feel good enough. Their many interests seem scattered, so they drop the ones that don’t fit the picture.",
-    grown: "notices which beliefs keep them small and lets them go. They keep all their sides and skills alive, even the ones that seem to have nothing to do with each other. Over time these come together into a mix that’s entirely their own, and that becomes their life’s work.",
+    growing: "Always expects the same outcome (“it never works out for me anyway”) and so only sees what confirms it. They measure themselves by other people's standards and never feel good enough. Their many interests seem scattered, so they drop the ones that don't fit the picture.",
+    grown: "catches themselves in lines like “I'm just not cut out for that” or “that's just how I am” and checks whether they're even true. They keep all their sides and skills alive, even the ones that seem to have nothing to do with each other. Over time these come together into a mix that's entirely their own, and that becomes their life's work.",
     before: "keeps their love of design and their nursing job apart, sure they'll never fit together.",
     after: "combines nursing and design into patient guides that clinics actually use.",
   },

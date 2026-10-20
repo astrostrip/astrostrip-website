@@ -96,7 +96,7 @@ export default {
   14: {
     theme: "Was bleibt. Bei diesem Grad geht es darum, hinter allem, was sich ständig ändert, zu erkennen, was wirklich Bestand hat, und deshalb auch die dunklen Seiten der eigenen Vergangenheit ohne Urteil anschauen zu können.",
     growing: "Versteckt die Teile der eigenen Vergangenheit, für die man sich schämt, und tut, als hätte es sie nie gegeben. Dadurch bleibt man in alter Verwirrung stecken und weiß nicht recht, wofür man eigentlich lebt. Und je mehr man verdrängt, desto weniger wagt man, auf Gutes zu hoffen.",
-    grown: "Weiß, was über alle vorübergehenden Sorgen hinaus Bestand hat, und schaut von dort aus gelassen auf Licht und Schatten im eigenen Leben. Die schwierigen Kapitel nimmt man an, ohne sich dafür zu verurteilen, und verzeiht sich, was damals schiefging. Das bringt Ruhe und Klarheit, und jeder Tag kann ein echter Neuanfang sein.",
+    grown: "Hält sich bewusst vor Augen, dass das eigene Leben endlich ist, und sieht dadurch, welche Sorgen in ein paar Jahren keine Rolle mehr spielen und was auch dann noch wahr und wichtig ist. Mit diesem Abstand schaut man gelassen auf die dunklen Kapitel der eigenen Vergangenheit, nimmt sie an und verzeiht sich, was damals schiefging. Das bringt Ruhe und Klarheit, und jeder Tag kann ein echter Neuanfang sein.",
     before: "Wechselt das Thema, sobald es um die frühen Zwanziger geht, und trägt die alte Scham noch immer mit sich.",
     after: "Spricht ruhig über die schlimmsten Jahre, weiß, was wirklich Bestand hat, und hat dem jüngeren Ich verziehen.",
   },
@@ -144,7 +144,7 @@ export default {
   },
   21: {
     theme: "Der Preis des Erfolgs. Bei diesem Grad geht es darum, mit ganzem Einsatz danach zu streben, etwas wirklich gut zu können, und dabei zu wissen, was Erfolg kostet. Erfolg und Misserfolg sind am Ende vor allem Gefühle, die kommen und gehen.",
-    growing: "Will vor allem Beifall und Anerkennung und fragt nie, was der Erfolg einen eigentlich kostet. Oder man bestaunt das Talent anderer nur aus dem Publikum heraus und lässt das eigene ungenutzt. In beiden Fällen hängt die Stimmung ganz davon ab, wie gut man gerade ankommt.",
+    growing: "Jagt Beifall und Ansehen hinterher und merkt nicht, was dafür verloren geht: Schlaf, Freundschaften, die Zeit mit den Liebsten. Selbst nach einem Erfolg stellt sich das erhoffte Glück nicht ein, also jagt man gleich dem nächsten hinterher. Oder man bestaunt das Talent anderer nur aus dem Publikum heraus und lässt das eigene ungenutzt.",
     grown: "Arbeitet mit Hingabe an einer Sache, bis man sie wirklich gut kann, und kennt den Preis dafür: Zeit, Übung und Verzicht. Die Aufmerksamkeit anderer spornt einen an, ersetzt aber nie die Arbeit. Einen Erfolg genießt man, einen Misserfolg steckt man weg, denn beides ist ein Gefühl, das wieder vorbeigeht.",
     before: "Kennt jede Folge der Castingshow auswendig und hat die eigene Gitarre seit Jahren nicht mehr angefasst.",
     after: "Übt jeden Abend Gitarre, spielt das erste eigene Konzert in der Kneipe um die Ecke, genießt den Applaus und weiß genau, wie viele Abende das gekostet hat.",

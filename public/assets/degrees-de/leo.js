@@ -150,9 +150,9 @@ export default {
     after: "Merkt nach einem stressigen Tag die Unruhe, steckt sie in die Aufgabe, die schon lange liegen geblieben ist, und schläft danach gut.",
   },
   22: {
-    theme: "Einer Aufgabe dienen. Bei diesem Grad geht es darum, das eigene Wissen in den Dienst einer Aufgabe zu stellen, die größer ist als man selbst, und auf klare Fragen klare Antworten zu finden.",
+    theme: "Einer Aufgabe dienen. Bei diesem Grad geht es darum, das eigene Wissen für ein klares Ziel einzusetzen, etwa um anderen etwas beizubringen oder sie zu beraten, und auf klare Fragen klare Antworten zu finden.",
     growing: "Stellt vage, ängstliche Fragen und bekommt darauf nur vage Antworten. Oder man macht aus etwas, das sich mit gesundem Menschenverstand lösen ließe, ein großes Rätsel. In beiden Fällen bleibt man verunsichert, und die Sorge hält einen davon ab, wirklich hinzusehen.",
-    grown: "Stellt sich in den Dienst einer Aufgabe, die größer ist als man selbst. Man stellt eine klare Frage und bleibt so lange dabei, bis die Antwort kommt, und nutzt dafür Verstand und Bauchgefühl zugleich. Gerade wenn es darauf ankommt, vertraut man darauf, dass man wissen wird, was zu tun ist.",
+    grown: "Hat eine klare Aufgabe, für die man das eigene Wissen einsetzt, etwa anderen etwas beizubringen, sie zu beraten oder anzuleiten, und tut das gern, ohne für jede Hilfe etwas zurückzuerwarten. Steht man selbst vor einer Frage, stellt man sie klar und bleibt so lange dabei, bis die Antwort kommt, mit Verstand und Bauchgefühl zugleich. Gerade wenn es darauf ankommt, vertraut man darauf, dass man wissen wird, was zu tun ist.",
     before: "Fragt zwölf Leute aus dem Freundeskreis, ob ein Berufswechsel sinnvoll ist, und fühlt sich mit jeder Meinung verlorener.",
     after: "Stellt sich eine klare Frage, nämlich mit welcher Arbeit man anderen am meisten nützt, prüft die Antwort mit Verstand und Bauchgefühl und entscheidet.",
   },

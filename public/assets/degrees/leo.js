@@ -149,9 +149,9 @@ export default {
     after: "notices the restlessness after a stressful day, puts it into the task that has been waiting for ages, and sleeps well afterward.",
   },
   22: {
-    theme: "Serving a purpose. This degree is about putting what you know in service of a task bigger than yourself, and finding clear answers by asking clear questions.",
+    theme: "Serving a purpose. This degree is about using what you know for one clear goal, such as teaching or advising others, and finding clear answers by asking clear questions.",
     growing: "Asks vague, anxious questions and gets only vague answers. Or they turn something common sense could solve into a great mystery. Either way they stay unsure, and worry keeps them from really looking.",
-    grown: "puts themselves in service of a task bigger than themselves. They ask one clear question and stay with it until the answer comes, using reason and gut feeling together. Especially when it really matters, they trust they’ll know what to do.",
+    grown: "has one clear task they put their knowledge to, such as teaching, advising or guiding others, and does it gladly without expecting something back for every bit of help. When a question comes up for them, they put it clearly and stay with it until the answer comes, using reason and gut feeling together. Especially when it really matters, they trust they’ll know what to do.",
     before: "asks twelve friends whether to switch careers and feels more lost with every opinion.",
     after: "asks themselves one clear question, which work would help others most, checks the answer with both head and gut, and decides.",
   },

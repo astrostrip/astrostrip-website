@@ -38,7 +38,7 @@ export default {
   },
   6: {
     theme: "Serving the community. This degree is about committing to a group and getting its backing in return, putting up with friction until a real line is crossed.",
-    growing: "Goes along with every group custom because they’re after titles, perks and recognition. They mistake the outward shine for the real thing and work incredibly hard to fit in. In the end they may have a position, but little that truly suits them.",
+    growing: "Puts up with everything that bothers them in a group just to belong, or quits at the first annoyance. Putting up with everything slowly means giving themselves up, and walking out at every bit of friction means finding support nowhere. Or they only fit in because they’re after titles and recognition, and end up with a position but little that truly suits them.",
     grown: "commits to the community and gets its support in return. They put up with friction and other people’s quirks and only draw a line when something really becomes unbearable. Titles and awards don’t matter much to them, because they know it’s about the work itself, not how it looks.",
     before: "joins the running club board for the title and the photo, then skips the actual work.",
     after: "does the club's dull jobs, puts up with the quirks, and steps back only when a line is crossed.",
@@ -143,10 +143,10 @@ export default {
   },
   21: {
     theme: "Practicing optimism. This degree is about training yourself in hopefulness through small joys and meeting life openly and without pretense.",
-    growing: "When in doubt, opts for resignation or fear and expects the worst. Experiences sit side by side with no connection, as if nothing in their life had anything to do with anything else. Everything feels random, and they feel empty.",
+    growing: "When in doubt, opts for resignation or fear and expects the worst. A smile, a hug or a sunny morning barely count, or get brushed off as trivial. Without that daily practice in hope, everything feels random and empty.",
     grown: "practices optimism through small things: a gentle touch, a smile, a lovely moment they consciously enjoy. They meet life openly and without suspicion and don’t let unimportant things distract them. That way they see how the scattered experiences of their life fit together, and a clear picture emerges of themselves and their goals.",
     before: "lists only what went wrong after a rough year and expects the next one to be worse.",
-    after: "keeps a list of small good moments, and starts to see how the rough year fits together.",
+    after: "writes down three small good moments every evening after the rough year, and a few weeks later notices they’re looking ahead to the new year with hope again.",
   },
   22: {
     theme: "A personal code of conduct. This degree is about living by firm inner rules, like “treat others the way you want to be treated,” and showing it in how you deal with everyone.",
@@ -171,7 +171,7 @@ export default {
   },
   25: {
     theme: "Clearing out. This degree is about freeing yourself from negative thoughts and from what has gone bad over time, and starting fresh.",
-    growing: "Lets negative thoughts pile up and judges leaders, role models or teachers harshly. They demand a flawlessness from them that they never demand of themselves. That way their disappointment with themselves gets dumped on someone else.",
+    growing: "Lets brooding, grudges and put-downs of themselves and others pile up, and clings to habits that have long been doing them harm. They take their frustration with themselves out on others and judge leaders, role models or teachers harshly. They demand a flawlessness from them that they never demand of themselves.",
     grown: "frees themselves from negative thinking and clears out what has gone bad in their life, even when that’s uncomfortable. Sometimes starting completely fresh is better than endlessly patching up the old. They expect no more from others than they’re willing to give themselves.",
     before: "rages about the team coach all season, but never asks what they let slide themselves.",
     after: "drops the grudge against the coach, clears their head, and starts the new season fresh.",

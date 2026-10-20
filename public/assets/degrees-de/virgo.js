@@ -19,7 +19,7 @@ export default {
   3: {
     theme: "Innere Stärke in schweren Zeiten. Bei diesem Grad geht es darum, sich getragen und beschützt zu fühlen und gerade dann, wenn es schwer wird, auf die eigene größte Kraft zuzugreifen.",
     growing: "Zweifelt in schweren Zeiten an allem und traut niemandem. Die Angst überspielt man mit gespielter Sicherheit und ist zu stolz, um um Hilfe zu bitten. So bleibt man mit allem allein, und die Kraft, die einen stützen könnte, kommt nicht an.",
-    grown: "Vertraut darauf, nicht allein zu sein, und bittet bewusst um Unterstützung, wenn man sie braucht. Gerade in dunklen Zeiten wächst man über sich hinaus und wirkt ruhig, klar und zuversichtlich. Diese Sicherheit zieht die richtigen Menschen und Mittel an, und vieles fügt sich zum Guten.",
+    grown: "Weiß, dass in einem mehr Kraft steckt, als man in der Angst spürt, und ruft sie bewusst ab: Man hält kurz inne, erinnert sich daran, was man schon durchgestanden hat, und bittet gezielt um Unterstützung. Gerade in dunklen Zeiten wächst man so über sich hinaus und wirkt ruhig, klar und zuversichtlich. Diese Sicherheit zieht die richtigen Menschen und Mittel an, und vieles fügt sich zum Guten.",
     before: "Bekommt am Montag eine schlechte Nachricht und malt sich die ganze Woche allein das Schlimmste aus, zu stolz, um jemanden zu fragen.",
     after: "Bekommt dieselbe schlechte Nachricht, atmet zehn Minuten durch, ruft die zwei Menschen an, auf die man zählen kann, und hat am Mittwoch einen Plan.",
   },
@@ -102,9 +102,9 @@ export default {
   },
   15: {
     theme: "Das Erbe mit Würde tragen. Bei diesem Grad geht es darum, den guten und den schwierigen Einfluss der Eltern klug zu betrachten und aus dem, was man mitbekommen hat, Haltung und Anmut zu entwickeln.",
-    growing: "Schmückt sich mit Dingen, die nach Stil und Status aussehen, ohne dass etwas dahintersteht. Man hofft, so zu einem besseren Kreis zu gehören, und wirkt dabei eher aufgesetzt. Weil man keinem tieferen Sinn folgt, fühlt man sich innerlich verloren.",
+    growing: "Übernimmt unbesehen, wie die Eltern mit Streit, Geld oder Gefühlen umgegangen sind, und wiederholt ihre Fehler, ohne es zu merken. Oder man schmückt sich mit Dingen, die nach Stil und Status aussehen, und hofft, so zu einem besseren Kreis zu gehören. Weil man keinem tieferen Sinn folgt, wirkt man aufgesetzt und fühlt sich innerlich verloren.",
     grown: "Sieht klar, was die Eltern einem Gutes und was sie einem Schwieriges mitgegeben haben, und trägt das Gute mit Würde weiter. Gegenstände und Gewohnheiten aus der Familie haben Wert, weil sie an etwas erinnern, das einem wirklich wichtig ist. Wer so etwas Höherem dient, wird feiner im Umgang, in der Arbeit und in Beziehungen, und diese Anmut gibt Kraft.",
-    before: "Kauft die Designertasche auf Raten, damit man auf der Hochzeit im Freundeskreis so aussieht, als gehöre man dazu.",
+    before: "Antwortet im Streit mit dem Lieblingsmenschen mit demselben eisigen Schweigen wie früher der Vater und merkt es erst, als jemand es ausspricht.",
     after: "Hat Frieden damit geschlossen, was die Eltern falsch gemacht haben, und bringt in schwierige Gespräche die Freundlichkeit der Mutter mit.",
   },
   16: {

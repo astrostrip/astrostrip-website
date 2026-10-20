@@ -177,7 +177,7 @@ export default {
     after: "picks one of the five logo drafts, refines it, and stops fiddling once it’s good.",
   },
   26: {
-    theme: "What really matters. This degree is about letting go of everything unnecessary so that what really counts becomes visible, and finding beauty and truth in exactly that.",
+    theme: "Less, but wholeheartedly. This degree is about letting go of things, plans and roles you only keep out of habit or to make an impression, so your full attention goes to what truly excites you and you can feel wonder again.",
     growing: "Surrounds themselves with lots of things, appointments and obligations that don’t really mean anything to them. They do many things only halfway and care more about how they come across than about what they really want. Along the way they lose sight of who they actually are and what truly makes them happy.",
     grown: "lets go of everything that’s only for show or done half-heartedly, and keeps what truly excites them. That then gets their full attention. With that clarity they see even the simplest moments with new eyes and discover a beauty in them that leaves them amazed.",
     before: "keeps two hundred things they merely tolerate and a calendar full of maybes.",
@@ -207,7 +207,7 @@ export default {
   30: {
     theme: "Setting the standard. This degree is about choosing clear standards that show what matters to you, and showing your gifts openly so others can take their cue from them.",
     growing: "Shows off out of vanity to be admired and uses their charm to steer others. Or they hide their strengths behind false modesty and act as if they were nothing special. Either way they don’t show honestly what they can do and what they stand for.",
-    grown: "knows what matters to them, sets high standards for it and stands by them openly. They show their talents without false modesty, but check honestly whether it’s about the cause or just vanity. Because they gladly share what they have and use it for something good, they become a standard that others like to measure themselves against.",
+    grown: "shows openly what they can do and what they’ve achieved, like presenting their own work to the team or singing at the party, without playing it down. They check honestly whether they want to share something or just want to be admired, and stand by what matters to them even if it doesn’t go down well with everyone. Because they gladly use their gifts for others, others see, almost in passing, what’s possible and start trusting themselves more.",
     before: "waves off every compliment with “oh, this old thing” and then fishes for more.",
     after: "accepts the compliment with a simple thanks and keeps the standard others now aim for.",
   },

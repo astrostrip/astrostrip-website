@@ -74,8 +74,8 @@ export default {
   },
   11: {
     theme: "Dem Körper glauben. Bei diesem Grad geht es darum, auf die Tatsachen zu achten, die der Körper und die Ergebnisse zeigen, denn der Kopf redet sich vieles schön, der Körper nicht.",
-    growing: "Lebt vor allem im Kopf und überhört die Signale des Körpers. Man probiert immer wieder dasselbe aus, ohne darauf zu achten, was dabei herauskommt. So bringt jeder neue Versuch nur mehr Verwirrung statt Klarheit.",
-    grown: "Achtet darauf, was der Körper meldet und welche Folgen jede Entscheidung tatsächlich hat. Man wägt Aufwand gegen Nutzen ab und nimmt das, was man gelernt hat, in den nächsten Versuch mit. Neues probiert man weiterhin gern aus, behält aber genau im Blick, was daraus folgt.",
+    growing: "Lebt vor allem im Kopf und redet sich ein, alles sei in Ordnung, während der Körper längst etwas anderes zeigt: verspannte Schultern, flacher Atem, Kopfschmerzen, ein mulmiges Gefühl im Bauch bei einer Zusage. Man probiert immer wieder dasselbe aus, ohne darauf zu achten, was dabei herauskommt. So bringt jeder neue Versuch nur mehr Verwirrung statt Klarheit.",
+    grown: "Nimmt ernst, was der Körper zeigt, etwa Müdigkeit, Anspannung oder ein flaues Gefühl, und prüft daran, ob das, was der Kopf sagt, wirklich stimmt. Man achtet darauf, welche Folgen jede Entscheidung tatsächlich hat, wägt Aufwand gegen Nutzen ab und nimmt das Gelernte in den nächsten Versuch mit. Neues probiert man weiterhin gern aus, behält aber genau im Blick, was es mit einem macht.",
     before: "Sagt immer wieder, die langen Nächte seien kein Problem, während die Schultern schmerzen und die Konzentration nachlässt.",
     after: "Bemerkt nach jeder langen Nacht den steifen Nacken, erkennt das Muster und ändert den Tagesablauf.",
   },
@@ -130,7 +130,7 @@ export default {
   },
   19: {
     theme: "Für später verzichten. Bei diesem Grad geht es darum, auf bequeme Vorteile im Hier und Jetzt zu verzichten, damit die, die nach einem kommen, eine gute Zukunft haben.",
-    growing: "Nimmt sich jetzt, was bequem ist, auch wenn es später teuer wird. Aus Angst gibt man sich mit weniger zufrieden, als einem zusteht. Um sicher zu bleiben, akzeptiert man sogar Zustände, die man nie hinnehmen sollte.",
+    growing: "Nimmt sich gedankenlos, was gerade bequem ist, etwa das Auto für jeden kurzen Weg, Kleidung, die nach einmal Tragen im Müll landet, oder das Geld, das für die Ausbildung der Kinder zurückgelegt war, und überlässt die Folgen denen, die nach einem kommen. Aus Angst gibt man sich mit weniger zufrieden, als einem zusteht. Um sicher zu bleiben, akzeptiert man sogar Zustände, die man nie hinnehmen sollte.",
     grown: "Verzichtet auf Bequemlichkeit, wenn es um die Zukunft der Menschen geht, für die man sorgt. Sobald eine Lage nicht mehr guttut, sucht man sich einen neuen, besseren Ort, auch wenn das Mut kostet. Sicherheit ist für einen eine Pause zum Durchatmen, nicht der Ort, an dem man für immer bleibt.",
     before: "Bleibt in der günstigen Wohnung an der lauten Hauptstraße, obwohl die Kinder nachts kaum schlafen, weil ein Umzug Mühe macht.",
     after: "Gibt die günstige Wohnung auf, zahlt mehr Miete und zieht mit den Kindern in eine ruhige Straße nahe einem Park.",

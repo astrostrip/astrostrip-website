@@ -73,8 +73,8 @@ export default {
   },
   11: {
     theme: "Trusting the body. This degree is about taking seriously the facts your body and your results show you, because the mind can talk itself into anything and the body can’t.",
-    growing: "Lives mostly in their head and ignores the body’s signals. They keep trying the same things without noticing what comes of them. So each new attempt only adds confusion instead of clarity.",
-    grown: "pays attention to what their body is telling them and to what each choice actually leads to. They weigh effort against benefit and bring what they learned into the next attempt. They still like trying new things, but they keep a close eye on the results.",
+    growing: "Lives mostly in their head and insists everything is fine while the body has long been saying otherwise: tight shoulders, shallow breathing, headaches, a knot in the stomach when they agree to something. They keep trying the same things without noticing what comes of them. So each new attempt only adds confusion instead of clarity.",
+    grown: "takes seriously what the body shows, like tiredness, tension or a queasy feeling, and uses it to check whether what the mind says is really true. They notice what each choice actually leads to, weigh effort against benefit, and bring what they learned into the next attempt. They still like trying new things, but they keep a close eye on what those things do to them.",
     before: "keeps saying the late nights are fine while their shoulders ache and their focus slips.",
     after: "notices the stiff neck after every late night, checks the pattern, and changes the schedule.",
   },
@@ -129,7 +129,7 @@ export default {
   },
   19: {
     theme: "Giving up comfort for the future. This degree is about passing up easy comforts now so that those who come after you have a good future.",
-    growing: "Takes whatever is comfortable now, even if it costs a lot later. Out of fear they settle for less than they deserve. To stay safe they even accept situations they should never put up with.",
+    growing: "Thoughtlessly takes whatever is convenient right now, like driving for every short trip, clothes that end up in the bin after one wear, or dipping into the money set aside for the kids' education, and leaves the consequences to those who come after. Out of fear they settle for less than they deserve. To stay safe they even accept situations they should never put up with.",
     grown: "gives up comfort when the future of the people they care for is at stake. As soon as a situation stops being good for them, they look for a new, better place, even if it takes courage. To them, safety is a break to catch their breath, not a place to stay forever.",
     before: "stays in the cheap flat on the noisy main road, though the kids barely sleep, because moving is a hassle.",
     after: "gives up the cheap flat, pays more rent, and moves the kids to a quiet street near a park.",

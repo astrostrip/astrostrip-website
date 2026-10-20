@@ -178,7 +178,7 @@ export default {
     after: "Wählt einen der fünf Logo-Entwürfe, verfeinert ihn und hört auf, daran herumzubasteln, sobald er gut ist.",
   },
   26: {
-    theme: "Das Wesentliche. Bei diesem Grad geht es darum, alles Überflüssige wegzulassen, damit sichtbar wird, was wirklich zählt, und gerade darin Schönheit und Wahrheit zu entdecken.",
+    theme: "Weniger, aber mit ganzem Herzen. Bei diesem Grad geht es darum, sich von Dingen, Terminen und Rollen zu trennen, die man nur aus Gewohnheit oder für den Eindruck behält, damit die volle Aufmerksamkeit dem gehört, was einen wirklich begeistert, und man wieder staunen kann.",
     growing: "Umgibt sich mit vielen Dingen, Terminen und Verpflichtungen, die einem eigentlich nichts bedeuten. Man macht vieles nur halb und achtet mehr darauf, wie man wirkt, als darauf, was man wirklich will. Dabei geht verloren, wer man eigentlich ist und was einem echte Freude macht.",
     grown: "Trennt sich von allem, was nur dem Schein dient oder halbherzig geschieht, und behält das, was einen wirklich begeistert. Dem schenkt man dann die volle Aufmerksamkeit. Mit dieser Klarheit sieht man auch ganz schlichte Momente mit neuen Augen und entdeckt in ihnen eine Schönheit, die einen staunen lässt.",
     before: "Besitzt zweihundert Dinge, die einem eigentlich gleichgültig sind, und einen Kalender voller Vielleichts.",
@@ -208,7 +208,7 @@ export default {
   30: {
     theme: "Maßstäbe setzen. Bei diesem Grad geht es darum, für sich klare Maßstäbe zu wählen, die zeigen, was einem wichtig ist, und die eigenen Gaben offen zu zeigen, damit andere sich daran orientieren können.",
     growing: "Gibt aus Eitelkeit an, um bewundert zu werden, und setzt den eigenen Charme ein, um andere zu lenken. Oder man versteckt die eigenen Stärken hinter falscher Bescheidenheit und tut so, als wären sie nichts Besonderes. In beiden Fällen zeigt man nicht ehrlich, was man kann und wofür man steht.",
-    grown: "Weiß, was einem wichtig ist, setzt sich dafür hohe Maßstäbe und steht offen dazu. Man zeigt die eigenen Begabungen ohne falsche Bescheidenheit, prüft aber ehrlich, ob es um die Sache geht oder nur um Eitelkeit. Weil man gern teilt, was man hat, und es für etwas Gutes einsetzt, wird man für andere zu einem Maßstab, an dem sie sich gern orientieren.",
+    grown: "Zeigt offen, was man kann und erreicht hat, etwa indem man die eigene Arbeit im Team vorstellt oder auf dem Fest singt, ohne es kleinzureden. Dabei prüft man ehrlich, ob man etwas teilen oder nur bewundert werden möchte, und steht zu dem, was einem wichtig ist, auch wenn es anderen nicht gefällt. Weil man die eigenen Gaben gern für andere einsetzt, merken andere ganz nebenbei, was alles möglich ist, und trauen sich selbst mehr zu.",
     before: "Wehrt jedes Kompliment mit „Ach, das ist doch nichts“ ab und fischt dann nach mehr.",
     after: "Nimmt das Kompliment mit einem schlichten Dank an und hält den Maßstab, an dem sich andere inzwischen orientieren.",
   },

@@ -18,7 +18,7 @@ export default {
   3: {
     theme: "Inner strength in hard times. This degree is about feeling supported and protected, and tapping into your greatest strength exactly when things get hard.",
     growing: "Doubts everything when times get hard and trusts no one. They cover the fear with a show of confidence and are too proud to ask for help. So they carry it all alone, and the strength that could hold them up never reaches them.",
-    grown: "trusts that they’re not alone and deliberately asks for support when they need it. In dark times especially, they grow beyond themselves and come across as calm, clear and confident. That steadiness draws the right people and resources toward them, and much falls into place.",
+    grown: "knows there’s more strength in them than they can feel through the fear, and deliberately draws on it: they pause, remember what they’ve already got through, and ask for the support they need. In dark times especially, they grow beyond themselves this way and come across as calm, clear and confident. That steadiness draws the right people and resources toward them, and much falls into place.",
     before: "gets bad news on Monday and spends the week imagining the worst alone, too proud to ask anyone.",
     after: "gets the same bad news, breathes for ten minutes, calls the two people they can count on, and has a plan by Wednesday.",
   },
@@ -101,9 +101,9 @@ export default {
   },
   15: {
     theme: "Carrying your inheritance with grace. This degree is about looking wisely at both the good and the difficult influence of your parents, and turning what you received into poise and grace.",
-    growing: "Shows off things that look stylish and high-status, with nothing behind them. They hope it gets them into a better circle, and come across as put-on instead. Because they aren’t following any deeper meaning, they feel lost inside.",
+    growing: "Takes on, unexamined, how their parents dealt with conflict, money or feelings, and repeats their mistakes without noticing. Or they show off things that look stylish and high-status, hoping it gets them into a better circle. Because they aren’t following any deeper meaning, they come across as put-on and feel lost inside.",
     grown: "sees clearly what their parents gave them that was good and what was difficult, and carries the good forward with dignity. Objects and habits from the family have value because they remind them of something that truly matters. Serving something higher like this makes them more refined in how they treat people, in their work and in relationships, and that grace gives them strength.",
-    before: "buys the designer bag in installments so they look like they belong at a friend’s wedding.",
+    before: "answers a fight with their partner with the same icy silence their father used to, and only notices when someone points it out.",
     after: "has made peace with what their parents got wrong, and brings their mother’s kindness into difficult conversations.",
   },
   16: {

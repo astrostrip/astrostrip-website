@@ -164,7 +164,7 @@ export default {
     after: "Sagt früh Nein, erkennt, was in dem einen echten Projekt steckt, und zieht es in aller Ruhe durch.",
   },
   24: {
-    theme: "Offen sein für Fülle. Bei diesem Grad geht es darum, auf die leisen Hinweise des Lebens zu achten, sich davon leiten zu lassen und großzügig zu teilen, was man hat.",
+    theme: "Großzügigkeit. Bei diesem Grad geht es darum, sich nicht arm zu fühlen, sondern gern und ohne Hintergedanken zu geben und anzunehmen und eine Gelegenheit zu ergreifen, wenn sie sich bietet.",
     growing: "Hält aus Angst, zu kurz zu kommen, alles fest, auch wenn eigentlich genug da ist. Oder man gibt zwar, macht aber eine große Sache daraus, um bewundert zu werden. In beiden Fällen fühlt man sich innerlich arm.",
     grown: "Achtet auf Zufälle und Gelegenheiten und greift zu, wenn sich eine Chance bietet. Man teilt gern und ohne Hintergedanken, mit offenen Händen. Wer so großzügig lebt, fühlt sich reich, und das Glück kommt oft hinterher.",
     before: "Teilt jede Rechnung auf den Cent genau und fühlt sich trotzdem pleite.",
