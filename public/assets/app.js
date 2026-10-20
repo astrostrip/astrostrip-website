@@ -754,9 +754,14 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
   const life = degreeKnown && dt && role === 'sun' ? await degreeText(key, deg, 'life') : null;
   let degreeBlock = '';
   if (reif) {
-    const [grown, before, after] = await Promise.all(['grown', 'before', 'after'].map(k => degreeText(key, deg, k)));
+    const [theme, grown, before, after] = await Promise.all(['theme', 'grown', 'before', 'after'].map(k => degreeText(key, deg, k)));
+    // Theme first (Sandra, 20.10.2026: the texts were too cryptic and short). The keyword before the first ". " stands
+    // as its own italic line under the degree label (variant B; next to the label it wrapped on phones), the sentence follows.
+    const [themeWord, ...themeRest] = (theme || '').split('. ');
     degreeBlock = `<div class="card-degree">
       <p class="card-degree-label">${L('YOUR DEGREE', 'DEIN GRAD')} · ${sign.toUpperCase()} ${deg}</p>
+      ${theme ? `<p class="card-head card-theme">${esc(themeWord)}</p>
+      <p class="card-body"><span class="card-stage">${L('What it’s about:', 'Worum es geht:')}</span> ${esc(themeRest.join('. '))}</p>` : ''}
       <p class="card-body"><span class="card-stage">${L('Still growing:', 'Noch im Wachsen:')}</span> ${esc(reif)}</p>
       <p class="card-body"><span class="card-stage">${L('Grown into it:', 'Hineingewachsen:')}</span> ${esc(grown)}</p>
       <p class="card-life-label">${L('IN REAL LIFE', 'IM ALLTAG')}</p>

@@ -146,6 +146,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .card-role { font-size: 11px; letter-spacing: .28em; color: var(--gold-label); margin-bottom: 8px; }
 .card-title { font-weight: 400; font-size: 22px; letter-spacing: .08em; margin: 0 0 18px; color: var(--cream); }
 .card-head { font-style: italic; color: var(--gold-italic); font-size: 20px; line-height: 1.35; margin-bottom: 12px; }
+.card-theme { margin-top: 4px; } /* degree keyword under YOUR DEGREE (Sandra, 20.10.2026, variant B) */
 .card-body { color: var(--cream); opacity: .9; font-size: 16px; }
 .card-sign { color: var(--muted); opacity: 1; font-size: 15px; }
 .card-degree { border-top: 1px solid var(--line-faint); margin-top: 18px; padding-top: 18px; }

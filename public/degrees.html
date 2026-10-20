@@ -66,8 +66,8 @@
     const tabs = document.querySelector('.sign-tabs'), grid = document.getElementById('deg-grid'), intro = document.getElementById('deg-intro');
     const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const cache = {};
-    // theme sentence first; the IN REAL LIFE lines stay on the calculator, they are written for the Sun (Sandra, 19.10.2026)
-    const themes = await import('./assets/degree-themes.js').then(m => m.default).catch(() => ({}));
+    // theme sentence first; the IN REAL LIFE lines stay on the calculator, they are written for the Sun (Sandra, 19.10.2026).
+    // Since 20.10.2026 the theme comes from the degree files themselves (field theme), the same line the calculator shows.
     for (const s of SIGNS) {
       const b = document.createElement('button');
       b.type = 'button'; b.role = 'tab'; b.textContent = s.toUpperCase(); b.dataset.sign = s.toLowerCase();
@@ -88,7 +88,7 @@
         const t = d[n] || {};
         return `<article class="deg-card" id="${key}-${n}">
           <h3>${name.toUpperCase()} ${n}</h3>
-          ${themes[key]?.[n] ? `<p class="deg-theme">${esc(themes[key][n])}</p>` : ''}
+          ${t.theme ? `<p class="deg-theme">${esc(t.theme)}</p>` : ''}
           ${t.growing ? `<p><span class="card-stage">Still growing:</span> ${esc(t.growing)}</p>` : ''}
           ${t.grown ? `<p><span class="card-stage">Grown into it:</span> ${esc(t.grown)}</p>` : ''}
         </article>`;
