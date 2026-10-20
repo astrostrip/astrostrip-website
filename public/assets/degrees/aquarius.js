@@ -159,8 +159,8 @@ export default {
     theme: "Power under control. This degree is about getting strong drives and emotions under control so you can use them deliberately as strength.",
     growing: "Lets anger, desire and impatience out unchecked and often reacts more strongly than the situation calls for. They use big emotions to get attention. Or they chase special, intense experiences and skip over the ordinary tasks of daily life.",
     grown: "has their strong feelings and drives in hand without suppressing them, and can put that energy to use on purpose. Passion becomes a real appetite for life that they put into work, relationships and new ideas. They prove what they can do in everyday life first and only then take on bigger goals.",
-    before: "loses their temper at the after-work soccer game and storms off the field so everyone can see.",
-    after: "keeps their cool at the after-work soccer game and pours all that drive into the last ten minutes.",
+    before: "loses their temper in the discussion at the parents’ evening, raises their voice and storms out so everyone can see.",
+    after: "stays calm at the parents’ evening, channels the anger into three clear sentences, and gets something changed.",
   },
   24: {
     theme: "Sharing experience. This degree is about using what you've already worked through to help others, and learning something new yourself in the process.",

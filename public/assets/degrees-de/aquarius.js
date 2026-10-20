@@ -160,8 +160,8 @@ export default {
     theme: "Kraft unter Kontrolle. Bei diesem Grad geht es darum, starke Triebe und Gefühle in den Griff zu bekommen, damit man sie gezielt als Kraft einsetzen kann.",
     growing: "Lässt Wut, Lust und Ungeduld ungebremst heraus und reagiert oft heftiger, als es die Situation verlangt. Große Gefühle setzt man ein, um Aufmerksamkeit zu bekommen. Oder man sucht besondere, tiefe Erfahrungen und übergeht dabei die ganz normalen Aufgaben des Alltags.",
     grown: "Hat die eigenen starken Gefühle und Triebe im Griff, ohne sie zu unterdrücken, und kann ihre Energie gezielt einsetzen. So wird aus Leidenschaft echte Lebenslust, die man in Arbeit, Beziehungen und neue Ideen steckt. Man beweist zuerst im Alltag, was man kann, und nimmt sich erst dann größere Ziele vor.",
-    before: "Verliert beim Feierabendfußball die Beherrschung und stapft demonstrativ vom Platz, damit es alle sehen.",
-    after: "Behält beim Feierabendfußball die Nerven und steckt den ganzen Ehrgeiz in die letzten zehn Minuten.",
+    before: "Verliert in der Diskussion beim Elternabend die Beherrschung, wird laut und verlässt demonstrativ den Raum, damit es alle sehen.",
+    after: "Bleibt beim Elternabend ruhig, sammelt die eigene Wut in drei klaren Sätzen und setzt damit durch, dass sich etwas ändert.",
   },
   24: {
     theme: "Erfahrung teilen. Bei diesem Grad geht es darum, anderen bei Problemen zu helfen, die man selbst schon gemeistert hat, und dabei selbst noch einmal dazuzulernen.",

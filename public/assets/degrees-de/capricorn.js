@@ -109,10 +109,10 @@ export default {
   },
   16: {
     theme: "Sich im Wettkampf messen. Bei diesem Grad geht es darum, Freude an der Kraft des eigenen Körpers zu haben und im fairen Kräftemessen mit anderen über sich hinauszuwachsen.",
-    growing: "Lebt fast nur im Kopf, staut Stress an und bewegt sich kaum. Oder man fügt sich aus Furcht vor Autoritäten und verliert dabei das Eigene. Am Ende ist man verspannt, fühlt sich machtlos und lässt sich leicht von anderen bestimmen.",
+    growing: "Lebt fast nur im Kopf und überhört, was der Körper braucht: Bewegung, Pausen, regelmäßige und ausgewogene Mahlzeiten. Der Stress staut sich an, weil er nie durch Bewegung abgebaut wird. Oder man fügt sich aus Furcht vor Autoritäten und verliert dabei das Eigene; am Ende ist man verspannt, fühlt sich machtlos und lässt sich leicht von anderen bestimmen.",
     grown: "Genießt die Kraft und Ausdauer des eigenen Körpers und nimmt Herausforderungen mit Freude an. Man hält sich an die Regeln der Gruppe, ohne sich dabei selbst aufzugeben, und lernt viel, wenn man anderen zusieht, wie sie über sich hinauswachsen. Lob und Kritik nimmt man gelassen als nützliche Rückmeldung.",
-    before: "Scrollt nach der Arbeit stundenlang, verspannt und aufgekratzt, und lässt das wöchentliche Fußballspiel mit dem Freundeskreis ausfallen.",
-    after: "Spielt beim wöchentlichen Fußball mit, liebt ein hartes Spiel und schläft danach besser.",
+    before: "Isst mittags nur einen Riegel am Schreibtisch, ist abends verspannt und aufgekratzt und sagt den wöchentlichen Lauftreff mit dem Freundeskreis wieder ab.",
+    after: "Macht eine echte Mittagspause, läuft abends mit dem Lauftreff, freut sich über jede neue Bestzeit und schläft danach besser.",
   },
   17: {
     theme: "Hemmungen ablegen. Bei diesem Grad geht es darum, sich von unnötigen Verboten und Schamgefühlen zu befreien und sich im eigenen Körper und so, wie man wirklich ist, wohlzufühlen.",

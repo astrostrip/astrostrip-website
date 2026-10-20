@@ -108,10 +108,10 @@ export default {
   },
   16: {
     theme: "Fair competition. This degree is about enjoying your body’s power and strength and growing beyond yourself by competing fairly with others.",
-    growing: "Lives almost entirely in their head, bottles up stress and hardly moves. Or they conform out of fear of authority and lose what makes them themselves. In the end they’re tense, feel powerless and are easily pushed around.",
+    growing: "Lives almost entirely in their head and ignores what their body needs: movement, breaks, regular and balanced meals. Stress builds up because they never work it off with exercise. Or they conform out of fear of authority and lose what makes them themselves; in the end they’re tense, feel powerless and are easily pushed around.",
     grown: "enjoys the strength and stamina of their body and takes on challenges gladly. They follow the group’s rules without giving themselves up, and learn a lot from watching others push past their limits. They take praise and criticism calmly as useful feedback.",
-    before: "scrolls for hours after work, stiff and wired, and skips the friends’ weekly football game.",
-    after: "joins the weekly football game, loves a tough match, and sleeps better for it.",
+    before: "eats a granola bar at the desk for lunch, is stiff and wired by evening, and cancels the weekly running group with friends again.",
+    after: "takes a real lunch break, runs with the group in the evening, enjoys every new personal best, and sleeps better for it.",
   },
   17: {
     theme: "Losing your inhibitions. This degree is about freeing yourself from needless rules and shame, and feeling at home in your body and in who you really are.",
