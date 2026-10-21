@@ -805,16 +805,16 @@ const ADDRESS_LINE = 'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20
 // No 'free'/'guide'/'gratis' in a subject: landed in web.de spam (Sandra, 19.10.2026).
 const DOI_MAIL = {
   guide: {
-    en: { subject: 'Confirm your email address · astro.strip', kicker: 'Confirm your signup', pre: 'One tap, then your free guide is yours.',
-      h1: 'One tap, then the guide is yours.',
-      body: 'Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your guide <em>The birth chart, stripped to the degree.</em>',
-      text: 'Please confirm that you want to receive the astro.strip newsletter. Right after confirming, you get the download link for your guide "The birth chart, stripped to the degree.":',
-      button: 'Confirm and get the guide' },
-    de: { subject: 'Bestätige deine E-Mail-Adresse · astro.strip', kicker: 'Anmeldung bestätigen', pre: 'Nur noch ein Klick bis zu deinem Leitfaden.',
-      h1: 'Nur noch ein Klick bis zu deinem Leitfaden.',
-      body: 'Bitte bestätige, dass du den astro.strip-Newsletter bekommen möchtest. Gleich danach schicken wir dir den Link zu deinem Leitfaden <em>Dein Geburtshoroskop, bis auf den Grad genau.</em>',
-      text: 'Bitte bestätige, dass du den astro.strip-Newsletter bekommen möchtest. Gleich danach schicken wir dir den Link zu deinem Leitfaden „Dein Geburtshoroskop, bis auf den Grad genau.“:',
-      button: 'Bestätigen und Leitfaden holen' },
+    // Plain like the newsletter confirmation: no 'free', 'download', 'get the guide' (Sandra, 21.10.2026: the guide
+    // confirmation landed in GMX spam). guide.html says beforehand that this mail only confirms the newsletter.
+    en: { subject: 'Please confirm your signup · astro.strip', kicker: 'Confirm your signup', pre: 'Please confirm your signup.',
+      body: 'Please confirm that you want to receive the astro.strip newsletter. After that, your guide is waiting for you on the next page.',
+      text: 'Please confirm that you want to receive the astro.strip newsletter. After that, your guide is waiting for you on the next page:',
+      button: 'Confirm' },
+    de: { subject: 'Bitte bestätige deine Anmeldung · astro.strip', kicker: 'Anmeldung bestätigen', pre: 'Bitte bestätige deine Anmeldung.',
+      body: 'Bitte bestätige, dass du den astro.strip-Newsletter bekommen möchtest. Danach wartet dein Leitfaden auf der nächsten Seite auf dich.',
+      text: 'Bitte bestätige, dass du den astro.strip-Newsletter bekommen möchtest. Danach wartet dein Leitfaden auf der nächsten Seite auf dich:',
+      button: 'Bestätigen' },
   },
   newsletter: {
     en: { subject: 'Please confirm your newsletter signup · astro.strip', kicker: 'Confirm your signup', pre: 'Please confirm your newsletter signup.',
@@ -1654,28 +1654,29 @@ async function handleConfirm(request, env) {
   await env.ORDERS.delete(`doi:${token}`);
   if (d.source === 'guide') {
     // The guide the person asked for: a service mail with the link, so it is not lost with the browser tab.
-    const pdf = `${site}${de ? GUIDE_PATH_DE : GUIDE_PATH}`;
+    // The button leads to the guide page, not straight to the PDF: a direct file link is a spam signal (Sandra, 21.10.2026).
+    const page = `${site}/${de ? 'de/' : ''}guide.html?status=confirmed`;
     const link = (href, label) => `<a href="${href}" style="color:${TWM.accent};text-decoration:underline;">${label}</a>`;
     try {
       await sendMail(env, de ? {
         to: d.email,
-        subject: 'Dein Leitfaden: Dein Geburtshoroskop, bis auf den Grad genau.',
-        text: ['Danke für deine Bestätigung. Hier ist dein Leitfaden:', pdf, '', ADDRESS_LINE].join('\n'),
-        html: brandMail({ lang: 'de', kicker: 'Dein Leitfaden', pre: 'Danke für deine Bestätigung. Hier ist dein Leitfaden.', body: [
+        subject: 'Dein Leitfaden von astro.strip',
+        text: ['Danke für deine Bestätigung. Hier ist dein Leitfaden:', page, '', ADDRESS_LINE].join('\n'),
+        html: brandMail({ lang: 'de', kicker: 'Dein Leitfaden', pre: 'Danke für deine Bestätigung.', body: [
           bH1('Dein Geburtshoroskop,<br>bis auf den Grad genau.', 28),
           bP('Danke für deine Bestätigung. Hier ist dein Leitfaden, der erste Schritt zu deinem eigenen Horoskop: wie ein Horoskop aufgebaut ist, wofür Planeten, Zeichen, Häuser und Aspekte stehen und warum es auf den genauen Grad ankommt.'),
-          bButton('Leitfaden öffnen (PDF)', pdf),
+          bButton('Zum Leitfaden', page),
           bRule,
           bP(`Nächster Schritt: Finde kostenlos deinen genauen Sonnengrad auf ${link(`${site}/de/`, 'astrostrip.com')} oder stöbere in ${link(`${site}/de/degrees`, 'allen 360 Graden')}.`, 15, TWM.muted),
         ].join('\n') }),
       } : {
         to: d.email,
-        subject: 'Your guide: The birth chart, stripped to the degree.',
-        text: ['Thank you for confirming. Here is your free guide:', pdf, '', ADDRESS_LINE].join('\n'),
-        html: brandMail({ kicker: 'Your free guide', pre: 'Thank you for confirming. Here is your guide.', body: [
+        subject: 'Your guide from astro.strip',
+        text: ['Thank you for confirming. Here is your guide:', page, '', ADDRESS_LINE].join('\n'),
+        html: brandMail({ kicker: 'Your guide', pre: 'Thank you for confirming.', body: [
           bH1('The birth chart,<br>stripped to the degree.', 28),
           bP('Thank you for confirming. Here is your guide, a first step to understanding your own chart: how a chart is built, what planets, signs, houses and aspects stand for, and why the degree changes everything.'),
-          bButton('Open the guide (PDF)', pdf),
+          bButton('Go to the guide', page),
           bRule,
           bP(`Next step: find your exact Sun degree for free on ${link(`${site}/`, 'astrostrip.com')}, or browse ${link(`${site}/degrees`, 'all 360 degrees')}.`, 15, TWM.muted),
         ].join('\n') }),
