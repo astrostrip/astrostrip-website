@@ -293,7 +293,9 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .strip-name { font-size: 24px; letter-spacing: .12em; margin-bottom: 4px; }
 .strip-tag { font-size: 11px; letter-spacing: .3em; color: var(--gold-label); margin-bottom: 22px; }
 .strip-desc { color: var(--gold-italic); font-style: italic; flex: 1; }
-.strip-plus { font-size: 14px; margin: -4px 0 14px; opacity: .8; } /* Mini: what it adds to the free chart (Sandra, 21.10.2026) */
+/* Mini: what it adds to the free chart (Sandra, 21.10.2026); a span inside .strip-desc, because the cards share 9 subgrid rows */
+.strip-plus { display: block; font-size: 14px; font-style: normal; margin-top: 14px; opacity: .8; }
+.paper .strip-plus { color: var(--ink); }
 .strip-price { font-size: 40px; margin: 10px 0 0; line-height: 1.1; }
 /* "from"/"ab" before the Maxi and Ultra price, clearly smaller (Sandra, 19.10.2026: „Bitte mache das from (bei den Preisen) deutlich kleiner“) */
 .price-from { font-size: .4em; letter-spacing: .08em; } /* on the baseline of the number (Sandra: „Das ab muss unten bündig mit der Zahl sein“) */
