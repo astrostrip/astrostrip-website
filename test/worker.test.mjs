@@ -471,6 +471,35 @@ assert.match(r.headers.get('Location'), /status=expired/);
   assert.ok(page.includes(GUIDE_PATH.slice(1)), 'download link on guide.html');
   assert.ok(readFileSync(new URL('../public' + GUIDE_PATH, import.meta.url)).length > 10000, 'guide PDF is in public/');
 }
+// German pages (Sandra, 21.10.2026): mails only in the page language, German guide, back to the German page
+{
+  const { GUIDE_PATH, GUIDE_PATH_DE } = await import('../src/worker.js');
+  mails.length = 0; lists.length = 0;
+  r = await worker.fetch(req('/api/subscribe', 'POST', { email: 'gd@example.com', consent: true, source: 'guide', lang: 'de' }, { ip: '5.5.7.1' }), env);
+  assert.equal(r.status, 200); assert.match(mails[0].subject, /^Bestätige deine E-Mail-Adresse/); assert.ok(!/gratis|kostenlos|leitfaden|free|guide/i.test(mails[0].subject), 'no spam word in the DOI subject');
+  assert.ok(mails[0].html.includes('Bestätigen und Leitfaden holen') && mails[0].html.includes('<html lang="de"'), 'German guide DOI mail');
+  assert.ok(!/Please|confirm/i.test(mails[0].text.replace(/https?:\S+/g, '')), 'German DOI mail without English');
+  let gt = mails[0].text.match(/t=([0-9a-f]{64})&l=de/)[1];
+  r = await worker.fetch(req('/api/confirm?t=' + gt + '&l=de', 'GET', undefined, { ip: '5.5.7.2' }), env);
+  assert.match(r.headers.get('Location'), /\/de\/guide\.html\?status=confirmed$/);
+  assert.ok(mails[1].text.includes(GUIDE_PATH_DE) && !mails[1].text.includes(GUIDE_PATH) && mails[1].html.includes('Leitfaden öffnen'), 'German guide by mail');
+  assert.equal(JSON.parse(kv.get('consent:gd@example.com')).events[0].lang, 'de');
+  r = await worker.fetch(req('/api/confirm?t=' + gt + '&l=de', 'GET'), env);
+  assert.match(r.headers.get('Location'), /\/de\/newsletter\.html\?status=expired$/, 'expired link answers in German');
+  mails.length = 0;
+  r = await worker.fetch(req('/api/subscribe', 'POST', { email: 'nd@example.com', consent: true, source: 'newsletter-page', lang: 'de' }, { ip: '5.5.7.3' }), env);
+  assert.match(mails[0].subject, /^Bitte bestätige deine Anmeldung/); assert.ok(!/Please|confirm/i.test((mails[0].text + mails[0].subject).replace(/https?:\S+/g, '')), 'German newsletter DOI without English');
+  gt = mails[0].text.match(/t=([0-9a-f]{64})/)[1];
+  r = await worker.fetch(req('/api/confirm?t=' + gt, 'GET'), env);
+  assert.match(r.headers.get('Location'), /\/de\/newsletter\.html\?status=confirmed$/);
+  mails.length = 0;
+  r = await worker.fetch(req('/api/subscribe', 'POST', { email: 'ne@example.com', consent: true, source: 'newsletter-page' }, { ip: '5.5.7.4' }), env);
+  assert.ok(!/Bitte|bestätige/i.test(mails[0].text + mails[0].subject), 'English newsletter DOI without German');
+  const de = readFileSync(new URL('../public/de/guide.html', import.meta.url), 'utf8');
+  assert.ok(de.includes(GUIDE_PATH_DE.slice(1)) && !de.includes(GUIDE_PATH.slice(1)), 'German PDF on /de/guide');
+  assert.ok(readFileSync(new URL('../public' + GUIDE_PATH_DE, import.meta.url)).length > 10000, 'German guide PDF is in public/');
+  assert.ok(readFileSync(new URL('../public/de/degrees.html', import.meta.url), 'utf8').includes('../assets/degrees-de/'), '/de/degrees reads the German degree texts');
+}
 console.log('newsletter ok');
 
 // consent wording on the pages must match the versioned proof texts
