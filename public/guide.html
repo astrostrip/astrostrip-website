@@ -26,6 +26,8 @@
     .guide-list { margin: 18px 0 0; padding-left: 18px; color: var(--cream); opacity: .9; }
     .guide-list li { margin-bottom: 6px; }
     .guide-terms { margin: 22px 0 0; padding: 14px 18px; border-left: 1px solid var(--gold); color: var(--gold-italic); font-style: italic; }
+    .guide-terms p { margin: 0; } .guide-terms ol { margin: 10px 0; padding-left: 20px; } .guide-terms li { margin-bottom: 4px; }
+    /* signup steps spelled out, so the plain confirmation email is expected (Sandra, 21.10.2026) */
     .guide-ready { text-align: center; }
     .guide-ready .btn { margin-top: 18px; }
     @media (max-width: 720px) { .guide-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; } .guide-cover { max-width: 170px; margin: 0 auto; } }
@@ -40,7 +42,7 @@
     <div id="guide-ready" class="guide-ready" hidden>
       <p class="kicker">YOU’RE IN</p>
       <h1 class="section-title">Here is your guide.</h1>
-      <p class="section-sub" style="margin: 0 auto">Thank you for confirming. We also sent you the link by email, so you can find it again later.</p>
+      <p class="section-sub" style="margin: 0 auto">Thank you for confirming. We also sent you the link by email, so you can find it again later. If it isn’t in your inbox, please check your spam folder.</p>
       <a class="btn btn-solid" href="downloads/astrostrip-birth-chart-guide-34cdce3698ed.pdf" target="_blank" rel="noopener">OPEN THE GUIDE (PDF)</a>
       <p class="fine">Next step: find your exact Sun degree for free on <a href="index.html#chart">astrostrip.com</a>, or browse <a href="degrees.html">all 360 Sun degrees</a>.</p>
     </div>
@@ -58,7 +60,15 @@
             <li>Why the exact degree changes everything</li>
             <li>A chart read step by step</li>
           </ul>
-          <p class="guide-terms">The guide is free and comes with the astro.strip newsletter: regular updates on the stars. Sign up, confirm your email, and you get the download link right away.</p>
+          <div class="guide-terms">
+            <p>The guide is free and comes with the astro.strip newsletter, which keeps you up to date on what’s happening in the sky. Here’s how it works:</p>
+            <ol>
+              <li>Enter your email address.</li>
+              <li>You’ll get a short email with the subject “Please confirm your signup”. In it, you simply confirm that you want the newsletter.</li>
+              <li>Once you click “Confirm”, the page with your guide opens. We also email you the link, so you can find it again later.</li>
+            </ol>
+            <p>Can’t find one of the two emails? Please check your spam folder.</p>
+          </div>
           <form class="newsletter-form" data-source="guide" novalidate>
             <div class="newsletter-row">
               <label for="nl-email" class="sr-only">Email</label>

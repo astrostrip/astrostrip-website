@@ -27,6 +27,8 @@
     .guide-list { margin: 18px 0 0; padding-left: 18px; color: var(--cream); opacity: .9; }
     .guide-list li { margin-bottom: 6px; }
     .guide-terms { margin: 22px 0 0; padding: 14px 18px; border-left: 1px solid var(--gold); color: var(--gold-italic); font-style: italic; }
+    .guide-terms p { margin: 0; } .guide-terms ol { margin: 10px 0; padding-left: 20px; } .guide-terms li { margin-bottom: 4px; }
+    /* signup steps spelled out, so the plain confirmation email is expected (Sandra, 21.10.2026) */
     .guide-ready { text-align: center; }
     .guide-ready .btn { margin-top: 18px; }
     @media (max-width: 720px) { .guide-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; } .guide-cover { max-width: 170px; margin: 0 auto; } }
@@ -41,7 +43,7 @@
     <div id="guide-ready" class="guide-ready" hidden>
       <p class="kicker">DU BIST DABEI</p>
       <h1 class="section-title">Hier ist dein Leitfaden.</h1>
-      <p class="section-sub" style="margin: 0 auto">Danke für deine Bestätigung. Den Link haben wir dir auch per E-Mail geschickt, damit du ihn später wiederfindest.</p>
+      <p class="section-sub" style="margin: 0 auto">Danke für deine Bestätigung. Den Link haben wir dir auch per E-Mail geschickt, damit du ihn später wiederfindest. Ist die Mail nicht in deinem Posteingang, sieh bitte im Spam-Ordner nach.</p>
       <a class="btn btn-solid" href="../downloads/astrostrip-geburtshoroskop-leitfaden-f33961a756b6.pdf" target="_blank" rel="noopener">LEITFADEN ÖFFNEN (PDF)</a>
       <p class="fine">Nächster Schritt: Finde kostenlos deinen genauen Sonnengrad auf <a href="index.html#chart">astrostrip.com</a> oder stöbere in <a href="degrees.html">allen 360 Sonnengraden</a>.</p>
     </div>
@@ -59,7 +61,15 @@
             <li>Warum es auf den genauen Grad ankommt</li>
             <li>Ein Beispielhoroskop, Schritt für Schritt gedeutet</li>
           </ul>
-          <p class="guide-terms">Den Leitfaden gibt es kostenlos zusammen mit dem astro.strip-Newsletter, der dich regelmäßig über das Geschehen am Himmel auf dem Laufenden hält. Melde dich an und bestätige deine E-Mail-Adresse, dann bekommst du sofort den Link zum Download.</p>
+          <div class="guide-terms">
+            <p>Den Leitfaden gibt es kostenlos zusammen mit dem astro.strip-Newsletter, der dich regelmäßig über das Geschehen am Himmel auf dem Laufenden hält. So geht’s:</p>
+            <ol>
+              <li>Trag deine E-Mail-Adresse ein.</li>
+              <li>Du bekommst eine kurze Mail mit dem Betreff „Bitte bestätige deine Anmeldung“. Darin bestätigst du nur, dass du den Newsletter bekommen möchtest.</li>
+              <li>Nach dem Klick auf „Bestätigen“ öffnet sich die Seite mit deinem Leitfaden. Den Link schicken wir dir zusätzlich per Mail, damit du ihn später wiederfindest.</li>
+            </ol>
+            <p>Findest du eine der beiden Mails nicht, sieh bitte im Spam-Ordner nach.</p>
+          </div>
           <form class="newsletter-form" data-source="guide" novalidate>
             <div class="newsletter-row">
               <label for="nl-email" class="sr-only">E-Mail</label>
