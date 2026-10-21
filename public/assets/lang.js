@@ -1,7 +1,7 @@
 // Language switch EN/DE (Sandra, 18./19.10.2026). Loaded in the <head> of the pages that have a German version.
 // 1. Remembers the visitor's own choice: a click on the EN/DE button stores "en" or "de" in the browser
 //    (localStorage key "astrostrip-lang", nothing else; named in the privacy policy § 4).
-// 2. Only on the English start page and newsletter page (script tag with data-redirect): someone arriving from
+// 2. Only on the English start, newsletter, guide and degree pages (script tag with data-redirect; guide and degrees since 21.10.2026): someone arriving from
 //    outside goes to the German page if they chose German before, or, without a choice, if the browser's first
 //    language is German. ?lang=en or a stored "en" keeps the English page. Order, thank-you and Transit Weekly pages
 //    never redirect (a Stripe return or a link in an English email must stay English).
@@ -18,7 +18,7 @@
       q.delete('lang');
       history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
     }
-    if (me && me.hasAttribute('data-redirect') && document.documentElement.lang === 'en') {
+    if (me && me.hasAttribute('data-redirect') && document.documentElement.lang === 'en' && !q.has('status')) { // ?status= comes from a confirmation link: its page already has the right language
       var saved = get();
       var ref = '';
       try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) {}

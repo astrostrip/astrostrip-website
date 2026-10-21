@@ -8,11 +8,15 @@
   <title>All 360 degrees · astro.strip</title>
   <meta name="description" content="Every degree of the zodiac from Aries 1 to Pisces 30: its theme, how it acts while still growing and how it looks once grown into.">
   <link rel="canonical" href="https://astrostrip.com/degrees">
+  <link rel="alternate" hreflang="en" href="https://astrostrip.com/degrees">
+  <link rel="alternate" hreflang="de" href="https://astrostrip.com/de/degrees">
+  <link rel="alternate" hreflang="x-default" href="https://astrostrip.com/degrees">
   <meta property="og:title" content="All 360 degrees · astro.strip">
   <meta property="og:description" content="Same sign, 30 shapes. Every degree, stripped down.">
   <meta property="og:url" content="https://astrostrip.com/degrees">
   <meta property="og:image" content="https://astrostrip.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
+  <script src="assets/lang.js" data-redirect></script><!-- EN/DE switch and language choice -->
   <link rel="stylesheet" href="assets/style.css">
   <style>
     /* degree library (Sandra, 19.10.2026): the 360 public Sun degree texts, one sign at a time */
@@ -40,7 +44,7 @@
 <body>
   <header class="site-header">
     <a class="wordmark" href="index.html">astro.strip</a>
-    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a></nav>
+    <nav class="nav"><a href="index.html#chart">Chart</a><a href="index.html#strips">Strips</a><a class="lang-switch" href="de/degrees.html" hreflang="de" lang="de" aria-label="Deutsche Fassung">DE</a></nav>
   </header>
   <main class="degrees">
     <p class="kicker">ALL 360 DEGREES</p>
@@ -63,6 +67,7 @@
   <script type="module">
     // Reads the same public Sun degree files as the calculator (assets/degrees/<sign>.js); nothing is sent anywhere.
     const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+    const NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']; // shown; /de/ has German names (build-de.py)
     const tabs = document.querySelector('.sign-tabs'), grid = document.getElementById('deg-grid'), intro = document.getElementById('deg-intro');
     const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const cache = {};
@@ -70,13 +75,13 @@
     // Since 20.10.2026 the theme comes from the degree files themselves (field theme), the same line the calculator shows.
     for (const s of SIGNS) {
       const b = document.createElement('button');
-      b.type = 'button'; b.role = 'tab'; b.textContent = s.toUpperCase(); b.dataset.sign = s.toLowerCase();
+      b.type = 'button'; b.role = 'tab'; b.textContent = NAMES[SIGNS.indexOf(s)].toUpperCase(); b.dataset.sign = s.toLowerCase();
       b.addEventListener('click', () => { history.replaceState(null, '', '#' + b.dataset.sign); show(b.dataset.sign); });
       tabs.appendChild(b);
     }
     async function show(key, focusDeg) {
       for (const b of tabs.children) b.setAttribute('aria-selected', String(b.dataset.sign === key));
-      const name = SIGNS.find(s => s.toLowerCase() === key);
+      const name = NAMES[SIGNS.findIndex(s => s.toLowerCase() === key)];
       intro.textContent = `${name}: 30 degrees, 30 shapes of the same sign.`;
       try {
         cache[key] ??= (await import(`./assets/degrees/${key}.js`)).default;

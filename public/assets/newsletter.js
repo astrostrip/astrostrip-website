@@ -15,7 +15,7 @@ for (const form of document.querySelectorAll('form.newsletter-form')) {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, consent, source: form.dataset.source, website: form.querySelector('input[name=website]').value }),
+        body: JSON.stringify({ email, consent, source: form.dataset.source, lang: document.documentElement.lang, website: form.querySelector('input[name=website]').value }),
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || '');

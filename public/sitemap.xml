@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- only the pages meant for search (guide.html added 19.10.2026, German /de/ pages 19.10.2026; addresses without .html, Cloudflare sends name.html on to name); legal and order pages are noindex (Sandra, 18.10.2026) -->
+<!-- only the pages meant for search (guide.html added 19.10.2026, German /de/ pages 19.10.2026, /de/guide and /de/degrees 21.10.2026; addresses without .html, Cloudflare sends name.html on to name); legal and order pages are noindex (Sandra, 18.10.2026) -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://astrostrip.com/</loc></url>
   <url><loc>https://astrostrip.com/newsletter</loc></url>
@@ -7,4 +7,6 @@
   <url><loc>https://astrostrip.com/degrees</loc></url>
   <url><loc>https://astrostrip.com/de/</loc></url>
   <url><loc>https://astrostrip.com/de/newsletter</loc></url>
+  <url><loc>https://astrostrip.com/de/guide</loc></url>
+  <url><loc>https://astrostrip.com/de/degrees</loc></url>
 </urlset>
