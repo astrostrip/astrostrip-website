@@ -257,6 +257,14 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .teaser { text-align: center; margin: 72px auto 0; padding: 48px 20px; border-top: 1px solid var(--line-faint); border-bottom: 1px solid var(--line-faint); }
 .teaser-line { font-size: clamp(26px, 4vw, 40px); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .04em; }
 .teaser-sub { color: var(--gold-italic); font-style: italic; margin-bottom: 26px; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 640px; margin: 0 auto 28px; text-align: left; }
+.compare-col { border: 1px solid var(--line-faint); padding: 16px 14px; }
+.compare-plus { border-color: var(--gold); }
+.compare-head { font-size: 11px; letter-spacing: .2em; color: var(--gold); margin: 0 0 10px; }
+.compare ul { margin: 0; padding-left: 16px; font-size: 15px; line-height: 1.45; }
+.compare li { margin-bottom: 6px; }
+.compare-more { margin: 14px 0 0; font-size: 15px; }
+.compare-more a { color: var(--gold-italic); }
 
 /* strips */
 .strips, .method { max-width: var(--max); margin: 0 auto; padding: 110px var(--gutter) 40px; text-align: center; scroll-margin-top: 70px; }
@@ -285,6 +293,7 @@ input::placeholder { color: #6f6556; font-style: italic; }
 .strip-name { font-size: 24px; letter-spacing: .12em; margin-bottom: 4px; }
 .strip-tag { font-size: 11px; letter-spacing: .3em; color: var(--gold-label); margin-bottom: 22px; }
 .strip-desc { color: var(--gold-italic); font-style: italic; flex: 1; }
+.strip-plus { font-size: 14px; margin: -4px 0 14px; opacity: .8; } /* Mini: what it adds to the free chart (Sandra, 21.10.2026) */
 .strip-price { font-size: 40px; margin: 10px 0 0; line-height: 1.1; }
 /* "from"/"ab" before the Maxi and Ultra price, clearly smaller (Sandra, 19.10.2026: „Bitte mache das from (bei den Preisen) deutlich kleiner“) */
 .price-from { font-size: .4em; letter-spacing: .08em; } /* on the baseline of the number (Sandra: „Das ab muss unten bündig mit der Zahl sein“) */

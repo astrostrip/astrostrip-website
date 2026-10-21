@@ -740,9 +740,10 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     <p class="card-body card-sign">${esc(body)}</p>
     <div class="card-degree">
     ${degreeKnown ? `<p class="card-degree-label">${L('YOUR DEGREE', 'DEIN GRAD')} · ${sign.toUpperCase()} ${deg}</p>` : ''}
-    <p class="card-body card-lock-text">${L(`For a precise reading of ${degreeKnown ? 'this degree' : `your ${r.label.charAt(0) + r.label.slice(1).toLowerCase()}`}, including how it fits into your whole chart, see the strips.`,
-      `Was ${degreeKnown ? 'dieser Grad' : role === 'moon' ? 'dein Mond' : 'dein Aszendent'} genau bedeutet und wie er sich in dein ganzes Horoskop fügt, liest du in den Strips.`)}</p>
-    <a class="card-lock-link" href="#strips">${L('SEE THE STRIPS', 'ZU DEN STRIPS')}</a>
+    <p class="card-body card-lock-text">${role === 'moon' // name the Mini and what the degree adds (Sandra, 21.10.2026)
+      ? L(`What ${degreeKnown ? 'this exact degree' : 'your Moon'} says about what you need, and how it plays with your Rising and Sun, is read in the Mini Strip.`, `Was ${degreeKnown ? 'dieser genaue Grad' : 'dein Mond'} darüber sagt, was du brauchst, und wie er mit Aszendent und Sonne zusammenspielt, liest du im Mini Strip.`)
+      : L('What this exact degree says about the way you come across, and how it plays with your Sun and Moon, is read in the Mini Strip.', 'Was dieser genaue Grad darüber sagt, wie du auf andere wirkst, und wie er mit Sonne und Mond zusammenspielt, liest du im Mini Strip.')}</p>
+    <a class="card-lock-link" href="#strips">MINI STRIP · 39&nbsp;€</a>
     </div>
     ${extra}
   </article>`;
@@ -868,7 +869,19 @@ async function renderResult(chart, input) {
     <div class="teaser">
       <p class="teaser-line">${L('This is the outline.', 'Das ist der Umriss.')}</p>
       <p class="teaser-sub">${L('A strip reads how it all works together.', 'Ein Strip deutet, wie alles zusammenwirkt.')}</p>
-      <a class="btn" href="#strips">${L('SEE THE STRIPS', 'ZU DEN STRIPS')}</a>
+      <div class="compare"><!-- free vs. Mini, two columns (Sandra, 21.10.2026) -->
+        <div class="compare-col"><p class="compare-head">${L('WHAT YOU JUST READ', 'WAS DU GERADE GELESEN HAST')}</p><ul>
+          <li>${L('Your three signs, in the text everyone with that sign reads', 'Deine drei Zeichen: derselbe Text für alle mit diesem Zeichen')}</li>
+          <li>${L('Your Sun degree, the same for everyone born on it', 'Deinen Sonnengrad: derselbe Text für alle mit diesem Grad')}</li></ul></div>
+        <div class="compare-col compare-plus"><p class="compare-head">${L('WHAT THE MINI ADDS', 'WAS IM MINI DAZUKOMMT')}</p><ul>
+          <li>${L('Where each of the three shows up in your life', 'Wo sich jeder der drei in deinem Leben zeigt')}</li>
+          <li>${L('Which planets shape them', 'Welche Planeten sie prägen')}</li>
+          <li>${L('Your Rising and Moon degrees', 'Die Grade von Aszendent und Mond')}</li>
+          <li>${L('Your Sun degree, read for you', 'Dein Sonnengrad, für dich gedeutet')}</li>
+          <li>${L('How the three work together, or pull apart', 'Ob sich die drei ergänzen oder im Weg stehen')}</li></ul></div>
+      </div>
+      <a class="btn btn-solid" href="#strips">MINI STRIP · 39&nbsp;€</a>
+      <p class="compare-more"><a href="#strips">${L('Want the whole chart? See the Maxi.', 'Du willst das ganze Horoskop? Zum Maxi.')}</a></p>
     </div>`;
   window.twApply?.($('#result')); // Transit Weekly price: founding or full (tw-price.js)
   $('#result').hidden = false;
