@@ -9,7 +9,7 @@ const L = (en, de) => (DE ? de : en);
 const AREA_DE = { 'Love and relationships': 'Liebe und Beziehungen', 'Work and calling': 'Beruf und Berufung', 'Money and self-worth': 'Geld und Selbstwert', 'Home and family': 'Zuhause und Familie', 'Creativity and self-expression': 'Kreativität und Ausdruck', 'Friends and belonging': 'Freundschaft und Zugehörigkeit', 'Personal growth': 'Persönliches Wachstum' };
 const areaName = a => (DE ? AREA_DE[a] || a : a);
 const LOCALE = L('en-GB', 'de-DE');
-const PRICES = { mini: 39, maxi: 79, ultra: 129 };
+const PRICES = { mini: 29, maxi: 79, ultra: 129 };
 const NAMES = { mini: 'Mini Strip', maxi: 'Maxi Strip', ultra: 'Ultra Strip' };
 const DAYS = { mini: 5, maxi: 7, ultra: 10 };
 // Transit Weekly per life area for 13 weeks: founding price 87 € (29 € a month) while places are left, then 117 €;

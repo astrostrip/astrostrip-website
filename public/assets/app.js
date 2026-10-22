@@ -743,7 +743,7 @@ async function bigThreeCard(role, lon, { degreeKnown = true, extra = '', locked 
     <p class="card-body card-lock-text">${role === 'moon' // name the Mini and what the degree adds (Sandra, 21.10.2026)
       ? L(`What ${degreeKnown ? 'this exact degree' : 'your Moon'} says about what you need, and how it plays with your Rising and Sun, is read in the Mini Strip.`, `Was ${degreeKnown ? 'dieser genaue Grad' : 'dein Mond'} darüber sagt, was du brauchst, und wie er mit Aszendent und Sonne zusammenspielt, liest du im Mini Strip.`)
       : L('What this exact degree says about the way you come across, and how it plays with your Sun and Moon, is read in the Mini Strip.', 'Was dieser genaue Grad darüber sagt, wie du auf andere wirkst, und wie er mit Sonne und Mond zusammenspielt, liest du im Mini Strip.')}</p>
-    <a class="card-lock-link" href="#strips">MINI STRIP · 39&nbsp;€</a>
+    <a class="card-lock-link" href="#strips">MINI STRIP · 29&nbsp;€</a>
     </div>
     ${extra}
   </article>`;
@@ -880,7 +880,7 @@ async function renderResult(chart, input) {
           <li>${L('Your Sun degree, read for you', 'Dein Sonnengrad, für dich gedeutet')}</li>
           <li>${L('How the three work together, or pull apart', 'Ob sich die drei ergänzen oder im Weg stehen')}</li></ul></div>
       </div>
-      <a class="btn btn-solid" href="#strips">MINI STRIP · 39&nbsp;€</a>
+      <a class="btn btn-solid" href="#strips">MINI STRIP · 29&nbsp;€</a>
       <p class="compare-more"><a href="#strips">${L('Want the whole chart? See the Maxi.', 'Du willst das ganze Horoskop? Zum Maxi.')}</a></p>
     </div>`;
   window.twApply?.($('#result')); // Transit Weekly price: founding or full (tw-price.js)
