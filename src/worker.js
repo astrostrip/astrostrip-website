@@ -47,9 +47,10 @@
 import { buildInvoice, buildCorrection, berlinDate, servicePeriod } from './invoice.js';
 import { berlinOffsetMinutes, berlinYmd, longDateText, berlinStampText, isoUtc } from './time.js';
 
+// Mini founding price 29 €, later 39 € (Sandra, 22.10.2026).
 // weekly = orders per strip and week (Sandra: 20/5/3 on 30.09.2026, Maxi and Ultra doubled on 03.10.2026, 21/7/6 on 06.10.2026).
 export const STRIPS = {
-  mini: { name: 'Mini Strip', tag: 'The essentials', cents: 3900, days: 5, weekly: 21 },
+  mini: { name: 'Mini Strip', tag: 'The essentials', cents: 2900, days: 5, weekly: 21 },
   maxi: { name: 'Maxi Strip', tag: 'Full chart reading', cents: 7900, days: 7, weekly: 7 },
   ultra: { name: 'Ultra Strip', tag: 'Complete dossier', cents: 12900, days: 10, weekly: 6 },
 };

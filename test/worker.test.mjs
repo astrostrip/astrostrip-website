@@ -1102,7 +1102,7 @@ console.log('newsletter ok');
   assert.ok(validateOrder({ ...good, asteroids: ['juno', 'ceres'] }).errors.some(e => /at least three asteroids/.test(e)), 'one or two asteroids: error');
   assert.equal(validateOrder({ ...good, asteroids: [] }).errors.length, 0, 'no asteroids is fine');
   const mini = validateOrder({ ...good, strip: 'mini', lifeArea: '', asteroids: ['juno', 'ceres', 'vesta'] }).order;
-  assert.deepEqual(mini.asteroids, [], 'Mini: no asteroids'); assert.equal(stripCents(mini), 3900);
+  assert.deepEqual(mini.asteroids, [], 'Mini: no asteroids'); assert.equal(stripCents(mini), 2900); // founding price (Sandra, 22.10.2026)
   const maxi = validateOrder({ ...good, strip: 'maxi', lifeArea: '', asteroids: ASTEROIDS }).order;
   assert.equal(maxi.ancestry, false, 'ancestral layer Ultra only'); assert.equal(maxi.nodes, true, 'nodes included'); assert.equal(stripCents(maxi), 7900 + 3000);
   // reading data mail: the skill takes the asteroids from here
