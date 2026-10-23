@@ -87,11 +87,11 @@ export default {
     after: "Zeigt dem Geschwisterkind Schritt für Schritt die Budgetmethode, die man selbst benutzt hat, und lässt Raum, sie anzupassen.",
   },
   13: {
-    theme: "Bleibende Werte. Bei diesem Grad geht es darum, jenseits von Ruhm und Geld nach dem zu suchen, was im Leben wirklich zählt, und aus dieser inneren Gewissheit heraus zu handeln.",
-    growing: "Jagt Ansehen und Geld hinterher und hofft, damit endlich zufrieden zu sein. Oder man hält sich für besonders begabt und auserwählt, überschätzt die eigenen Kräfte und überhört das schlechte Gewissen. In beiden Fällen nimmt das Ego immer mehr Raum ein, und man entfernt sich von sich selbst.",
-    grown: "Richtet das eigene Leben nach Werten aus, die länger halten als Ruhm und Geld, und setzt Talente und Mittel für das ein, woran man wirklich glaubt. Aus dieser inneren Gewissheit heraus werden Ideen erstaunlich leicht Wirklichkeit. Je weniger man dabei für sich haben will, desto ruhiger und unabhängiger von äußeren Umständen wird man.",
-    before: "Gibt den Bonus für eine Statusuhr aus, um die Schwiegerfamilie zu beeindrucken.",
-    after: "Setzt den Bonus für das ein, was einem selbst etwas bedeutet, und hört auf, sich darum zu sorgen, was die Schwiegerfamilie denkt.",
+    theme: "Hinter die Oberfläche schauen. Bei diesem Grad geht es darum, jenseits von Ruhm und Geld den tiefsten Fragen des Lebens nachzugehen und nach Werten zu leben, die bleiben.",
+    growing: "Hält die Oberfläche für die ganze Wahrheit: Ansehen, Geld und die Meinung anderer geben die Richtung vor, und zufrieden wird man trotzdem nicht. Oder man spürt ein starkes inneres Feuer und große Ideen, überschätzt aber die eigenen Kräfte, hält sich für auserwählt und überhört das schlechte Gewissen, das warnt. In beiden Fällen nimmt das Ego immer mehr Raum ein, und man entfernt sich von sich selbst.",
+    grown: "Schaut hinter das, was alle für selbstverständlich halten, und merkt, dass jeder Mensch dasselbe Leben ganz anders erlebt. Man spürt ein beständiges inneres Feuer und setzt Talente und Mittel für das ein, woran man wirklich glaubt, und so werden Ideen erstaunlich leicht Wirklichkeit. Je weniger man dabei für sich haben will, desto ruhiger und unabhängiger von äußeren Umständen wird man.",
+    before: "Arbeitet auf den nächsten Titel und die nächste Gehaltsstufe hin und fühlt sich bei jeder Feier dazu trotzdem leer.",
+    after: "Nimmt sich jede Woche eine Stunde für die großen Fragen, auf einem langen Spaziergang, mit einem Buch oder in einer Meditationsgruppe, und steckt das eigene Können in ein Vorhaben, an das man glaubt, statt dem nächsten Titel nachzujagen.",
   },
   14: {
     theme: "Langfristig investieren. Bei diesem Grad geht es darum, Zeit und Kraft in das zu stecken, was grundlegend, stabil und wahr ist, und so etwas zu schaffen, das Moden überdauert.",

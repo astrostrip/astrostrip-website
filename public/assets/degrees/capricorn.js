@@ -86,11 +86,11 @@ export default {
     after: "shows their sibling the budget method they actually used, step by step, and lets them adapt it.",
   },
   13: {
-    theme: "Lasting values. This degree is about looking beyond fame and money for what really counts in life, and acting from that inner certainty.",
-    growing: "Chases status and money, hoping that will finally make them content. Or they think of themselves as specially gifted and chosen, overrate their own powers and ignore their conscience. Either way the ego takes up more and more room, and they drift away from who they are.",
-    grown: "lines their life up with values that outlast fame and money, and puts their talents and means into what they truly believe in. That inner certainty lets ideas become real with surprising ease. The less they want to get out of it for themselves, the calmer and less dependent on circumstances they become.",
-    before: "spends the bonus on a status watch to impress the in-laws.",
-    after: "spends the bonus on what they truly care about and stops worrying what the in-laws think.",
+    theme: "Looking beneath the surface. This degree is about following the deepest questions of life beyond fame and money, and living by values that last.",
+    growing: "Takes the surface for the whole truth: status, money and what others think set the course, and contentment never comes. Or they feel a strong inner fire and big ideas, but overrate their own powers, feel chosen and ignore the uneasy conscience that warns them. Either way the ego takes up more and more room, and they drift away from who they are.",
+    grown: "looks behind what everyone takes for granted and notices that each person experiences the same life quite differently. They feel a steady inner fire and put their talents and means into what they truly believe in, so ideas become real with surprising ease. The less they want to get out of it for themselves, the calmer and less dependent on circumstances they become.",
+    before: "works toward the next title and the next pay grade, and still feels empty at every celebration of it.",
+    after: "keeps an hour each week for the big questions, on a long walk, with a book or in a meditation group, and puts their skills into a project they believe in instead of chasing the next title.",
   },
   14: {
     theme: "Investing for the long run. This degree is about putting time and energy into what is basic, stable and true, and so creating something that outlasts trends.",

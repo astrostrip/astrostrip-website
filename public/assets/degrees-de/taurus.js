@@ -115,11 +115,11 @@ export default {
     after: "Lebt nach dem, was man erkannt hat, antwortet, wenn jemand fragt, und lernt trotzdem weiter.",
   },
   17: {
-    theme: "Sich klar entscheiden. Bei diesem Grad geht es darum, sich den eigenen inneren Widersprüchen zu stellen und klar zu wählen, zwischen dem, was man will, und dem, was man braucht.",
-    growing: "Schwankt zwischen dem, was man gern hätte, und dem, was eigentlich nötig wäre. Man lässt sich von Nebensächlichkeiten ablenken und schiebt die Entscheidung auf. Am Ende entscheiden die Umstände oder die Ablenkungen, nicht man selbst.",
-    grown: "Schaut genau hin, was in einer Sache wirklich wichtig ist, und entscheidet sich dann klar. Dabei lernt man, Dinge gut zu organisieren und zu verstehen, wie sie funktionieren. Man respektiert, dass auch andere Macht haben, und kann hinnehmen, was sich nicht ändern lässt, statt dagegen anzukämpfen.",
-    before: "Gibt den Bonus für einen Wochenendtrip aus und kann dann die Autoreparatur nicht bezahlen, die längst absehbar war.",
-    after: "Bezahlt zuerst die Autoreparatur, plant eine kleinere Reise und hat bei beidem ein gutes Gefühl.",
+    theme: "Sich den eigenen Widersprüchen stellen. Bei diesem Grad geht es um das Tauziehen zwischen dem, was man zum Leben tun muss, und dem, wofür man brennt, und darum, sich klar zu entscheiden, denn diese Entscheidungen machen aus, wer man ist.",
+    growing: "Ist hin- und hergerissen zwischen dem Vernünftigen und dem, was einem wirklich am Herzen liegt, und schiebt die Entscheidung immer weiter auf. Nebensächlichkeiten binden die ganze Aufmerksamkeit, und am Ende entscheiden die Umstände. Oder man setzt den eigenen Kopf durch, solange niemand dagegenhält, und läuft gegen eine Wand, sobald andere mitreden.",
+    grown: "Stellt sich dem Zwiespalt, sucht den Kern einer Sache und entscheidet dann klar: zwischen Wollen und Brauchen, zwischen Kämpfen und Nachgeben. Dabei wird man sehr gut darin, Dinge zu organisieren und zu erkennen, wo man ansetzen muss und wann. Man nimmt hin, was sich nicht ändern lässt, ändert, was man nicht hinnehmen kann, und weiß: Die eigenen Entscheidungen machen aus, wer man ist.",
+    before: "Hält jahrelang zugleich an einem sicheren Job und einem Herzenswunsch fest, etwa einem eigenen Atelier, einem Studium oder einem Umzug ins Ausland, und entscheidet sich nie.",
+    after: "Rechnet aus, was der Job tragen muss, gibt dem Herzenswunsch feste Stunden in der Woche und entscheidet bis zu einem festen Datum, ob man es wagt.",
   },
   18: {
     theme: "Den Kopf frei machen. Bei diesem Grad geht es darum, alte Vorurteile und Gewohnheiten loszulassen, offen für andere Ideen zu werden und große Pläne mit ganz praktischen Schritten umzusetzen.",

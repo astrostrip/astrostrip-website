@@ -198,11 +198,11 @@ export default {
     after: "buys the good coffee machine, enjoys it every morning, and feels no need for the next model.",
   },
   29: {
-    theme: "What connects everything. This degree is about looking for what’s shared behind all the differences between people and things, and seeing the world with a kind eye.",
-    growing: "Takes their own values as proof that they’re right, and needs others to agree or be converted. Or their values shift with every mood, and they lose their footing. Either way, it’s hard for them to enjoy the variety around them.",
-    grown: "looks for what’s shared behind all the differences and recognizes it in everyone they meet, however different people are. They have steady values they can rely on and still express their own style creatively. Others don’t have to adopt any of it, because they don’t need approval from outside.",
-    before: "tries to convert every friend to their own way of eating, working and living.",
-    after: "loves how differently their friends live, keeps their own values, and converts nobody.",
+    theme: "What connects everything. This degree is about looking for what holds the world together behind all its variety, and understanding it well enough to rely on it, while still looking at people and things with a kind eye.",
+    growing: "Wants to understand how things really work and is often right, but then needs everyone else to see it too. They explain, correct and convince until others feel lectured, and still feel unsure as long as nobody agrees. Or their values shift with every mood and every new opinion, so there is nothing solid to stand on.",
+    grown: "looks for what connects people and things, and finds it in the small things right in front of them as much as in the big questions. They test what they believe against their own experience until they can rely on it, and their judgement becomes remarkably fine. They express what they have understood in their own creative way and let others see it differently, because they no longer need anyone’s approval.",
+    before: "has read everything about sleep, money or nutrition and corrects every friend at dinner until nobody brings the topic up anymore.",
+    after: "shares what they found out when someone asks, listens to how the others handle it, and keeps their own way without needing anyone to copy it.",
   },
   30: {
     theme: "Becoming who you want to be. This degree is about having a clear picture of the person you want to be and gradually becoming exactly that person through what you do every day.",

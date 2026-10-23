@@ -199,11 +199,11 @@ export default {
     after: "Kauft die gute Kaffeemaschine, genießt sie jeden Morgen und braucht kein neueres Modell.",
   },
   29: {
-    theme: "Das Verbindende in allem. Bei diesem Grad geht es darum, hinter allen Unterschieden zwischen Menschen und Dingen das Gemeinsame zu suchen und die Welt mit wohlwollendem Blick zu sehen.",
-    growing: "Hält die eigenen Werte für den Beweis, recht zu haben, und braucht es, dass andere zustimmen oder sich bekehren lassen. Oder die eigenen Werte ändern sich mit jeder Stimmung, und man verliert den Halt. Beides macht es schwer, die Vielfalt um einen herum zu genießen.",
-    grown: "Sucht das Gemeinsame hinter allen Unterschieden und erkennt es in jedem Menschen wieder, dem man begegnet, wie verschieden alle auch sind. Man hat feste Werte, auf die man sich verlassen kann, und drückt die eigene Art trotzdem kreativ aus. Andere müssen nichts davon übernehmen, denn man braucht keine Bestätigung von außen.",
-    before: "Versucht, den ganzen Freundeskreis zur eigenen Art zu essen, zu arbeiten und zu leben zu bekehren.",
-    after: "Freut sich, wie unterschiedlich der Freundeskreis lebt, bleibt den eigenen Werten treu und bekehrt niemanden.",
+    theme: "Das Verbindende in allem. Bei diesem Grad geht es darum, hinter aller Vielfalt zu suchen, was die Welt zusammenhält, und es so gut zu verstehen, dass man sich darauf verlassen kann, ohne den wohlwollenden Blick auf Menschen und Dinge zu verlieren.",
+    growing: "Will genau durchschauen, wie etwas funktioniert, und liegt damit oft richtig, braucht dann aber, dass alle anderen es auch einsehen. Man erklärt, verbessert und überzeugt, bis sich die anderen belehrt fühlen, und bleibt trotzdem unsicher, solange niemand zustimmt. Oder die eigenen Werte ändern sich mit jeder Stimmung und jeder neuen Meinung, und es gibt nichts, worauf man fest stehen kann.",
+    grown: "Sucht, was Menschen und Dinge verbindet, und findet es im Kleinen direkt vor sich genauso wie in den großen Fragen. Was man glaubt, prüft man an der eigenen Erfahrung, bis man sich darauf verlassen kann, und das Urteil wird dabei bemerkenswert fein. Was man verstanden hat, drückt man auf die eigene, kreative Art aus und lässt andere es anders sehen, denn man braucht keine Zustimmung mehr.",
+    before: "Hat alles über Schlaf, Geld oder Ernährung gelesen und verbessert beim Essen jede befreundete Person, bis niemand mehr davon anfängt.",
+    after: "Erzählt, was man herausgefunden hat, wenn jemand fragt, hört zu, wie die anderen es halten, und bleibt beim eigenen Weg, ohne dass ihn jemand nachmachen muss.",
   },
   30: {
     theme: "Werden, wer man sein will. Bei diesem Grad geht es darum, ein klares Bild davon zu haben, wer man sein möchte, und durch das tägliche Handeln nach und nach genau diese Person zu werden.",

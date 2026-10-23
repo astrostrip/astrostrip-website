@@ -114,11 +114,11 @@ export default {
     after: "lives what they've figured out, answers questions when asked, and keeps learning anyway.",
   },
   17: {
-    theme: "Making a clear choice. This degree is about facing your inner contradictions and choosing clearly between what you want and what you need.",
-    growing: "Wavers between what they’d like and what’s actually needed. They get distracted by side issues and keep putting the decision off. In the end, circumstances or distractions decide, not them.",
-    grown: "looks closely at what really matters in a situation and then decides clearly. Along the way they get good at organizing things and understanding how they work. They respect that others have power too, and can accept what can’t be changed instead of fighting it.",
-    before: "spends the bonus on a weekend trip, then can't cover the car repair they knew was coming.",
-    after: "pays for the car repair first, plans a smaller trip, and feels good about both.",
+    theme: "Facing your inner contradictions. This degree is about the tug-of-war between what you have to do to get by and what you burn for, and about choosing clearly, because those choices shape who you are.",
+    growing: "Is torn between the sensible thing and what they really care about, and keeps putting the choice off. Side issues take up all their attention, so in the end circumstances decide for them. Or they push their own way through as long as nobody pushes back, and hit a wall as soon as others have a say.",
+    grown: "faces the conflict inside, looks for the heart of a matter and then decides clearly: between what they want and what they need, between fighting and giving in. Along the way they get very good at organizing things and at seeing where to start and when. They accept what can’t be changed, change what they can’t accept, and know that their choices make them who they are.",
+    before: "keeps a safe job and a dream they care about, such as their own studio, a degree or a move abroad, side by side for years and never decides.",
+    after: "works out what the job has to cover, gives the dream fixed hours every week, and decides by a set date whether to go for it.",
   },
   18: {
     theme: "Clearing your head. This degree is about letting go of old prejudices and habits, opening up to other ideas, and carrying out big plans with very practical steps.",

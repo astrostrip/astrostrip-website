@@ -115,11 +115,11 @@ export default {
     after: "Überprüft jeden Januar die eigenen Ziele, steht auch zu den chaotischen Seiten und fragt zwei Menschen aus dem Freundeskreis, wie sie einen erleben.",
   },
   17: {
-    theme: "Wachsen. Bei diesem Grad geht es darum, auf dem aufzubauen, was in einem angelegt ist, und sich Schritt für Schritt zu dem Menschen zu entwickeln, der man werden möchte.",
-    growing: "Gibt sich schon jetzt mit Fähigkeiten aus, die man noch gar nicht beherrscht. Man will sofort am Ziel sein und überspringt das mühsame Lernen dazwischen. Unter Druck fällt dann auf, wie groß die Lücke zwischen Auftritt und echtem Können ist.",
-    grown: "Nimmt das, womit man gern angibt, als Hinweis darauf, wer man werden möchte, und arbeitet dann wirklich daran. Man lässt sich ganz auf jeden einzelnen Schritt ein und wächst langsam, aber stetig. Dabei verbindet man die eigenen Pläne mit denen anderer Menschen, und beide Seiten wachsen aneinander.",
-    before: "Schreibt nach drei Wochen mit einer Sprach-App „fließend Spanisch“ in den Lebenslauf und gerät in Panik, als das Vorstellungsgespräch beginnt.",
-    after: "Merkt, dass man immer wieder mit dem eigenen Spanisch angibt, sucht sich ein Sprachtandem und spricht zwei Jahre später fließend.",
+    theme: "Wachsen. Bei diesem Grad geht es um den starken Drang, zu wachsen und das eigene Leben und den eigenen Einfluss auszuweiten, Schritt für Schritt auf dem aufbauend, was schon in einem angelegt ist.",
+    growing: "Spürt den starken Drang, mehr zu sein als jetzt, geht es aber falsch an. Entweder gibt man sich schon mit Fähigkeiten aus, die man noch nicht beherrscht, und hofft, dass niemand die Lücke bemerkt. Oder man bleibt in der eigenen Schale, passt sich allen an und hält das Eigene versteckt, obwohl es heraus will.",
+    grown: "Nimmt das, womit man gern angibt, als Hinweis darauf, wer man werden möchte, und arbeitet dann wirklich daran. Man bleibt offen, lässt sich ganz auf jeden Schritt ein und zeigt die eigene Art, sodass Leben und Einfluss langsam, aber stetig wachsen. Dabei verbindet man die eigenen Pläne mit denen anderer Menschen, und beide Seiten wachsen aneinander.",
+    before: "Verspricht in Besprechungen entweder mehr, als man kann, oder behält jede Idee für sich, um nicht aufzufallen.",
+    after: "Bringt die eigenen Ideen ein, sagt ehrlich, was man noch lernt, und übernimmt jedes Jahr ein Stück mehr Verantwortung.",
   },
   18: {
     theme: "Erwachsen werden. Bei diesem Grad geht es darum, Verantwortung für sich und andere zu übernehmen und den eigenen Platz in der Gemeinschaft verlässlich auszufüllen.",

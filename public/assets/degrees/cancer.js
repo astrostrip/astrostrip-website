@@ -114,11 +114,11 @@ export default {
     after: "reviews their goals every January, owns their messy sides, and asks two friends how they come across.",
   },
   17: {
-    theme: "Growing. This degree is about building on what’s already in you and developing step by step into the person you want to become.",
-    growing: "Already presents themselves with skills they haven’t mastered yet. They want to be there right now and skip the hard learning in between. Under pressure it shows how big the gap is between the show and the real ability.",
-    grown: "takes what they like to brag about as a clue to who they want to become, and then really works on it. They commit fully to each single step and grow slowly but steadily. Along the way they connect their plans with other people’s, and both sides grow through each other.",
-    before: "lists fluent Spanish on their CV after three weeks on a language app, and panics when the interview starts.",
-    after: "notices they keep bragging about their Spanish, finds a language exchange partner, and is fluent two years later.",
+    theme: "Growing. This degree is about the strong urge to grow and to widen your life and your influence, building step by step on what is already in you.",
+    growing: "Feels a strong urge to be more than they are right now, but goes about it the wrong way. Either they already present themselves with skills they haven’t mastered and hope nobody notices the gap. Or they stay in their shell, fit in with everyone and keep what is their own hidden, although it wants out.",
+    grown: "treats what they like to show off about as a clue to who they want to become, and then really works on it. They stay open, give themselves fully to each step and let their own way show, so their life and their influence widen slowly but steadily. Along the way they connect their plans with other people’s, and both sides grow through each other.",
+    before: "in meetings either promises more than they can do or keeps every idea to themselves so as not to stand out.",
+    after: "brings in the ideas they have, says honestly what they are still learning, and takes on a little more responsibility every year.",
   },
   18: {
     theme: "Growing up. This degree is about taking responsibility for yourself and others and reliably filling your place in the community.",
