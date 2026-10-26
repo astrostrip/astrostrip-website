@@ -35,7 +35,8 @@
 //                               both: when their queue is idle, a portion of due Transit Weekly emails
 //   cron (hourly), Friday 12:00 Berlin: warning to Sandra about Transit Weekly texts missing for next Monday
 //   cron (Monday 01:10 UTC)    stats rollup: sums last week's /api/stat events (SQL API) into one small KV entry,
-//                               kept indefinitely (Workers Analytics Engine itself only keeps raw data 3 months)
+//                               kept indefinitely (Workers Analytics Engine itself only keeps raw data 3 months);
+//                               the hourly run fills a week still missing, outcome in KV "stats:lastrun" (26.10.2026)
 //
 // Secrets (Cloudflare → Worker → Settings → Variables and Secrets, type "Secret"):
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, MAILJET_API_KEY, MAILJET_SECRET_KEY, OWNER_EMAIL,
@@ -1740,6 +1741,18 @@ export async function runStatsRollup(env, nowMs = Date.now()) {
   return caughtUp.length ? { ...result, caughtUp } : result;
 }
 
+// Cron wrapper (26.10.2026): runs on the Monday cron and on every hourly run, so a week missed on Monday is filled within
+// the hour. Until 26.10.2026 no week sum was ever written and nobody could see why (logs are not kept). So every run that
+// did not just find all weeks done leaves its outcome in `stats:lastrun`, which GET /api/stats hands to the Monday report.
+export async function runStatsCron(env, nowMs = Date.now()) {
+  let r;
+  try { r = await runStatsRollup(env, nowMs); } catch (err) { r = { error: String(err) }; }
+  if (r.error || r.week || (r.skipped && !String(r.skipped).startsWith('stats:week:'))) {
+    await env.ORDERS.put('stats:lastrun', JSON.stringify({ at: isoUtc(nowMs), ...(r.error ? { error: String(r.error).slice(0, 300) } : r.week ? { week: r.week, caughtUp: r.caughtUp || [] } : { skipped: r.skipped }) }));
+  }
+  return r;
+}
+
 async function rollupWeek(env, lastWeek) {
   const key = `stats:week:${weekDate(lastWeek)}`;
   if (await env.ORDERS.get(key)) return { skipped: key };
@@ -2229,7 +2242,8 @@ async function handleStatsRead(request, env) {
     const raw = await env.ORDERS.get(`stats:week:${weekDate(w)}`);
     weeks.push({ week: weekDate(w), ...(raw ? JSON.parse(raw) : { visit: {}, click: {} }) });
   }
-  return json({ weeks });
+  const lastRun = await env.ORDERS.get('stats:lastrun'); // outcome of the last rollup that did something (runStatsCron)
+  return json({ weeks, lastRun: lastRun ? JSON.parse(lastRun) : null });
 }
 
 export default {
@@ -2259,11 +2273,11 @@ export default {
   async scheduled(event, env, ctx) {
     // Monday 01:10 UTC: stats rollup and the Transit Weekly reading list (Monday early morning in Berlin)
     // Invoice and correction runs: when their queue is idle, the same invocation sends a portion of weekly emails
-    // (no fifth cron; the free plan has five per account). Hourly run: Friday 12:00 Berlin, missing weekly texts.
+    // (no fifth cron; the free plan has five per account). Hourly run: Friday 12:00 Berlin, missing weekly texts; stats weeks still missing.
     const thenMails = r => (r && r.sent === 0 ? runTwMails(env).then(tw => ({ ...r, tw }), err => ({ ...r, tw: String(err) })) : r);
     const job = event.cron === INVOICE_CRON ? runInvoices(env).then(thenMails) : event.cron === CORRECTION_CRON ? runCorrections(env).then(thenMails)
-      : event.cron === STATS_ROLLUP_CRON ? Promise.all([runStatsRollup(env), runReadingList(env).catch(err => ({ readingList: String(err) }))])
-      : Promise.all([runRetention(env), twFridayNoon(Date.now()) ? runTwFriday(env).catch(err => ({ twFriday: String(err) })) : null]);
+      : event.cron === STATS_ROLLUP_CRON ? Promise.all([runStatsCron(env), runReadingList(env).catch(err => ({ readingList: String(err) }))])
+      : Promise.all([runRetention(env), twFridayNoon(Date.now()) ? runTwFriday(env).catch(err => ({ twFriday: String(err) })) : null, runStatsCron(env)]);
     ctx.waitUntil(job.then(r => console.log(event.cron, JSON.stringify(r))));
   },
 };

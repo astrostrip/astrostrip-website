@@ -658,6 +658,25 @@ console.log('newsletter ok');
   assert.equal(JSON.parse(store.get('stats:week:2026-10-05')).visit.ig, 12, 'existing week not overwritten');
   assert.equal(JSON.parse(store.get('stats:week:2026-10-12')).visit.ig, 2);
   assert.deepEqual(await runStatsRollup(senv, Date.parse('2026-10-26T02:10:00Z')), { skipped: 'stats:week:2026-10-19' }, 'nothing left: no caughtUp');
+  // hourly catch-up with outcome for the report (26.10.2026): nothing to do writes nothing, every real outcome is kept
+  { const { runStatsCron } = await import('../src/worker.js');
+    await runStatsCron(senv, Date.parse('2026-10-26T02:17:00Z'));
+    assert.ok(!store.has('stats:lastrun'), 'all weeks done: no write');
+    await runStatsCron({ ...senv, CF_ANALYTICS_READ_TOKEN: '' }, Date.parse('2026-11-02T00:17:00Z'));
+    assert.ok(JSON.parse(store.get('stats:lastrun')).skipped.includes('CF_ANALYTICS_READ_TOKEN'), 'missing secret is reported');
+    globalThis.fetch = async () => new Response('{"errors":[{"code":10000,"message":"Authentication error"}]}', { status: 403 });
+    await runStatsCron(senv, Date.parse('2026-11-02T00:17:00Z'));
+    assert.deepEqual(JSON.parse(store.get('stats:lastrun')), { at: '2026-11-02T00:17:00.000Z', error: '{"errors":[{"code":10000,"message":"Authentication error"}]}' });
+    globalThis.fetch = async () => { throw new Error('network down'); };
+    await runStatsCron(senv, Date.parse('2026-11-02T00:17:00Z'));
+    assert.ok(JSON.parse(store.get('stats:lastrun')).error.includes('network down'), 'thrown error is caught and reported');
+    globalThis.fetch = async () => new Response(JSON.stringify({ data: [] }));
+    const ok = await runStatsCron(senv, Date.parse('2026-11-02T01:17:00Z'));
+    assert.equal(ok.week, '2026-10-26');
+    assert.deepEqual(JSON.parse(store.get('stats:lastrun')), { at: '2026-11-02T01:17:00.000Z', week: '2026-10-26', caughtUp: [] });
+    assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-26')).visit, { ig: 0, tt: 0, direct: 0 }, 'a week without visits is stored as zeros');
+    const src = worker.scheduled.toString();
+    assert.equal(src.split('runStatsCron(env)').length - 1, 2, 'Monday cron and hourly run both roll up'); }
   globalThis.fetch = realFetch;
   // cron weekday (19.10.2026): Cloudflare counts 1 = Sunday, so the weekday is a name, and wrangler.jsonc uses the same string
   { const { STATS_ROLLUP_CRON } = await import('../src/worker.js');
@@ -673,12 +692,16 @@ console.log('newsletter ok');
   assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stats?key='), { ...senv, STATS_READ_KEY: '' })).status, 404, 'no key set: closed');
   const last = weekDate(addWeeks(weekStart(Date.now()), -1));
   store.set(`stats:week:${last}`, JSON.stringify({ visit: { ig: 1, tt: 0, direct: 2 }, click: { mini: 0, maxi: 1, ultra: 0 } }));
+  assert.equal((await (await read('?key=readkey')).json()).lastRun.week, '2026-10-26', 'last rollup outcome goes to the report');
   let w = (await (await read('?key=readkey')).json()).weeks;
   assert.equal(w.length, 1);
   assert.deepEqual(w[0], { week: last, visit: { ig: 1, tt: 0, direct: 2 }, click: { mini: 0, maxi: 1, ultra: 0 } });
   w = (await (await read('?key=readkey&weeks=3')).json()).weeks;
   assert.deepEqual(w.map(x => x.week), [0, 1, 2].map(i => weekDate(addWeeks(weekStart(Date.now()), -1 - i))));
-  assert.deepEqual(w[2], { week: w[2].week, visit: {}, click: {} });
+  // empty week: the oldest of 12 (before the first counted week), independent of today's date (w[2] hit a stored week from 26.10.2026 on)
+  const oldest = (await (await read('?key=readkey&weeks=12')).json()).weeks[11];
+  assert.ok(oldest.week < '2026-10-05');
+  assert.deepEqual(oldest, { week: oldest.week, visit: {}, click: {} });
   assert.equal((await (await read('?key=readkey&weeks=99')).json()).weeks.length, 12, 'at most 12 weeks');
   assert.equal((await (await read('?key=readkey&weeks=abc')).json()).weeks.length, 1);
   // the page's counter script: same endpoint, no cookie, no storage
