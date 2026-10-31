@@ -636,7 +636,7 @@ export function customerMail(order, id, env) {
     `You can also withdraw online at any time during the withdrawal period: ${site}/withdraw.html`,
     '',
     'Terms: ' + site + '/terms.html',
-    'Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.',
+    'Astrology is a tool for self-reflection and is not scientifically proven. It does not replace medical, legal, financial or psychological advice.',
     '',
     'astro.strip · Sandra Willuweit · Renzelstraße 10c · 20146 Hamburg · Germany · hello@astrostrip.com',
   ].filter(l => l !== null).join('\n');
@@ -1911,6 +1911,7 @@ export function weeklyMail(b, area, week, md, site = 'https://astrostrip.com') {
   const tzLine = de ? `Die Zeiten in dieser Mail gelten für ${b.tzLabel}.` : `Times in this email are ${b.tzLabel} time.`;
   const why = de ? 'Du bekommst diese Mail, weil du Transit Weekly gebucht hast.' : 'You are getting this email because you booked Transit Weekly.';
   const cancel = de ? 'Verträge hier kündigen' : 'Cancel contracts here';
+  const note = de ? 'Transit Weekly ist Astrologie zur Selbstreflexion. Die Mails beschreiben mögliche Themen, keine festen Ereignisse, und ersetzen keine medizinische, rechtliche, finanzielle oder psychologische Beratung. Astrologie ist wissenschaftlich nicht belegt.' : 'Transit Weekly is astrology for self-reflection. The emails describe possible themes, not fixed events, and do not replace medical, legal, financial or psychological advice. Astrology is not scientifically proven.';
   const areaName = de ? (AREA_DE[area] || area) : area;
   const blocks = twBlocks(md);
   // Head of the text: heading, date line (italic line right after it), then week and time zone
@@ -1922,7 +1923,7 @@ export function weeklyMail(b, area, week, md, site = 'https://astrostrip.com') {
   const text = [
     ...(h1 ? [mdPlain(h1).toUpperCase()] : []), ...(date ? [mdPlain(date)] : []), weekLine, tzLine, '',
     rest.map(x => x.t === 'ul' ? x.items.map(s => `– ${mdPlain(s)}`).join('\n') : x.t === 'p' ? mdPlain(x.s) : mdPlain(x.s).toUpperCase()).join('\n\n'),
-    '', '—', 'astro.strip · hello@astrostrip.com', why, `${cancel}: ${site}/cancel`,
+    '', '—', 'astro.strip · hello@astrostrip.com', why, `${cancel}: ${site}/cancel`, '', note,
   ].join('\n').replace(/\n{3,}/g, '\n\n').trim();
 
   // HTML part
@@ -1966,6 +1967,7 @@ ${body.join('\n')}
 <tr><td class="x-pad" style="padding-top:30px;padding-bottom:34px;${pad}">${rule(TWM.line)}
 <p style="margin:20px 0 6px 0;${pStyle(14, `line-height:1.6;color:${TWM.muted};`)}">astro.strip · <a href="mailto:hello@astrostrip.com" style="color:${TWM.accent};text-decoration:underline;">hello@astrostrip.com</a></p>
 <p style="margin:0 0 6px 0;${pStyle(14, `line-height:1.6;color:${TWM.muted};`)}">${escH(why)} <a href="${escH(site)}/cancel" style="color:${TWM.accent};text-decoration:underline;">${escH(cancel)}</a></p>
+<p style="margin:14px 0 0 0;${pStyle(12, `line-height:1.55;color:${TWM.muted};`)}">${escH(note)}</p>
 </td></tr></table></td></tr></table></body></html>`;
   return { subject, text, html };
 }
@@ -2080,7 +2082,7 @@ export function customerMailHtml(order, id, env) {
     legal('Model withdrawal form', WITHDRAWAL_FORM.en),
     bSmall(linkify(escH(`You can also withdraw online at any time during the withdrawal period: ${site}/withdraw.html`))),
     bSmall(linkify(escH(`Terms: ${site}/terms.html`))),
-    bSmall('Astrology is a tool for self-reflection. It does not replace medical, legal, financial or psychological advice.'),
+    bSmall('Astrology is a tool for self-reflection and is not scientifically proven. It does not replace medical, legal, financial or psychological advice.'),
   ].join('\n');
   return brandMail({ lang: 'en', kicker: 'Order confirmation', body, pre: `Your order ${id} is in. This email confirms your contract.`, title: `Your order ${id}` });
 }

@@ -1002,6 +1002,10 @@ console.log('newsletter ok');
     assert.ok(m.html.length < 102000 / 3, 'far below the Gmail clip');
     assert.match(m.text, /^YOUR WEEK IN LOVE\nNovember 2 to 8, 2026\n/); assert.ok(!/[*#]/.test(m.text), 'no Markdown marks');
     assert.match(m.text, /Week 1 of 13\.\nTimes in this email are New York time\./); assert.match(m.text, /astrostrip\.com\/cancel/);
+    // Note at the very bottom (Sandra, 30.10.2026: „wenn ganz unten“)
+    assert.match(m.text, /astrostrip\.com\/cancel\n\nTransit Weekly is astrology for self-reflection\.[^\n]*Astrology is not scientifically proven\.$/);
+    assert.match(m.html, /Cancel contracts here<\/a><\/p>\n<p[^>]*>Transit Weekly is astrology for self-reflection\.[^<]*not scientifically proven\.<\/p>\n<\/td><\/tr><\/table>/);
+    assert.match(weeklyMail({ ...B, language: 'de', tzLabel: 'Berlin' }, 'Work and calling', 4, md).text, /Transit Weekly ist Astrologie zur Selbstreflexion\.[^\n]*wissenschaftlich nicht belegt\.$/);
     const log = JSON.parse(kv.get(`twlog:2026-11-02:${B.order}:love`));
     assert.equal(log.result, 'sent'); assert.ok(log.id);
     { const { twLogExpiry } = await import('../src/worker.js'); assert.equal(new Date(twLogExpiry('2027-01-31') * 1000).toISOString().slice(0, 10), '2031-01-01', 'log: 3 years from the end of the term year'); } assert.ok(!JSON.stringify(log).includes('example.com') && !JSON.stringify(log).includes('depth'), 'log without address and text');
