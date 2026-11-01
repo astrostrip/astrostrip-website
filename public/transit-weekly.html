@@ -70,6 +70,21 @@
         </div>
         <p class="hint">The times in your emails follow the time zone of this city for the whole 13 weeks. We keep only the time zone, not the city.</p>
       </div>
+      <div class="field field-wide combo" id="birthday-last-field">
+        <label for="birthday-last">Where were you on your last birthday?</label>
+        <div class="combo-box">
+          <input id="birthday-last" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-last-list" spellcheck="false" autocomplete="off">
+          <ul id="birthday-last-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <div class="field field-wide combo" id="birthday-next-field" hidden>
+        <label for="birthday-next">Where will you be on your next birthday?</label>
+        <div class="combo-box">
+          <input id="birthday-next" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-next-list" spellcheck="false" autocomplete="off">
+          <ul id="birthday-next-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <p class="hint birthday-why field-wide" id="birthday-why">Why we ask: each year of your life has its own chart. It starts on your birthday and is calculated for the place where you are that day, which may not be where you live or where you were born. Calculated for another place, it looks different, and your year may focus on other areas of life. <span id="birthday-unknown" hidden>Don’t know yet where you will be? Choose the city you expect to be in.</span></p>
 
       <fieldset class="field field-wide options transit-add">
         <legend>Your life areas</legend>

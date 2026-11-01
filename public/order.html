@@ -81,7 +81,7 @@
 
       <fieldset class="field field-wide questionnaire" id="questionnaire" hidden>
         <legend>A few questions about your life right now</legend>
-        <p class="hint">They help us read your chart against your real life. Everything except your current city (Ultra Strip, Transit Weekly) is optional. Your strip works without sensitive details: please don’t share health information, diagnoses, or anything about other people.</p>
+        <p class="hint">They help us read your chart against your real life. Everything except your current city and where you were or will be on your birthday (Ultra Strip, Transit Weekly) is optional. Your strip works without sensitive details: please don’t share health information, diagnoses, or anything about other people.</p>
         <div class="field combo">
           <label for="residence">Where do you live now? <span id="residence-req">(needed for the Ultra Strip and for Transit Weekly)</span></label>
           <div class="combo-box">
@@ -89,6 +89,21 @@
             <ul id="residence-list" class="place-list" role="listbox" hidden></ul>
           </div>
         </div>
+        <div class="field combo" id="birthday-last-field" hidden>
+          <label for="birthday-last">Where were you on your last birthday?</label>
+          <div class="combo-box">
+            <input id="birthday-last" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-last-list" spellcheck="false" autocomplete="off">
+            <ul id="birthday-last-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <div class="field combo" id="birthday-next-field" hidden>
+          <label for="birthday-next">Where will you be on your next birthday?</label>
+          <div class="combo-box">
+            <input id="birthday-next" type="text" placeholder="Start typing a city" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-next-list" spellcheck="false" autocomplete="off">
+            <ul id="birthday-next-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <p class="hint birthday-why" id="birthday-why" hidden>Why we ask: each year of your life has its own chart. It starts on your birthday and is calculated for the place where you are that day, which may not be where you live or where you were born. Calculated for another place, it looks different, and your year may focus on other areas of life. <span id="birthday-unknown" hidden>Don’t know yet where you will be? Choose the city you expect to be in.</span></p>
         <div class="field">
           <label for="occupation">What do you do for a living?</label>
           <input id="occupation" type="text" maxlength="120">

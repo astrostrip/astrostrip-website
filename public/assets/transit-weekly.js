@@ -20,13 +20,35 @@ const status = $('#tw-status');
 const placeError = () => { status.textContent = L('The place list could not be loaded. Please reload the page.', 'Die Ortsliste konnte nicht geladen werden. Bitte lade die Seite neu.'); };
 const getPlace = attachPlaceSearch($('#place'), $('#place-list'), placeError);
 const getResidence = attachPlaceSearch($('#residence'), $('#residence-list'), placeError);
+const getBirthdayLast = attachPlaceSearch($('#birthday-last'), $('#birthday-last-list'), placeError);
+const getBirthdayNext = attachPlaceSearch($('#birthday-next'), $('#birthday-next-list'), placeError);
 const areas = () => [...form.querySelectorAll('input[name=tw-area]:checked')].map(i => i.value);
 const eur = n => `${n.toLocaleString(LOCALE)} €`;
 const shortDay = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(LOCALE, { timeZone: 'UTC', day: 'numeric', month: 'short' }); };
 let slots = null;
+let askNext = false; // the server found that the 13 weeks run over the next birthday
+
+// Solar return places (K3, Sandra, 01.11.2026): last birthday whenever the solar return is read (Ultra, Transit Weekly);
+// next birthday with the Ultra, and with Transit Weekly when the 13 weeks run over it. This is an estimate for showing
+// the field; the server decides from the real term and asks back (needBirthdayNext).
+const DAY = 86400000;
+function nextBirthdaySoon(birth, fromYmd) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) return false;
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const [, m, d] = birth.split('-').map(Number);
+  let next = Date.UTC(now.getFullYear(), m - 1, d);
+  if (next < today) next = Date.UTC(now.getFullYear() + 1, m - 1, d);
+  const from = Math.max(today, fromYmd ? Date.parse(fromYmd + 'T00:00:00Z') : 0);
+  return next - DAY <= from + 7 * DAY + 91 * DAY;
+}
+const placeData = p => (p ? { label: [p.name, p.region, p.country].filter(Boolean).join(', '), lat: p.lat, lon: p.lon, tz: p.tz } : null);
 
 function update() {
   const a = areas();
+  const needNext = askNext || nextBirthdaySoon($('#birth-date').value, slots?.transit?.next);
+  $('#birthday-next-field').hidden = !needNext;
+  $('#birthday-unknown').hidden = !needNext;
   $('#tw-time-row').hidden = !(a.length && UNSURE_TIME.includes($('#time-source').value));
   $('#summary-text').textContent = a.length
     ? L(`Transit Weekly for ${a.length} life area${a.length === 1 ? '' : 's'} (${a.join(', ')}): ${eur(a.length * TW_PRICE)} including 19 % VAT for 13 weeks.`,
@@ -51,6 +73,8 @@ form.addEventListener('submit', async e => {
   const residence = $('#residence').value.trim() ? await getResidence() : null;
   const label = p => [p.name, p.region, p.country].filter(Boolean).join(', ');
   const a = areas();
+  const birthdayLast = $('#birthday-last').value.trim() ? await getBirthdayLast() : null;
+  const birthdayNext = !$('#birthday-next-field').hidden && $('#birthday-next').value.trim() ? await getBirthdayNext() : null;
   const data = {
     baseOrder: $('#base-order').value.trim().toUpperCase(),
     email: $('#email').value.trim(),
@@ -60,6 +84,8 @@ form.addEventListener('submit', async e => {
     timeSource: $('#time-source').value,
     place: place ? { label: label(place), lat: place.lat, lon: place.lon, tz: place.tz } : null,
     residence: residence ? { label: label(residence), lat: residence.lat, lon: residence.lon, tz: residence.tz } : null,
+    birthdayLast: placeData(birthdayLast),
+    birthdayNext: placeData(birthdayNext),
     language: $('#language').value,
     transit: { areas: a, timeConsent: $('#tw-time-consent').checked, earlyStart: $('#tw-early-start').checked },
     acceptTerms: $('#accept-terms').checked,
@@ -75,6 +101,8 @@ form.addEventListener('submit', async e => {
   if (!data.timeSource) missing.push(L('where your birth time comes from', 'woher deine Geburtszeit stammt'));
   if (!data.place) missing.push(L('your birth place (choose it from the list)', 'deinen Geburtsort (aus der Liste wählen)'));
   if (!data.residence) missing.push(L('where you live now (choose it from the list)', 'deinen jetzigen Wohnort (aus der Liste wählen)'));
+  if (!birthdayLast) missing.push(L('where you were on your last birthday (choose it from the list)', 'den Ort deines letzten Geburtstags (aus der Liste wählen)'));
+  if (!$('#birthday-next-field').hidden && !birthdayNext) missing.push(L('where you will be on your next birthday (choose it from the list)', 'den Ort deines nächsten Geburtstags (aus der Liste wählen)'));
   if (!a.length) missing.push(L('at least one life area', 'mindestens einen Lebensbereich'));
   if (a.length && UNSURE_TIME.includes(data.timeSource) && !data.transit.timeConsent) missing.push(L('the box about your birth time', 'das Häkchen zu deiner Geburtszeit'));
   if (missing.length) { status.textContent = L(`Please add ${missing.join(', ')}.`, `Bitte ergänze ${missing.join(', ')}.`); return; }
@@ -86,6 +114,7 @@ form.addEventListener('submit', async e => {
   try {
     const res = await fetch('/api/transit-weekly', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const out = await res.json().catch(() => ({}));
+    if (out.needBirthdayNext) { askNext = true; update(); }
     if (!res.ok || !out.url) throw new Error(out.error || '');
     location.href = out.url;
   } catch (err) {

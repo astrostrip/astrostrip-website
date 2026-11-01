@@ -82,7 +82,7 @@
 
       <fieldset class="field field-wide questionnaire" id="questionnaire" hidden>
         <legend>Ein paar Fragen zu deiner aktuellen Lebenssituation</legend>
-        <p class="hint">Sie helfen uns, dein Horoskop mit deinem echten Leben abzugleichen. Bis auf deinen jetzigen Wohnort (Ultra Strip, Transit Weekly) ist alles freiwillig. Dein Strip funktioniert ohne sensible Angaben: Bitte teile keine Gesundheitsinformationen, Diagnosen oder Angaben über andere Menschen.</p>
+        <p class="hint">Sie helfen uns, dein Horoskop mit deinem echten Leben abzugleichen. Bis auf deinen jetzigen Wohnort und die Angabe, wo du an deinem Geburtstag warst oder bist (Ultra Strip, Transit Weekly), ist alles freiwillig. Dein Strip funktioniert ohne sensible Angaben: Bitte teile keine Gesundheitsinformationen, Diagnosen oder Angaben über andere Menschen.</p>
         <div class="field combo">
           <label for="residence">Wo wohnst du jetzt? <span id="residence-req">(nötig für den Ultra Strip und für Transit Weekly)</span></label>
           <div class="combo-box">
@@ -90,6 +90,21 @@
             <ul id="residence-list" class="place-list" role="listbox" hidden></ul>
           </div>
         </div>
+        <div class="field combo" id="birthday-last-field" hidden>
+          <label for="birthday-last">Wo warst du an deinem letzten Geburtstag?</label>
+          <div class="combo-box">
+            <input id="birthday-last" type="text" placeholder="Stadt eingeben" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-last-list" spellcheck="false" autocomplete="off">
+            <ul id="birthday-last-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <div class="field combo" id="birthday-next-field" hidden>
+          <label for="birthday-next">Wo bist du an deinem nächsten Geburtstag?</label>
+          <div class="combo-box">
+            <input id="birthday-next" type="text" placeholder="Stadt eingeben" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-next-list" spellcheck="false" autocomplete="off">
+            <ul id="birthday-next-list" class="place-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <p class="hint birthday-why" id="birthday-why" hidden>Warum wir das fragen: Jedes Lebensjahr hat ein eigenes Horoskop. Es gilt ab deinem Geburtstag und wird für den Ort berechnet, an dem du an diesem Tag bist. Das muss weder dein Wohnort noch dein Geburtsort sein. Für einen anderen Ort sieht es anders aus, und in deinem Jahr können andere Lebensbereiche im Mittelpunkt stehen. <span id="birthday-unknown" hidden>Weißt du noch nicht, wo du sein wirst? Dann wähl die Stadt, in der du voraussichtlich bist.</span></p>
         <div class="field">
           <label for="occupation">Was machst du beruflich?</label>
           <input id="occupation" type="text" maxlength="120">

@@ -71,6 +71,21 @@
         </div>
         <p class="hint">Die Uhrzeiten in deinen Mails richten sich 13 Wochen lang nach der Zeitzone dieser Stadt. Wir behalten nur die Zeitzone, nicht die Stadt.</p>
       </div>
+      <div class="field field-wide combo" id="birthday-last-field">
+        <label for="birthday-last">Wo warst du an deinem letzten Geburtstag?</label>
+        <div class="combo-box">
+          <input id="birthday-last" type="text" placeholder="Stadt eingeben" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-last-list" spellcheck="false" autocomplete="off">
+          <ul id="birthday-last-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <div class="field field-wide combo" id="birthday-next-field" hidden>
+        <label for="birthday-next">Wo bist du an deinem nächsten Geburtstag?</label>
+        <div class="combo-box">
+          <input id="birthday-next" type="text" placeholder="Stadt eingeben" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="birthday-next-list" spellcheck="false" autocomplete="off">
+          <ul id="birthday-next-list" class="place-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <p class="hint birthday-why field-wide" id="birthday-why">Warum wir das fragen: Jedes Lebensjahr hat ein eigenes Horoskop. Es gilt ab deinem Geburtstag und wird für den Ort berechnet, an dem du an diesem Tag bist. Das muss weder dein Wohnort noch dein Geburtsort sein. Für einen anderen Ort sieht es anders aus, und in deinem Jahr können andere Lebensbereiche im Mittelpunkt stehen. <span id="birthday-unknown" hidden>Weißt du noch nicht, wo du sein wirst? Dann wähl die Stadt, in der du voraussichtlich bist.</span></p>
 
       <fieldset class="field field-wide options transit-add">
         <legend>Deine Lebensbereiche</legend>

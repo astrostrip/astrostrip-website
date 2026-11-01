@@ -29,7 +29,26 @@ const status = $('#order-status');
 const placeError = () => { status.textContent = L('The place list could not be loaded. Please reload the page.', 'Die Ortsliste konnte nicht geladen werden. Bitte lade die Seite neu.'); };
 const getPlace = attachPlaceSearch($('#place'), $('#place-list'), placeError);
 const getResidence = attachPlaceSearch($('#residence'), $('#residence-list'), placeError);
+const getBirthdayLast = attachPlaceSearch($('#birthday-last'), $('#birthday-last-list'), placeError);
+const getBirthdayNext = attachPlaceSearch($('#birthday-next'), $('#birthday-next-list'), placeError);
 let slots = null;
+let askNext = false; // the server found that the 13 weeks run over the next birthday
+
+// Solar return places (K3, Sandra, 01.11.2026): last birthday whenever the solar return is read (Ultra, Transit Weekly);
+// next birthday with the Ultra, and with Transit Weekly when the 13 weeks run over it. This is an estimate for showing
+// the field; the server decides from the real term and asks back (needBirthdayNext).
+const DAY = 86400000;
+function nextBirthdaySoon(birth, fromYmd) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) return false;
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const [, m, d] = birth.split('-').map(Number);
+  let next = Date.UTC(now.getFullYear(), m - 1, d);
+  if (next < today) next = Date.UTC(now.getFullYear() + 1, m - 1, d);
+  const from = Math.max(today, fromYmd ? Date.parse(fromYmd + 'T00:00:00Z') : 0);
+  return next - DAY <= from + 7 * DAY + 91 * DAY;
+}
+const placeData = p => (p ? { label: [p.name, p.region, p.country].filter(Boolean).join(', '), lat: p.lat, lon: p.lon, tz: p.tz } : null);
 
 const selected = () => form.querySelector('input[name=strip]:checked')?.value || '';
 const twAreas = () => [...form.querySelectorAll('input[name=tw-area]:checked')].map(i => i.value);
@@ -58,6 +77,12 @@ function update() {
   $('#tw-time-row').hidden = !(areas.length && UNSURE_TIME.includes($('#time-source').value));
   $('#tw-early-row').hidden = !areas.length;
   $('#residence-req').hidden = !(ultra || areas.length);
+  const needLast = ultra || areas.length > 0;
+  const needNext = ultra || (areas.length > 0 && (askNext || nextBirthdaySoon($('#birth-date').value, [slots?.transit?.next, slots?.[strip]?.next].filter(Boolean).sort().pop())));
+  $('#birthday-last-field').hidden = !needLast;
+  $('#birthday-next-field').hidden = !needNext;
+  $('#birthday-why').hidden = !needLast;
+  $('#birthday-unknown').hidden = !needNext;
   const tw = slots?.transit;
   $('#transit-slot').textContent = tw && !tw.next ? L(`Transit Weekly is fully booked until ${shortDay(tw.until)}. You can add it later with your order number.`, `Transit Weekly ist bis ${shortDay(tw.until)} ausgebucht. Du kannst es später mit deiner Bestellnummer dazubuchen.`) : '';
   $('#ancestry-row').hidden = !ultra;
@@ -123,6 +148,8 @@ function restoreDraft() {
   $('#note').value = d.note || '';
   const q = d.questionnaire || {};
   if (q.residence?.label) $('#residence').value = q.residence.label;
+  if (q.birthdayLast?.label) $('#birthday-last').value = q.birthdayLast.label;
+  if (q.birthdayNext?.label) $('#birthday-next').value = q.birthdayNext.label;
   $('#occupation').value = q.occupation || '';
   $('#passions').value = q.passions || '';
   $('#relationship').value = q.relationship || '';
@@ -150,6 +177,8 @@ form.addEventListener('submit', async e => {
   const withQ = strip === 'maxi' || strip === 'ultra';
   const residence = withQ && $('#residence').value.trim() ? await getResidence() : null;
   const areas = withQ ? twAreas() : [];
+  const birthdayLast = !$('#birthday-last-field').hidden && $('#birthday-last').value.trim() ? await getBirthdayLast() : null;
+  const birthdayNext = !$('#birthday-next-field').hidden && $('#birthday-next').value.trim() ? await getBirthdayNext() : null;
   const data = {
     strip,
     name: $('#name').value.trim(),
@@ -167,6 +196,8 @@ form.addEventListener('submit', async e => {
     sensitiveConsent: $('#sensitive-consent').checked,
     questionnaire: withQ ? {
       residence: residence ? { label: [residence.name, residence.region, residence.country].filter(Boolean).join(', '), lat: residence.lat, lon: residence.lon, tz: residence.tz } : null,
+      birthdayLast: placeData(birthdayLast),
+      birthdayNext: placeData(birthdayNext),
       occupation: $('#occupation').value.trim(),
       passions: $('#passions').value.trim(),
       relationship: $('#relationship').value,
@@ -189,6 +220,8 @@ form.addEventListener('submit', async e => {
   if (!data.place) missing.push(L('your birth place (choose it from the list)', 'deinen Geburtsort (aus der Liste wählen)'));
   if (strip === 'ultra' && !data.lifeArea) missing.push(L('the life area', 'den Lebensbereich'));
   if ((strip === 'ultra' || areas.length) && !data.questionnaire.residence) missing.push(L('where you live now (choose it from the list)', 'deinen jetzigen Wohnort (aus der Liste wählen)'));
+  if (!$('#birthday-last-field').hidden && !birthdayLast) missing.push(L('where you were on your last birthday (choose it from the list)', 'den Ort deines letzten Geburtstags (aus der Liste wählen)'));
+  if (!$('#birthday-next-field').hidden && !birthdayNext) missing.push(L('where you will be on your next birthday (choose it from the list)', 'den Ort deines nächsten Geburtstags (aus der Liste wählen)'));
   if (areas.length && UNSURE_TIME.includes(data.timeSource) && !data.transit.timeConsent) missing.push(L('the Transit Weekly box about your birth time', 'das Häkchen zu deiner Geburtszeit bei Transit Weekly'));
   if (data.asteroids.length && data.asteroids.length < AST_MIN) missing.push(L(`at least ${AST_MIN} asteroids (or none)`, `mindestens ${AST_MIN} Asteroiden (oder keinen)`));
   if (missing.length) { status.textContent = L(`Please add ${missing.join(', ')}.`, `Bitte ergänze ${missing.join(', ')}.`); return; }
@@ -206,6 +239,7 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const out = await res.json().catch(() => ({}));
     if (out.slots) { slots = out.slots; for (const el of document.querySelectorAll('[data-slot]')) if (slots[el.dataset.slot]) { el.textContent = slotLine(slots[el.dataset.slot]); el.classList.toggle('sold-out', !slots[el.dataset.slot].next); } update(); }
+    if (out.needBirthdayNext) { askNext = true; update(); }
     if (!res.ok || !out.url) throw new Error(out.error || '');
     location.href = out.url;
   } catch (err) {
