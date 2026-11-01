@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker, { receiptLangs, cancellationReceipt, withdrawalReceipt, CANCELLATION_POLICY, WITHDRAWAL_FORM, weekStart, addWeeks, weekDate, longDate, WEEKS_AHEAD, verifyStripeSignature, validateOrder, STRIPS, customerMail, ownerOrderMail } from '../src/worker.js';
+import worker, { receiptLangs, cancellationReceipt, withdrawalReceipt, CANCELLATION_POLICY, WITHDRAWAL_FORM, weekStart, addWeeks, weekDate, longDate, WEEKS_AHEAD, verifyStripeSignature, validateOrder, STRIPS, customerMail, ownerOrderMail, runsOverBirthday, ownerReadingMail } from '../src/worker.js';
 
 const iso = s => new Date(s * 1000).toISOString();
 // week start (Berlin)
@@ -47,8 +47,26 @@ assert.equal(await verifyStripeSignature(body, `t=${t - 1000},v1=${hex}`, secret
 console.log('signature ok');
 
 // validation
-const good = { strip: 'ultra', name: 'Test Person', email: 't@example.com', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: { label: 'Hamburg, Germany', lat: 53.55, lon: 9.99, tz: 'Europe/Berlin' }, lifeArea: 'Work and calling', language: 'en', nodes: true, ancestry: true, acceptTerms: true, earlyStart: true, sensitiveConsent: true, questionnaire: { residence: { label: 'Berlin, Germany', lat: 52.52, lon: 13.4, tz: 'Europe/Berlin' }, occupation: 'Designer', passions: 'Dance', relationship: 'Married', focus: 'Career' } };
+const bdPlace = { label: 'Lisbon, Portugal', lat: 38.72, lon: -9.14, tz: 'Europe/Lisbon' };
+const good = { strip: 'ultra', name: 'Test Person', email: 't@example.com', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: { label: 'Hamburg, Germany', lat: 53.55, lon: 9.99, tz: 'Europe/Berlin' }, lifeArea: 'Work and calling', language: 'en', nodes: true, ancestry: true, acceptTerms: true, earlyStart: true, sensitiveConsent: true, questionnaire: { birthdayLast: bdPlace, birthdayNext: bdPlace, residence: { label: 'Berlin, Germany', lat: 52.52, lon: 13.4, tz: 'Europe/Berlin' }, occupation: 'Designer', passions: 'Dance', relationship: 'Married', focus: 'Career' } };
 assert.equal(validateOrder(good).errors.length, 0);
+// solar return places (K3, 01.11.2026)
+{
+  const withQ = (base, patch) => ({ ...base, questionnaire: { ...base.questionnaire, ...patch } });
+  assert.ok(validateOrder(withQ(good, { birthdayLast: null })).errors.some(e => /last birthday/.test(e)), 'ultra needs last birthday');
+  assert.ok(validateOrder(withQ(good, { birthdayNext: null })).errors.some(e => /next birthday/.test(e)), 'ultra needs next birthday');
+  const maxiOnly = validateOrder({ ...good, strip: 'maxi', lifeArea: '' });
+  assert.equal(maxiOnly.errors.length, 0);
+  assert.equal(maxiOnly.order.questionnaire.birthdayLast, null, 'maxi alone keeps no birthday place');
+  assert.equal(maxiOnly.order.questionnaire.birthdayNext, null, 'maxi alone keeps no birthday place');
+  assert.ok(ownerReadingMail({ ...validateOrder(good).order, id: 'X' }, 'X').includes('Ort am letzten Geburtstag: Lisbon'));
+  assert.equal(runsOverBirthday('1990-05-01', '2026-11-02', '2027-02-07'), false, 'birthday after the term');
+  assert.equal(runsOverBirthday('1990-01-15', '2026-11-02', '2027-02-07'), true, 'birthday in the term');
+  assert.equal(runsOverBirthday('1990-02-08', '2026-11-02', '2027-02-07'), true, 'one day of tolerance');
+  assert.equal(runsOverBirthday('1990-02-09', '2026-11-02', '2027-02-07'), false);
+  assert.equal(runsOverBirthday('1992-02-29', '2026-11-02', '2027-03-07'), true, 'leap day');
+  assert.equal(runsOverBirthday('1990-11-02', '2026-11-02', '2027-02-07'), true, 'birthday today');
+}
 assert.ok(validateOrder({ ...good, earlyStart: false }).errors.length);
 assert.ok(validateOrder({ ...good, lifeArea: 'Health' }).errors.length);
 assert.equal(validateOrder({ ...good, strip: 'mini', lifeArea: '' }).order.ancestry, false);
@@ -729,7 +747,7 @@ console.log('newsletter ok');
     return worker.fetch(req('/api/stripe-webhook', 'POST', evtBody, { 'Stripe-Signature': `t=${ts},v1=${sg}` }), env);
   };
   const residence = { label: 'New York, United States', lat: 40.71, lon: -74.01, tz: 'America/New_York' };
-  const maxi = { ...good, strip: 'maxi', lifeArea: '', ancestry: false, sensitiveConsent: false, questionnaire: { residence }, transit: { areas: ['Love and relationships', 'Work and calling'], earlyStart: true } };
+  const maxi = { ...good, strip: 'maxi', lifeArea: '', ancestry: false, sensitiveConsent: false, questionnaire: { residence, birthdayLast: bdPlace, birthdayNext: bdPlace }, transit: { areas: ['Love and relationships', 'Work and calling'], earlyStart: true } };
 
   // prices: 117 € per area (39 € a month), invoice amounts clean for every possible number of areas
   assert.equal(TRANSIT.cents, 11700); assert.equal(TRANSIT.monthCents * 3, TRANSIT.cents); assert.equal(TRANSIT_MAX_AREAS, 5);
@@ -847,10 +865,23 @@ console.log('newsletter ok');
   assert.match(pis.pi_tw.metadata.tw_invoice_date, /^\d{4}-\d{2}-\d{2}$/); assert.match(pis.pi_tw.metadata.invoice_date, /^\d{4}-\d{2}-\d{2}$/, 'both invoice dates kept apart');
 
   // booking later: order number + email must match a paid, unrefunded Maxi/Ultra at Stripe
-  const later = { baseOrder: stored.id, email: 'T@example.com', name: 'Test Person', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: good.place, residence, language: 'de', transit: { areas: ['Personal growth'], earlyStart: true }, acceptTerms: true };
+  const later = { baseOrder: stored.id, email: 'T@example.com', name: 'Test Person', birthDate: '1990-05-01', birthTime: '08:15', timeSource: 'certificate', place: good.place, residence, birthdayLast: bdPlace, birthdayNext: bdPlace, language: 'de', transit: { areas: ['Personal growth'], earlyStart: true }, acceptTerms: true };
   assert.equal(validateRebook(later).errors.length, 0, JSON.stringify(validateRebook(later).errors));
   assert.ok(validateRebook({ ...later, residence: null }).errors.some(e => /where you live now/.test(e)));
   assert.ok(validateRebook({ ...later, baseOrder: 'AS-123' }).errors.some(e => /order number/.test(e)));
+  assert.ok(validateRebook({ ...later, birthdayLast: null }).errors.some(e => /last birthday/.test(e)), 'booking later needs the last birthday');
+  // K3: the server asks for the next birthday only when the 13 weeks run over it
+  {
+    const md = days => new Date(Date.now() + days * 86400000).toISOString().slice(5, 10);
+    const noNext = { ...maxi, questionnaire: { residence, birthdayLast: bdPlace } };
+    let k = await worker.fetch(req('/api/checkout', 'POST', { ...noNext, birthDate: `1990-${md(40)}` }, { ip: '10.0.7.1' }), env);
+    assert.equal(k.status, 400);
+    const kOut = await k.json();
+    assert.equal(kOut.needBirthdayNext, true, 'birthday in the term: asked');
+    assert.match(kOut.error, /before your 13 weeks end/);
+    k = await worker.fetch(req('/api/checkout', 'POST', { ...noNext, birthDate: `1990-${md(250)}` }, { ip: '10.0.7.2' }), env);
+    assert.equal(k.status, 200, 'birthday after the term: not asked');
+  }
   r = await worker.fetch(req('/api/transit-weekly', 'POST', { ...later, email: 'other@example.com' }, { ip: '10.0.1.1' }), env);
   assert.equal(r.status, 400); assert.match((await r.json()).error, /could not find a paid Maxi or Ultra Strip/, 'wrong email: same answer as an unknown number');
   r = await worker.fetch(req('/api/transit-weekly', 'POST', later, { ip: '10.0.1.2' }), env);

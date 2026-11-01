@@ -382,6 +382,16 @@ function checkPerson(o, errors) {
 }
 
 // Transit Weekly part of an order: life areas, the time zone of the residence, the confirmations.
+// Solar return places (K3, Sandra, 01.11.2026). The next birthday counts until the term ends; one day of tolerance,
+// because the Sun can return the day before the birthday.
+export function runsOverBirthday(birthDate, todayYmd, endYmd) {
+  const [, m, d] = birthDate.split('-');
+  const md = m === '02' && d === '29' ? '02-28' : `${m}-${d}`;
+  const year = Number(todayYmd.slice(0, 4));
+  const next = `${year}-${md}` >= todayYmd ? `${year}-${md}` : `${year + 1}-${md}`;
+  return Date.parse(next + 'T12:00:00Z') - 86400000 <= Date.parse(endYmd + 'T12:00:00Z');
+}
+
 function checkTransit(t, timeSource, residence, errors) {
   const areas = Array.isArray(t?.areas) ? [...new Set(t.areas.map(a => clean(a, 80)))] : [];
   if (!areas.length) return null;
@@ -421,6 +431,8 @@ export function validateOrder(o) {
     if (strip === 'ultra' && !residence) errors.push('Please choose where you live now from the list.');
     questionnaire = {
       residence,
+      birthdayLast: cleanPlace(q.birthdayLast),
+      birthdayNext: cleanPlace(q.birthdayNext),
       occupation: clean(q.occupation, 120),
       passions: clean(q.passions, 200),
       relationship: RELATIONSHIP.includes(q.relationship) ? q.relationship : '',
@@ -439,6 +451,17 @@ export function validateOrder(o) {
   if (o.transit && Array.isArray(o.transit.areas) && o.transit.areas.length) {
     if (strip !== 'maxi' && strip !== 'ultra') errors.push('Transit Weekly can be added to a Maxi or Ultra Strip.');
     else transit = checkTransit(o.transit, o.timeSource, questionnaire?.residence || null, errors);
+  }
+  // Solar return: last birthday with the Ultra and Transit Weekly, next birthday with the Ultra (12 months always run
+  // over it); Transit Weekly decides in handleCheckout, once the term is known. Otherwise neither is kept.
+  if (questionnaire) {
+    if (strip === 'ultra' || transit) {
+      if (!questionnaire.birthdayLast) errors.push('Please choose from the list where you were on your last birthday.');
+      if (strip === 'ultra' && !questionnaire.birthdayNext) errors.push('Please choose from the list where you will be on your next birthday.');
+    } else {
+      questionnaire.birthdayLast = null;
+      questionnaire.birthdayNext = null;
+    }
   }
   const order = {
     strip, name, email: String(o.email || '').trim(), language: lang,
@@ -469,11 +492,13 @@ export function validateRebook(o) {
   const residence = cleanPlace(o.residence);
   const transit = checkTransit({ ...(o.transit || {}), areas: o.transit?.areas || [] }, o.timeSource, residence, errors);
   if (!transit) errors.push('Please choose at least one life area.');
+  const birthdayLast = cleanPlace(o.birthdayLast);
+  if (!birthdayLast) errors.push('Please choose from the list where you were on your last birthday.');
   if (o.acceptTerms !== true) errors.push('Please confirm that you are 18 or older and accept the terms and the cancellation policy.');
   const order = {
     strip: 'transit', base, name, email: String(o.email || '').trim(), language: o.language === 'de' ? 'de' : 'en',
     birthDate: o.birthDate, birthTime: o.birthTime, timeSource: o.timeSource,
-    place: cleanPlace(place) || {}, questionnaire: { residence }, transit, newsletter: o.newsletter === true,
+    place: cleanPlace(place) || {}, questionnaire: { residence, birthdayLast, birthdayNext: cleanPlace(o.birthdayNext) }, transit, newsletter: o.newsletter === true,
   };
   return { errors, order };
 }
@@ -533,6 +558,12 @@ export function ownerOrderMail(order, id, session) {
   ].filter(l => l !== null).join('\n');
 }
 
+const placeLine = p => `${p.label} · ${p.lat}, ${p.lon} · ${p.tz}`;
+const birthdayLines = q => [
+  q.birthdayLast ? `Ort am letzten Geburtstag: ${placeLine(q.birthdayLast)}` : null,
+  q.birthdayNext ? `Ort am nächsten Geburtstag: ${placeLine(q.birthdayNext)}` : null,
+];
+
 export function ownerReadingMail(order, id) {
   const s = STRIPS[order.strip];
   const q = order.questionnaire;
@@ -567,12 +598,13 @@ export function ownerReadingMail(order, id) {
       '',
       'Fragebogen:',
       `Wohnort heute: ${q.residence ? `${q.residence.label} · ${q.residence.lat}, ${q.residence.lon} · ${q.residence.tz}` : '–'}`,
+      ...birthdayLines(q),
       `Beruf: ${q.occupation || '–'}`,
       `Leidenschaften: ${q.passions || '–'}`,
       `Beziehungsstatus: ${q.relationship || 'keine Angabe'}`,
       `Was sie gerade verstehen will: ${q.focus || '–'}`,
     ] : []),
-    ...(q && !s ? ['', `Wohnort heute: ${q.residence ? `${q.residence.label} · ${q.residence.lat}, ${q.residence.lon} · ${q.residence.tz}` : '–'}`] : []),
+    ...(q && !s ? ['', `Wohnort heute: ${q.residence ? `${q.residence.label} · ${q.residence.lat}, ${q.residence.lon} · ${q.residence.tz}` : '–'}`, ...birthdayLines(q)] : []),
   ].filter(l => l !== null).join('\n');
 }
 
@@ -1328,8 +1360,20 @@ async function handleCheckout(request, env) {
     const plan = planTransit(state, weekStart(Date.parse(deadline + 'T12:00:00Z')), order.transit.areas.length, now);
     if (!plan) return json({ error: T('Transit Weekly is fully booked for the weeks after your strip. You can order the strip alone and add Transit Weekly later with your order number.', 'Transit Weekly ist für die Wochen nach deinem Strip ausgebucht. Du kannst den Strip allein bestellen und Transit Weekly später mit deiner Bestellnummer dazubuchen.'), transitSoldOut: true, slots }, 409);
     Object.assign(order.transit, plan);
+    if (order.strip !== 'ultra') {
+      const asked = settleBirthdayNext(order, now, T);
+      if (asked) return asked;
+    }
   }
   return createCheckout(request, env, order, { week: String(slot.nextStart), now, cancelUrl: `order.html?strip=${order.strip}&cancelled=1`, ui });
+}
+
+// Transit Weekly: the place of the next birthday is needed only if the 13 weeks run over it; if not, it is not kept.
+function settleBirthdayNext(order, now, T) {
+  const q = order.questionnaire;
+  if (!runsOverBirthday(order.birthDate, berlinYmd(now), order.transit.end)) { q.birthdayNext = null; return null; }
+  if (q.birthdayNext) return null;
+  return json({ error: T('Your next birthday comes before your 13 weeks end. Please also tell us where you will be that day.', 'Dein nächster Geburtstag liegt vor dem Ende deiner 13 Wochen. Bitte sag uns auch, wo du an diesem Tag bist.'), needBirthdayNext: true }, 400);
 }
 
 // Stripe Checkout for a strip and/or Transit Weekly. Birth data stays in KV until payment, never goes to Stripe.
@@ -1429,6 +1473,8 @@ async function handleRebook(request, env) {
   const plan = planTransit(state, from, order.transit.areas.length, now, seamless);
   if (!plan) return json({ error: T(`Transit Weekly is fully booked until ${longDate(freeSlotsFrom(state).transit.until)}. New weeks open every Monday.`, `Transit Weekly ist bis ${longDate(freeSlotsFrom(state).transit.until, 'de')} ausgebucht. Jeden Montag kommen neue Wochen dazu.`), transitSoldOut: true }, 409);
   Object.assign(order.transit, plan);
+  const asked = settleBirthdayNext(order, now, T);
+  if (asked) return asked;
   if (seamless) order.renews = running.map(b => b.order).join(', ');
   return createCheckout(request, env, order, { now, cancelUrl: 'transit-weekly.html?cancelled=1', ui });
 }
