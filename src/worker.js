@@ -19,7 +19,8 @@
 //   POST /api/stat             anonymous counter (Sandra, 07.10.2026): a page visit (by source: Instagram, TikTok,
 //                               direct) or a click on one of the three preview tabs; visits also carry the country
 //                               Cloudflare estimates from the IP (request.cf.country, Sandra 09.10.2026; the IP itself
-//                               is never read or stored). No cookie, no IP, no per-visitor
+//                               is never read or stored); a finished calculation in the free calculator carries
+//                               country and German hour (Sandra 03.11.2026). No cookie, no IP, no per-visitor
 //                               id — only categories go into Workers Analytics Engine (STATS), which is built for
 //                               exactly this and free up to 100,000 points/day (KV's free write limit is 1,000/day,
 //                               too little once traffic grows). Triggered by a small first-party fetch() from
@@ -1746,6 +1747,9 @@ const STAT_CARD = new Set(['mini', 'maxi', 'ultra']);
 export const STAT_MIN_COUNTRY = 5;
 // ISO 3166-1 alpha-2 from request.cf.country; anything else (missing, "XX" unknown, "T1" Tor) counts as "XX".
 const statCountry = request => { const c = request.cf && request.cf.country; return typeof c === 'string' && /^[A-Z]{2}$/.test(c) ? c : 'XX'; };
+// Hour of a calculator use in German time, "00"–"23" (Sandra, 03.11.2026: "Deutsche Zeit"); taken from the server clock,
+// the browser sends nothing for it.
+const statHour = (nowMs = Date.now()) => String(new Date(nowMs + berlinOffsetMinutes(nowMs) * 60000).getUTCHours()).padStart(2, '0');
 // Monday 01:10 UTC, always after Monday 00:00 Berlin. Weekday as "MON", never as a number: Cloudflare counts 1 = Sunday
 // (developers.cloudflare.com/workers/configuration/cron-triggers/); "10 1 * * 1" ran on Sundays until 19.10.2026, so the
 // Monday report found no sum. Must match wrangler.jsonc exactly (event.cron is the configured string).
@@ -1755,7 +1759,8 @@ const STATS_FIRST_WEEK = '2026-10-05';
 // Weeks the rollup looks back for a missing sum (Analytics Engine keeps raw points about 3 months).
 const STATS_CATCHUP_WEEKS = 8;
 
-// A visit (by source, estimated country and page language en/de, Sandra 19.10.2026) or a click on one of the three preview tabs. No IP, no cookie,
+// A visit (by source, estimated country and page language en/de, Sandra 19.10.2026), a click on one of the three preview tabs,
+// or a finished calculation in the free calculator (by German hour and country, Sandra 03.11.2026). No IP, no cookie,
 // no per-visitor id — only the categories are written to Workers Analytics Engine. Always 204, even on a bad body: this must
 // never surface an error to a visitor or cost more than a trivial amount of CPU.
 async function handleStat(request, env) {
@@ -1764,6 +1769,7 @@ async function handleStat(request, env) {
   if (!env.STATS || !b || typeof b !== 'object') return new Response(null, { status: 204 });
   if (b.event === 'visit') env.STATS.writeDataPoint({ blobs: ['visit', STAT_SRC.has(b.src) ? b.src : 'direct', statCountry(request), b.lang === 'de' ? 'de' : 'en'], indexes: ['visit'] });
   else if (b.event === 'click' && STAT_CARD.has(b.card)) env.STATS.writeDataPoint({ blobs: ['click', b.card], indexes: ['click'] });
+  else if (b.event === 'calc') env.STATS.writeDataPoint({ blobs: ['calc', statHour(), statCountry(request)], indexes: ['calc'] });
   return new Response(null, { status: 204 });
 }
 
@@ -1810,8 +1816,17 @@ async function rollupWeek(env, lastWeek) {
   if (!res.ok) return { error: await res.text() };
   const summary = { visit: { ig: 0, tt: 0, direct: 0 }, click: { mini: 0, maxi: 0, ultra: 0 }, lang: { en: 0, de: 0 } };
   const byCountry = {}; // source and country are summed separately, never crossed (Sandra, 09.10.2026)
+  // calculator uses: one list by country, one by hour, never crossed (Sandra, 03.11.2026: "Getrennte Listen")
+  const calc = { total: 0, hour: {}, country: {}, countryOther: { uses: 0, countries: 0 } };
+  const calcByCountry = {};
   for (const row of (await res.json()).data || []) {
     const n = Number(row.n) || 0;
+    if (row.blob1 === 'calc') {
+      calc.total += n;
+      if (/^([01]\d|2[0-3])$/.test(row.blob2 || '')) calc.hour[row.blob2] = (calc.hour[row.blob2] || 0) + n;
+      const c = /^[A-Z]{2}$/.test(row.blob3 || '') ? row.blob3 : 'XX'; calcByCountry[c] = (calcByCountry[c] || 0) + n;
+      continue;
+    }
     if (summary[row.blob1] && row.blob2 in summary[row.blob1]) summary[row.blob1][row.blob2] += n;
     if (row.blob1 === 'visit') { const c = /^[A-Z]{2}$/.test(row.blob3 || '') ? row.blob3 : 'XX'; byCountry[c] = (byCountry[c] || 0) + n; }
     if (row.blob1 === 'visit') summary.lang[row.blob4 === 'de' ? 'de' : 'en'] += n; // points before 19.10.2026 have no language: English page
@@ -1822,6 +1837,11 @@ async function rollupWeek(env, lastWeek) {
     if (n >= STAT_MIN_COUNTRY) summary.country[c] = n;
     else { summary.countryOther.visits += n; summary.countryOther.countries += 1; }
   }
+  for (const [c, n] of Object.entries(calcByCountry)) {
+    if (n >= STAT_MIN_COUNTRY) calc.country[c] = n;
+    else { calc.countryOther.uses += n; calc.countryOther.countries += 1; }
+  }
+  summary.calc = calc;
   await env.ORDERS.put(key, JSON.stringify(summary)); // no expirationTtl: aggregate counts, no personal data
   return { week: weekDate(lastWeek), summary };
 }

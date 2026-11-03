@@ -634,6 +634,15 @@ console.log('newsletter ok');
   assert.deepEqual(points.slice(before).map(p => p.blobs[3]), ['de', 'en', 'en', 'en', 'en']);
   points.length = before;
   assert.equal((await worker.fetch(new Request('https://astrostrip.com/api/stat', { method: 'POST', body: '{"event":"visit","src":"ig"}' }), { ...senv, STATS: undefined })).status, 204, 'missing binding: still 204');
+  // calculator use (Sandra, 03.11.2026): country from request.cf, German hour from the server clock, nothing from the browser
+  { const realNow = Date.now;
+    Date.now = () => Date.parse('2026-11-03T20:30:00Z'); // 21:30 in Berlin (winter time)
+    await stat({ event: 'calc', hour: '05', country: 'US' }, undefined, { country: 'FR' });
+    Date.now = () => Date.parse('2026-07-01T22:10:00Z'); // 00:10 in Berlin (summer time)
+    await stat({ event: 'calc' }, undefined, {});
+    Date.now = realNow;
+    assert.deepEqual(points.slice(before).map(p => p.blobs), [['calc', '21', 'FR'], ['calc', '00', 'XX']]);
+    points.length = before; }
 
   // rollup: Monday 12.10.2026 sums the week 05.–11.10. (Berlin)
   const now = Date.parse('2026-10-12T01:10:00Z');
@@ -648,6 +657,8 @@ console.log('newsletter ok');
       { blob1: 'visit', blob2: 'tt', blob3: 'AT', n: 3 }, { blob1: 'visit', blob2: 'direct', blob3: 'DE', n: '30' }, { blob1: 'visit', blob2: 'direct', blob3: 'AT', n: '1' },
       { blob1: 'visit', blob2: 'direct', blob3: '', n: '6' }, { blob1: 'visit', blob2: 'direct', blob3: 'US', n: '3' },
       { blob1: 'click', blob2: 'maxi', blob3: '', n: '7' }, { blob1: 'click', blob2: 'other', blob3: '', n: '1' }, { blob1: 'x', blob2: 'ig', blob3: 'DE', n: '5' },
+      { blob1: 'calc', blob2: '21', blob3: 'DE', n: '4' }, { blob1: 'calc', blob2: '21', blob3: 'US', n: '2' }, { blob1: 'calc', blob2: '09', blob3: 'DE', n: '3' },
+      { blob1: 'calc', blob2: '24', blob3: 'GB', n: '1' },
     ] }));
   };
   const r = await runStatsRollup(senv, now);
@@ -655,7 +666,9 @@ console.log('newsletter ok');
   // source summed over all countries; country summed over all sources (never crossed); AT 1+3+1 = 5 stays, LU 1 and US 3 below 5;
   // points without country (before 09.10.2026) count as XX
   assert.deepEqual(JSON.parse(store.get('stats:week:2026-10-05')), { visit: { ig: 12, tt: 3, direct: 40 }, click: { mini: 0, maxi: 7, ultra: 0 },
-    lang: { en: 45, de: 10 }, country: { DE: 40, AT: 5, XX: 6 }, countryOther: { visits: 4, countries: 2 } });
+    lang: { en: 45, de: 10 }, country: { DE: 40, AT: 5, XX: 6 }, countryOther: { visits: 4, countries: 2 },
+    // calculator: total, by hour and by country separately; US 2 and GB 1 below 5; a bad hour is left out of the hour list only
+    calc: { total: 10, hour: { '21': 6, '09': 3 }, country: { DE: 7 }, countryOther: { uses: 3, countries: 2 } } });
   assert.ok(sqls[0].includes('GROUP BY blob1, blob2, blob3, blob4'));
   const from = Date.parse('2026-10-04T22:00:00Z') / 1000;
   assert.ok(sqls[0].includes(`toDateTime(${from})`) && sqls[0].includes(`toDateTime(${from + 7 * 86400})`), 'Berlin week bounds');
