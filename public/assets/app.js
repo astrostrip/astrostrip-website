@@ -935,6 +935,8 @@ function initForm() {
       const input = { y, mo, d, h, mi, place: chosen, timeKnown, offsetOverride };
       const chart = await calculateChart(input);
       await renderResult(chart, input);
+      // anonymous counter (Sandra, 03.11.2026): one finished calculation, nothing else; the server adds country and German hour
+      try { fetch('/api/stat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"event":"calc"}', keepalive: true }).catch(() => {}); } catch {}
     } catch (err) {
       console.error(err);
       status.textContent = L('Something went wrong with the calculation. Please try again.', 'Bei der Berechnung ist etwas schiefgegangen. Bitte versuche es noch einmal.');
