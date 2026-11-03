@@ -122,9 +122,9 @@ export const afterWithdrawal = nowMs => berlinYmd(nowMs + (TW_WITHDRAWAL_DAYS + 
 // Birth time from family memory or approximate: Transit Weekly only with this confirmation (Sandra, 11.10.2026).
 export const UNSURE_TIME = ['family', 'approximate'];
 export const TIME_CONSENT = {
-  version: 'v1-2026-10-11',
-  en: 'I understand that my birth time is not exact, so my chart is imprecise and the readings of my life areas cannot be 100 % exact.',
-  de: 'Mir ist klar, dass meine Geburtszeit nicht genau ist, mein Horoskop deshalb ungenau ist und die Deutungen meiner Lebensbereiche nicht 100 % exakt sein können.',
+  version: 'v2-2026-11-02',
+  en: "I understand that I don't know my exact birth time. My chart is therefore imprecise, and parts of my weekly emails may not fit me.",
+  de: 'Mir ist klar, dass ich meine Geburtszeit nicht genau kenne. Mein Horoskop ist deshalb ungenau, und Teile meiner Wochenmails passen vielleicht nicht zu mir.',
 };
 // "America/New_York" -> "New York": the weekly emails name the zone of their times; the booking keeps only the zone.
 export const tzLabel = tz => String(tz || '').split('/').pop().replace(/_/g, ' ');

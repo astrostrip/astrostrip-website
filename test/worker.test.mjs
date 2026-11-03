@@ -775,7 +775,7 @@ console.log('newsletter ok');
     assert.equal(late.readWeek2, null); assert.equal(late.part1Weeks, 13, 'reading week after the withdrawal period: all at once'); }
   assert.ok(validateOrder({ ...maxi, transit: { areas: ['Health'], earlyStart: true } }).errors.some(e => /life areas for Transit Weekly/.test(e)));
   assert.ok(validateOrder({ ...maxi, transit: { areas: [...Array(6)].map((_, i) => ['Love and relationships', 'Work and calling', 'Money and self-worth', 'Home and family', 'Creativity and self-expression', 'Friends and belonging'][i]), earlyStart: true } }).errors.some(e => /at most 5/.test(e)));
-  assert.match(TIME_CONSENT.en, /^I understand that my birth time is not exact/); assert.match(TIME_CONSENT.de, /^Mir ist klar/);
+  assert.match(TIME_CONSENT.en, /^I understand that I don't know my exact birth time/); assert.match(TIME_CONSENT.de, /^Mir ist klar/);
   const html = readFileSync(new URL('../public/order.html', import.meta.url), 'utf8') + readFileSync(new URL('../public/transit-weekly.html', import.meta.url), 'utf8');
   assert.equal(html.split(TIME_CONSENT.en.replace('100 %', '100&nbsp;%')).length, 3, 'confirmation wording on both pages = the stored proof text');
 
