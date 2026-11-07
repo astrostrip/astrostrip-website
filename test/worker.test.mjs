@@ -1197,3 +1197,28 @@ console.log('newsletter ok');
   assert.deepEqual(JSON.parse(kv.get('order:' + s.id)).asteroids, ['juno', 'ceres', 'vesta', 'eros']);
   console.log('extra layers ok');
 }
+
+// KV list quota (06.11.2026): empty invoice/correction queues are checked with a get, not a list
+{
+  const { runInvoices, runCorrections } = await import('../src/worker.js');
+  for (const k of [...kv.keys()]) if (/^(invoice|correction|queueidle):/.test(k)) kv.delete(k);
+  let n = 0; const orig = env.ORDERS.list;
+  env.ORDERS.list = async o => { if (o.prefix === 'invoice:' || o.prefix === 'correction:') n++; return orig(o); };
+  assert.equal((await runInvoices(env)).sent, 0); assert.equal((await runCorrections(env)).sent, 0);
+  assert.equal(n, 2, 'first empty run lists once per queue');
+  for (let i = 0; i < 5; i++) { await runInvoices(env); await runCorrections(env); }
+  assert.equal(n, 2, 'idle runs do not list invoice: or correction:');
+  // a job queued by the webhook clears the marker and is picked up by the next run
+  const ts = Math.floor(Date.now() / 1000); const evtBody = JSON.stringify({ type: 'refund.created', data: { object: { id: 're_idle' } } });
+  const sg = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${ts}.${evtBody}`)))].map(b => b.toString(16).padStart(2, '0')).join('');
+  await worker.fetch(req('/api/stripe-webhook', 'POST', evtBody, { 'Stripe-Signature': `t=${ts},v1=${sg}` }), env);
+  assert.ok(!kv.has('queueidle:correction:') && kv.has('queueidle:invoice:'));
+  await runCorrections(env).catch(() => {}); assert.equal(n, 3, 'queued job: list again'); // the test refund is unknown to the Stripe mock
+  // marker expired (KV ttl): a job that slipped in between list and marker is found again
+  kv.delete('correction:re_idle'); kv.delete('correctionpdf:re_idle');
+  kv.set('invoice:AS-SLIPPED', '{}'); assert.equal((await runInvoices(env)).sent, 0, 'marker still there: waits');
+  kv.delete('queueidle:invoice:'); await runInvoices(env).catch(() => {}); assert.equal(n, 4, 'job found after the marker expired'); // empty test job
+  for (const k of [...kv.keys()]) if (/^(invoice|invoicepdf|correction|correctionpdf|queueidle):/.test(k)) kv.delete(k);
+  env.ORDERS.list = orig;
+  console.log('idle queues ok');
+}

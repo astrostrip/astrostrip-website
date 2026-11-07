@@ -983,6 +983,17 @@ export const INVOICE_CRON = '*/5 * * * *';
 export const INVOICE_TRIES = 3;
 const INVOICE_TTL = 14 * 86400;
 const invoicePdfKey = id => `invoicepdf:${id}`; // not under 'invoice:', so the job list stays small
+// KV list quota (06.11.2026): KV Free allows 1,000 list operations a day; two empty queue checks every 5 minutes
+// alone were 576. An empty list leaves an idle marker (get, not list); queueing a job deletes it. The marker expires
+// after QUEUE_IDLE_TTL, so a job queued in the moment between the empty list and the marker still goes out within that time.
+const QUEUE_IDLE_TTL = 1800;
+const idleKey = prefix => `queueidle:${prefix}`; // not under the job prefix
+async function queueIdle(env, prefix) { return (await env.ORDERS.get(idleKey(prefix))) !== null; }
+async function markIdle(env, prefix) { await env.ORDERS.put(idleKey(prefix), '1', { expirationTtl: QUEUE_IDLE_TTL }); }
+async function queueJob(env, prefix, id, job) {
+  await env.ORDERS.put(`${prefix}${id}`, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  await env.ORDERS.delete(idleKey(prefix));
+}
 
 // What an invoice job bills: a strip, or Transit Weekly (n life areas, service period = the 13 weeks).
 const dmyText = ymd => ymd.split('-').reverse().join('.');
@@ -1021,7 +1032,7 @@ async function queueTransitInvoice(env, order, session) {
     customer_details: { name: session.customer_details?.name || '', address: session.customer_details?.address || {} },
     paidAt: Date.now(), attempts: 0, pi: typeof session.payment_intent === 'string' ? session.payment_intent : '',
   };
-  await env.ORDERS.put(`invoice:${id}`, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  await queueJob(env, 'invoice:', id, job);
 }
 
 async function queueInvoice(env, order, session) {
@@ -1030,7 +1041,7 @@ async function queueInvoice(env, order, session) {
     customer_details: { name: session.customer_details?.name || '', address: session.customer_details?.address || {} },
     paidAt: Date.now(), attempts: 0, pi: typeof session.payment_intent === 'string' ? session.payment_intent : '',
   };
-  await env.ORDERS.put(`invoice:${order.id}`, JSON.stringify(job), { expirationTtl: INVOICE_TTL });
+  await queueJob(env, 'invoice:', order.id, job);
 }
 
 export function invoiceMailText(d, strip) {
@@ -1056,8 +1067,9 @@ export function invoiceMailText(d, strip) {
 
 export async function runInvoices(env, nowMs = Date.now()) {
   if (!env.MAILJET_API_KEY) return { skipped: true };
+  if (await queueIdle(env, 'invoice:')) return { sent: 0 };
   const page = await env.ORDERS.list({ prefix: 'invoice:', limit: 1 });
-  if (!page.keys.length) return { sent: 0 };
+  if (!page.keys.length) { await markIdle(env, 'invoice:'); return { sent: 0 }; }
   const key = page.keys[0].name;
   const raw = await env.ORDERS.get(key);
   if (!raw) return { sent: 0 };
@@ -1195,8 +1207,9 @@ export function correctionMailText(d, strip) {
 
 export async function runCorrections(env, nowMs = Date.now()) {
   if (!env.MAILJET_API_KEY) return { skipped: true };
+  if (await queueIdle(env, 'correction:')) return { sent: 0 };
   const page = await env.ORDERS.list({ prefix: 'correction:', limit: 1 });
-  if (!page.keys.length) return { sent: 0 };
+  if (!page.keys.length) { await markIdle(env, 'correction:'); return { sent: 0 }; }
   const key = page.keys[0].name;
   const raw = await env.ORDERS.get(key);
   if (!raw) return { sent: 0 };
@@ -1524,7 +1537,7 @@ async function handleWebhook(request, env) {
   const event = JSON.parse(body);
   if (event.type === 'refund.created') {
     const refund = event.data.object;
-    await env.ORDERS.put(`correction:${refund.id}`, JSON.stringify({ refund: refund.id, attempts: 0 }), { expirationTtl: INVOICE_TTL });
+    await queueJob(env, 'correction:', refund.id, { refund: refund.id, attempts: 0 });
     return new Response('queued');
   }
   if (event.type === 'refund.failed') {
