@@ -156,9 +156,9 @@ export default {
     after: "tells the group honestly about the hard month, and three people immediately offer to help.",
   },
   23: {
-    theme: "Letting new ideas ripen. This degree is about bringing inspiration and clear thinking together, and protecting a fresh idea until it’s strong enough for the world.",
+    theme: "Backing your first attempts. This degree is about standing behind a new idea while it is still young: giving it time before others judge it, following your gut feeling and checking it with a clear head, and only after that turning it into something real.",
     growing: "Tends to announce every new idea right away and with excitement, before it’s really thought through. Then it gets laughed at or fails because the planning and timing are off. Or they get so carried away by their own excitement that they can no longer see clearly whether the idea can work at all.",
-    grown: "keeps a fresh idea to themselves at first or shares it only with a few people they trust. They take time and step back, look soberly at where the idea comes from and what would follow from it, and plan the next steps ahead. That way inspiration and reason work together, and the first idea becomes something that works in real life.",
+    grown: "gives a fresh idea time before anyone else gets to judge it. They follow their gut feeling and check it with a clear head: what sparked the idea, and what would it take to make it happen? Only then do they try it out in a first draft, sketch or trial run, so the first attempt stands on solid ground and grows step by step into something that really works.",
     before: "posts the startup idea the night they have it and drops it when friends make jokes.",
     after: "tests the idea on paper and with one trusted friend, fixes the flaws, then launches it.",
   },

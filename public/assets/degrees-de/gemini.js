@@ -157,9 +157,9 @@ export default {
     after: "Erzählt in der Runde ehrlich von dem schweren Monat, und drei Leute bieten sofort Hilfe an.",
   },
   23: {
-    theme: "Neue Ideen reifen lassen. Bei diesem Grad geht es darum, Eingebung und klaren Verstand zusammenzubringen und eine frische Idee zu schützen, bis sie stark genug für die Welt ist.",
+    theme: "Erste Versuche unterstützen. Bei diesem Grad geht es darum, hinter einer neuen Idee zu stehen, solange sie noch ganz neu ist: ihr Zeit zu lassen, bevor andere über sie urteilen, dem Bauchgefühl zu folgen und es mit klarem Kopf zu prüfen, und sie erst danach Wirklichkeit werden zu lassen.",
     growing: "Neigt dazu, jede neue Idee sofort und begeistert zu verkünden, bevor sie richtig durchdacht ist. Dann wird sie belächelt oder scheitert, weil Planung und Zeitpunkt nicht stimmen. Oder man lässt sich von der eigenen Aufregung so mitreißen, dass man nicht mehr klar sieht, ob die Idee überhaupt funktionieren kann.",
-    grown: "Behält eine frische Idee erst einmal für sich oder teilt sie nur mit wenigen Vertrauten. Man nimmt sich Zeit und Abstand, prüft nüchtern, woher die Idee kommt und was aus ihr folgen würde, und plant die nächsten Schritte voraus. So arbeiten Eingebung und Verstand zusammen, und aus dem ersten Einfall wird etwas, das im echten Leben funktioniert.",
+    grown: "Lässt einer frischen Idee Zeit, bevor andere über sie urteilen. Folgt dem Bauchgefühl und prüft es mit klarem Kopf: Wodurch ist die Idee entstanden, und was bräuchte es, um sie umzusetzen? Erst danach geht es an einen ersten Entwurf, eine Skizze oder einen Probelauf. So steht der erste Versuch auf festem Boden und wird nach und nach zu etwas, das wirklich trägt.",
     before: "Veröffentlicht die Gründungsidee noch in derselben Nacht und gibt sie auf, als im Freundeskreis Witze darüber fallen.",
     after: "Prüft die Idee auf dem Papier und mit einem vertrauten Menschen, behebt die Schwächen und setzt sie dann um.",
   },
